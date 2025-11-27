@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer2Read - Design Direction Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav h1 {
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #f9fafb;
+            border-color: #2563eb;
+        }
+
+        .direction-selector {
+            padding: 0.5rem 1rem;
+            border: 2px solid #2563eb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* Mockup Container */
+        .mockup-container {
+            display: none;
+            min-height: calc(100vh - 80px);
+        }
+
+        .mockup-container.active {
+            display: block;
+        }
+
+        .mockup-header {
+            background: white;
+            padding: 2rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .mockup-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .mockup-title {
+            font-size: 2rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .mockup-personality {
+            font-size: 1.1rem;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .mockup-description {
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .characteristics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .char-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .char-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .char-value {
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+
+        /* Mockup viewport */
+        .mockup-viewport {
+            background: #e5e7eb;
+            padding: 2rem;
+        }
+
+        .screen-frame {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Common styles for all directions */
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        /* Direction 1: Clean Centered */
+        .direction-1 .screen-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .direction-1 .hero-title {
+            font-size: 2.5rem;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .direction-1 .hero-subtitle {
+            font-size: 1.25rem;
+            color: #64748b;
+            margin-bottom: 3rem;
+        }
+
+        .direction-1 .upload-zone {
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            background: #f9fafb;
+            transition: all 0.3s;
+        }
+
+        .direction-1 .upload-zone:hover {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+
+        .direction-1 .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .direction-1 .features {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 3rem;
+            text-align: left;
+        }
+
+        .direction-1 .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Direction 2: Dashboard Layout */
+        .direction-2 .screen-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 600px;
+        }
+
+        .direction-2 .sidebar {
+            background: #0f172a;
+            padding: 2rem 1rem;
+            color: white;
+        }
+
+        .direction-2 .sidebar-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+        }
+
+        .direction-2 .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .direction-2 .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .direction-2 .nav-item:hover,
+        .direction-2 .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            color: white;
+        }
+
+        .direction-2 .main-content {
+            padding: 2rem;
+        }
+
+        .direction-2 .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .direction-2 .page-title {
+            font-size: 2rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .direction-2 .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .direction-2 .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .direction-2 .stat-card {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .direction-2 .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .direction-2 .stat-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        /* Direction 3: Split Preview Focused */
+        .direction-3 .screen-content {
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+        }
+
+        .direction-3 .top-bar {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .direction-3 .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .direction-3 .top-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .direction-3 .preview-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            background: #e5e7eb;
+        }
+
+        .direction-3 .preview-pane {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .direction-3 .pane-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #0f172a;
+            background: #f9fafb;
+        }
+
+        .direction-3 .pane-content {
+            flex: 1;
+            padding: 2rem;
+            overflow: auto;
+        }
+
+        .direction-3 .quality-dashboard {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .direction-3 .quality-score {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .direction-3 .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .direction-3 .metric {
+            text-align: center;
+        }
+
+        .direction-3 .metric-value {
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        /* Direction 4: Card-Based Modern */
+        .direction-4 .screen-content {
+            padding: 3rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .direction-4 .top-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .direction-4 .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .direction-4 .tagline {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .direction-4 .upload-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .direction-4 .upload-area {
+            border: 2px dashed #2563eb;
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #dbeafe 0%, #f9fafb 100%);
+        }
+
+        .direction-4 .recent-conversions {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .direction-4 .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0f172a;
+        }
+
+        .direction-4 .conversion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .direction-4 .conversion-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .direction-4 .conversion-item:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Direction 5: Minimal Spacious */
+        .direction-5 .screen-content {
+            padding: 5rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .direction-5 .minimal-header {
+            margin-bottom: 4rem;
+        }
+
+        .direction-5 .app-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .direction-5 .app-desc {
+            color: #64748b;
+        }
+
+        .direction-5 .main-action {
+            margin-bottom: 4rem;
+        }
+
+        .direction-5 .upload-button {
+            width: 100%;
+            padding: 2rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .direction-5 .upload-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .direction-5 .info-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .direction-5 .info-section h3 {
+            font-size: 1.1rem;
+            color: #0f172a;
+            margin-bottom: 1rem;
+        }
+
+        .direction-5 .info-section p {
+            color: #64748b;
+            line-height: 1.8;
+        }
+
+        /* Direction 6: Dense Information */
+        .direction-6 .screen-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 300px;
+            min-height: 700px;
+        }
+
+        .direction-6 .left-nav {
+            background: #f9fafb;
+            padding: 1.5rem 1rem;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .direction-6 .nav-brand {
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #0f172a;
+        }
+
+        .direction-6 .nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .direction-6 .nav-link {
+            padding: 0.5rem 0.75rem;
+            color: #64748b;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .direction-6 .nav-link:hover,
+        .direction-6 .nav-link.active {
+            background: white;
+            color: #2563eb;
+        }
+
+        .direction-6 .center-content {
+            padding: 2rem;
+        }
+
+        .direction-6 .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .direction-6 .content-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .direction-6 .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .direction-6 .quick-stat {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .direction-6 .quick-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .direction-6 .quick-stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .direction-6 .right-panel {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-left: 1px solid #e5e7eb;
+        }
+
+        .direction-6 .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .direction-6 .panel-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .direction-6 .activity-item {
+            padding: 0.75rem;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* Best for section */
+        .best-for {
+            background: #f9fafb;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .best-for h4 {
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .best-for p {
+            color: #475569;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <div class="nav">
+        <div class="nav-content">
+            <h1>🎨 Transfer2Read Design Directions</h1>
+            <div class="nav-controls">
+                <select class="direction-selector" onchange="showDirection(this.value)">
+                    <option value="1">Direction 1: Clean Centered</option>
+                    <option value="2">Direction 2: Dashboard Layout</option>
+                    <option value="3">Direction 3: Preview Focused</option>
+                    <option value="4">Direction 4: Card-Based Modern</option>
+                    <option value="5">Direction 5: Minimal Spacious</option>
+                    <option value="6">Direction 6: Dense Information</option>
+                </select>
+                <button class="nav-btn" onclick="showPrevious()">← Previous</button>
+                <button class="nav-btn" onclick="showNext()">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direction 1: Clean Centered -->
+    <div class="mockup-container direction-1 active" id="direction-1">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 1: Clean Centered</div>
+                <div class="mockup-personality">Focused • Simple • Confident</div>
+                <div class="mockup-description">
+                    Inspired by Adobe Acrobat's minimalism, this direction centers everything - making the upload action
+                    impossible to miss.
+                    Perfect for users who want zero friction: arrive, upload, done.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Centered, single column</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Spacious</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Minimal</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">First-time users, simplicity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <h1 class="hero-title">Perfect PDF to EPUB Conversion</h1>
+                    <p class="hero-subtitle">See your book will be readable - before you download</p>
+
+                    <div class="upload-zone">
+                        <div class="upload-icon">📄</div>
+                        <h3 style="margin-bottom: 0.5rem; color: #0f172a;">Drag & Drop Your PDF</h3>
+                        <p style="color: #64748b; margin-bottom: 1.5rem;">or click to browse</p>
+                        <button class="btn-primary">Choose File</button>
+                    </div>
+
+                    <div class="features">
+                        <div class="feature-item">
+                            <span style="font-size: 1.5rem;">✓</span>
+                            <div>
+                                <strong style="color: #0f172a;">95%+ fidelity</strong>
+                                <div style="color: #64748b; font-size: 0.9rem;">Tables, equations, charts preserved
+                                </div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span style="font-size: 1.5rem;">⚡</span>
+                            <div>
+                                <strong style="color: #0f172a;">Under 2 minutes</strong>
+                                <div style="color: #64748b; font-size: 0.9rem;">Fast AI-powered conversion</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span style="font-size: 1.5rem;">👁️</span>
+                            <div>
+                                <strong style="color: #0f172a;">Preview before download</strong>
+                                <div style="color: #64748b; font-size: 0.9rem;">Verify quality first</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>Users who want the simplest possible experience. One big action, zero distractions. Perfect for matching
+                Adobe's clean aesthetic while adding the quality preview differentiator. Great for first-time visitors
+                who need immediate clarity on what to do.</p>
+        </div>
+    </div>
+
+    <!-- Direction 2: Dashboard Layout -->
+    <div class="mockup-container direction-2" id="direction-2">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 2: Dashboard Layout</div>
+                <div class="mockup-personality">Professional • Organized • Power User</div>
+                <div class="mockup-description">
+                    A full dashboard with persistent navigation. Great for users who will use Transfer2Read frequently -
+                    quick access to history, settings, and new conversions.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Sidebar navigation</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Balanced</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Rich (dark sidebar)</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">Frequent users, power users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-brand">Transfer2Read</div>
+                        <div class="sidebar-nav">
+                            <div class="nav-item active">📤 Upload</div>
+                            <div class="nav-item">📋 History</div>
+                            <div class="nav-item">⚙️ Settings</div>
+                            <div class="nav-item">💳 Billing</div>
+                        </div>
+                    </div>
+                    <div class="main-content">
+                        <div class="page-header">
+                            <h2 class="page-title">Convert PDF to EPUB</h2>
+                            <p style="color: #64748b;">Upload your PDF and let AI ensure perfect formatting</p>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">247</div>
+                                <div class="stat-label">Total Conversions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">98%</div>
+                                <div class="stat-label">Avg Quality Score</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">2 left</div>
+                                <div class="stat-label">Free Tier Remaining</div>
+                            </div>
+                        </div>
+
+                        <div class="action-bar">
+                            <h3 style="color: #0f172a; font-size: 1.1rem;">New Conversion</h3>
+                            <button class="btn-primary">Upload PDF</button>
+                        </div>
+
+                        <div
+                            style="border: 2px dashed #e5e7eb; padding: 3rem; text-align: center; border-radius: 8px; background: #f9fafb;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+                            <p style="color: #64748b; margin-bottom: 1rem;">Drag and drop PDF here</p>
+                            <p style="color: #94a3b8; font-size: 0.875rem;">Maximum file size: 50MB (Free tier)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>Power users and frequent converters. Provides quick navigation between all features (history, settings,
+                billing) without page reloads. The sidebar gives a professional SaaS feel and shows users this is a
+                serious tool they can rely on long-term.</p>
+        </div>
+    </div>
+
+    <!-- Direction 3: Preview Focused -->
+    <div class="mockup-container direction-3" id="direction-3">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 3: Preview Focused</div>
+                <div class="mockup-personality">Transparent • Confident • Quality-First</div>
+                <div class="mockup-description">
+                    The split-screen preview IS the centerpiece. This direction makes quality verification the star -
+                    perfect for emphasizing Transfer2Read's unique differentiator.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Split-screen dominant</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Moderate</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Balanced</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">Quality preview showcase</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <div class="top-bar">
+                        <div class="brand">Transfer2Read</div>
+                        <div class="top-actions">
+                            <button class="btn-secondary">History</button>
+                            <button class="btn-primary">New Conversion</button>
+                        </div>
+                    </div>
+                    <div class="preview-container">
+                        <div class="preview-pane">
+                            <div class="pane-header">📄 Original PDF</div>
+                            <div class="pane-content">
+                                <div
+                                    style="border: 1px solid #e5e7eb; padding: 2rem; background: white; border-radius: 4px; height: 300px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                                    PDF Preview (Page 45 - Complex table section)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-pane">
+                            <div class="pane-header">📗 Converted EPUB</div>
+                            <div class="pane-content">
+                                <div
+                                    style="border: 1px solid #10b981; padding: 2rem; background: white; border-radius: 4px; height: 300px; display: flex; align-items: center; justify-content: center; color: #10b981; font-weight: 500;">
+                                    EPUB Preview (Chapter 3 - Table preserved)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quality-dashboard">
+                        <div class="quality-score">98%</div>
+                        <div style="text-align: center; color: #64748b; margin-bottom: 1rem; font-size: 0.875rem;">
+                            CONVERSION QUALITY</div>
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <div class="metric-value">✓ 12/12</div>
+                                <div style="color: #64748b; font-size: 0.75rem;">Tables</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">✓ 8/8</div>
+                                <div style="color: #64748b; font-size: 0.75rem;">Images</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">✓ 3/3</div>
+                                <div style="color: #64748b; font-size: 0.75rem;">Equations</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">✓ 15</div>
+                                <div style="color: #64748b; font-size: 0.75rem;">Chapters</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center;">
+                            <button class="btn-secondary">⚙️ Customize</button>
+                            <button class="btn-secondary">🔄 Re-convert</button>
+                            <button class="btn-primary">⬇️ Download EPUB</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>Showcasing the unique quality preview feature. Makes the before/after comparison impossible to miss.
+                Perfect for users who've been burned by converters before - this immediately shows transparency and
+                builds trust through visual proof.</p>
+        </div>
+    </div>
+
+    <!-- Direction 4: Card-Based Modern -->
+    <div class="mockup-container direction-4" id="direction-4">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 4: Card-Based Modern</div>
+                <div class="mockup-personality">Approachable • Modern • Friendly</div>
+                <div class="mockup-description">
+                    Cards everywhere - modern, scannable, and friendly. Great visual hierarchy with distinct sections
+                    that make each action clear.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Card-based grid</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Moderate</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Rich (shadows, depth)</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">Modern aesthetic, clarity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <div class="top-header">
+                        <div class="logo">Transfer2Read</div>
+                        <div class="tagline">AI-Powered PDF to EPUB Conversion</div>
+                    </div>
+
+                    <div class="upload-card">
+                        <h2 style="font-size: 1.75rem; color: #0f172a; margin-bottom: 1.5rem; text-align: center;">
+                            Convert Your PDF</h2>
+                        <div class="upload-area">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📤</div>
+                            <h3 style="color: #0f172a; margin-bottom: 0.5rem;">Drop your PDF here</h3>
+                            <p style="color: #64748b; margin-bottom: 1.5rem;">or browse from your computer</p>
+                            <button class="btn-primary">Select PDF File</button>
+                            <p style="color: #94a3b8; font-size: 0.875rem; margin-top: 1rem;">Maximum size: 50MB •
+                                Supports: Tables, Images, Equations</p>
+                        </div>
+                    </div>
+
+                    <div class="recent-conversions">
+                        <div class="section-title">Recent Conversions</div>
+                        <div class="conversion-list">
+                            <div class="conversion-item">
+                                <div>
+                                    <div style="font-weight: 600; color: #0f172a;">Calculus_TextBook.pdf</div>
+                                    <div style="font-size: 0.875rem; color: #64748b;">Converted 2 hours ago • Quality:
+                                        98%</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem;">Download</button>
+                            </div>
+                            <div class="conversion-item">
+                                <div>
+                                    <div style="font-weight: 600; color: #0f172a;">Programming_Guide.pdf</div>
+                                    <div style="font-size: 0.875rem; color: #64748b;">Converted yesterday • Quality: 95%
+                                    </div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem;">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>Users who appreciate modern web design. Cards provide clear visual separation between upload action and
+                recent history. Feels contemporary and friendly while maintaining professionalism. Good balance between
+                aesthetics and functionality.</p>
+        </div>
+    </div>
+
+    <!-- Direction 5: Minimal Spacious -->
+    <div class="mockup-container direction-5" id="direction-5">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 5: Minimal Spacious</div>
+                <div class="mockup-personality">Calm • Focused • Premium</div>
+                <div class="mockup-description">
+                    Maximum white space, minimal distractions. Perfect for users who want a zen-like, premium feel - the
+                    tool gets out of the way and lets you focus on the one action that matters.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Vertical, centered</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Extremely spacious</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Minimal (flat)</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">Premium feel, focus</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <div class="minimal-header">
+                        <div class="app-name">Transfer2Read</div>
+                        <div class="app-desc">Perfect PDF to EPUB conversion</div>
+                    </div>
+
+                    <div class="main-action">
+                        <button class="upload-button">
+                            Upload PDF →
+                        </button>
+                    </div>
+
+                    <div class="info-sections">
+                        <div class="info-section">
+                            <h3>Quality you can see</h3>
+                            <p>Preview your converted EPUB before downloading. See exactly how tables, equations, and
+                                images will look on your e-reader.</p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>AI-powered intelligence</h3>
+                            <p>Our algorithms detect and preserve complex layouts that other converters destroy. 95%+
+                                fidelity for technical documents.</p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Made for readers</h3>
+                            <p>Finally read your PDF library on iPad, Kindle, or Kobo without formatting frustration.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>"Reader-explorer" personality. Maximum calm and focus - no visual noise. Feels premium and thoughtful,
+                like a tool designed by someone who truly understands readers. Perfect for users who value simplicity
+                and elegance.</p>
+        </div>
+    </div>
+
+    <!-- Direction 6: Dense Information -->
+    <div class="mockup-container direction-6" id="direction-6">
+        <div class="mockup-header">
+            <div class="mockup-header-content">
+                <div class="mockup-title">Direction 6: Dense Information</div>
+                <div class="mockup-personality">Efficient • Information-Rich • Power Tool</div>
+                <div class="mockup-description">
+                    Maximum information density - three-column layout with navigation, main content, and activity panel.
+                    Perfect for power users who want everything at a glance.
+                </div>
+                <div class="characteristics">
+                    <div class="char-item">
+                        <div class="char-label">Layout</div>
+                        <div class="char-value">Three-column</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Density</div>
+                        <div class="char-value">Dense (info-rich)</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Visual Weight</div>
+                        <div class="char-value">Balanced</div>
+                    </div>
+                    <div class="char-item">
+                        <div class="char-label">Best For</div>
+                        <div class="char-value">Power users, efficiency</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-viewport">
+            <div class="screen-frame">
+                <div class="screen-content">
+                    <div class="left-nav">
+                        <div class="nav-brand">T2R</div>
+                        <div class="nav-list">
+                            <div class="nav-link active">Upload</div>
+                            <div class="nav-link">Queue</div>
+                            <div class="nav-link">History</div>
+                            <div class="nav-link">Analytics</div>
+                            <div class="nav-link">Settings</div>
+                        </div>
+                    </div>
+
+                    <div class="center-content">
+                        <div class="content-header">
+                            <div class="content-title">Dashboard</div>
+                            <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">+ New</button>
+                        </div>
+
+                        <div class="quick-stats">
+                            <div class="quick-stat">
+                                <div class="quick-stat-value">156</div>
+                                <div class="quick-stat-label">Conversions</div>
+                            </div>
+                            <div class="quick-stat">
+                                <div class="quick-stat-value">97%</div>
+                                <div class="quick-stat-label">Avg Quality</div>
+                            </div>
+                            <div class="quick-stat">
+                                <div class="quick-stat-value">Pro</div>
+                                <div class="quick-stat-label">Tier</div>
+                            </div>
+                        </div>
+
+                        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem;">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #0f172a;">Recent Activity</h3>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div
+                                    style="padding: 0.75rem; background: #f9fafb; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 500; color: #0f172a; font-size: 0.9rem;">
+                                            Math_Textbook.pdf</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">2 min ago • 98% quality</div>
+                                    </div>
+                                    <span style="color: #10b981;">✓</span>
+                                </div>
+                                <div
+                                    style="padding: 0.75rem; background: #f9fafb; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 500; color: #0f172a; font-size: 0.9rem;">
+                                            Research_Paper.pdf</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">1 hour ago • 95% quality</div>
+                                    </div>
+                                    <span style="color: #10b981;">✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-panel">
+                        <div class="panel-section">
+                            <div class="panel-title">Queue Status</div>
+                            <div style="padding: 1rem; background: white; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 1.5rem; color: #10b981; font-weight: 700;">0</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Active Jobs</div>
+                            </div>
+                        </div>
+
+                        <div class="panel-section">
+                            <div class="panel-title">Quick Actions</div>
+                            <button class="btn-secondary"
+                                style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; font-size: 0.875rem;">Upload
+                                PDF</button>
+                            <button class="btn-secondary"
+                                style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; font-size: 0.875rem;">View
+                                History</button>
+                            <button class="btn-secondary"
+                                style="width: 100%; padding: 0.5rem; font-size: 0.875rem;">Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="best-for">
+            <h4>Best For:</h4>
+            <p>Power users who convert frequently and want maximum efficiency. Three-column layout shows navigation,
+                main content, and activity/stats simultaneously. Information-dense but organized - perfect for users who
+                value seeing everything at once.</p>
+        </div>
+    </div>
+
+    <script>
+        let currentDirection = 1;
+
+        function showDirection(num) {
+            document.querySelectorAll('.mockup-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(`direction-${num}`).classList.add('active');
+            document.querySelector('.direction-selector').value = num;
+            currentDirection = parseInt(num);
+        }
+
+        function showNext() {
+            currentDirection = currentDirection >= 6 ? 1 : currentDirection + 1;
+            showDirection(currentDirection);
+        }
+
+        function showPrevious() {
+            currentDirection = currentDirection <= 1 ? 6 : currentDirection - 1;
+            showDirection(currentDirection);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer2Read - Color Theme Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .theme-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .theme-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .theme-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-personality {
+            font-size: 0.95rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .color-swatch {
+            text-align: center;
+        }
+
+        .color-box {
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .color-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .color-code {
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+            color: #999;
+        }
+
+        .components-demo h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .input-demo {
+            margin-bottom: 1rem;
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .input:focus {
+            outline: none;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metric-card {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Theme 1: Professional Blue */
+        .theme1 .btn-primary { background: #2563eb; color: white; }
+        .theme1 .btn-secondary { background: #64748b; color: white; }
+        .theme1 .input:focus { border-color: #2563eb; }
+        .theme1 .alert { background: #dbeafe; border-left: 4px solid #2563eb; color: #1e40af; }
+        .theme1 .metric-card { background: #f0f9ff; border-left: 3px solid #2563eb; }
+
+        /* Theme 2: Trust Green */
+        .theme2 .btn-primary { background: #059669; color: white; }
+        .theme2 .btn-secondary { background: #6b7280; color: white; }
+        .theme2 .input:focus { border-color: #059669; }
+        .theme2 .alert { background: #d1fae5; border-left: 4px solid #059669; color: #065f46; }
+        .theme2 .metric-card { background: #ecfdf5; border-left: 3px solid #059669; }
+
+        /* Theme 3: Modern Indigo */
+        .theme3 .btn-primary { background: #4f46e5; color: white; }
+        .theme3 .btn-secondary { background: #6b7280; color: white; }
+        .theme3 .input:focus { border-color: #4f46e5; }
+        .theme3 .alert { background: #e0e7ff; border-left: 4px solid #4f46e5; color: #3730a3; }
+        .theme3 .metric-card { background: #eef2ff; border-left: 3px solid #4f46e5; }
+
+        /* Theme 4: Warm Slate */
+        .theme4 .btn-primary { background: #0f172a; color: white; }
+        .theme4 .btn-secondary { background: #64748b; color: white; }
+        .theme4 .input:focus { border-color: #0f172a; }
+        .theme4 .alert { background: #f1f5f9; border-left: 4px solid #0f172a; color: #1e293b; }
+        .theme4 .metric-card { background: #f8fafc; border-left: 3px solid #475569; }
+
+        .best-for {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #fafafa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .best-for strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Transfer2Read Color Themes</h1>
+        <p>Explore visual identities that balance professional credibility with reader exploration</p>
+    </div>
+
+    <div class="themes-grid">
+        <!-- Theme 1: Professional Blue -->
+        <div class="theme-card theme1">
+            <div class="theme-header">
+                <div class="theme-title">1. Professional Blue</div>
+                <div class="theme-personality">Trustworthy • Confident • Technical Excellence</div>
+            </div>
+
+            <div class="palette">
+                <div class="color-swatch">
+                    <div class="color-label">Primary</div>
+                    <div class="color-box" style="background: #2563eb;"></div>
+                    <div class="color-code">#2563eb</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Secondary</div>
+                    <div class="color-box" style="background: #64748b;"></div>
+                    <div class="color-code">#64748b</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Accent</div>
+                    <div class="color-box" style="background: #0ea5e9;"></div>
+                    <div class="color-code">#0ea5e9</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Success</div>
+                    <div class="color-box" style="background: #10b981;"></div>
+                    <div class="color-code">#10b981</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Warning</div>
+                    <div class="color-box" style="background: #f59e0b;"></div>
+                    <div class="color-code">#f59e0b</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Error</div>
+                    <div class="color-box" style="background: #ef4444;"></div>
+                    <div class="color-code">#ef4444</div>
+                </div>
+            </div>
+
+            <div class="components-demo">
+                <h3>Live Components</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">Download EPUB</button>
+                    <button class="btn btn-secondary">Customize</button>
+                </div>
+                <div class="input-demo">
+                    <input type="text" class="input" placeholder="Upload your PDF..." />
+                </div>
+                <div class="alert">
+                    <span>✓</span>
+                    <span>Conversion complete - 98% quality score</span>
+                </div>
+                <div class="metric-card">
+                    <strong>Tables:</strong> 12/12 preserved (100%)
+                </div>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Creates maximum trust and professionalism. Blue is universally associated with reliability and technical competence. Perfect for users who need confidence in a tool that "just works."
+            </div>
+        </div>
+
+        <!-- Theme 2: Trust Green -->
+        <div class="theme-card theme2">
+            <div class="theme-header">
+                <div class="theme-title">2. Trust Green</div>
+                <div class="theme-personality">Reliable • Growth • Success-Oriented</div>
+            </div>
+
+            <div class="palette">
+                <div class="color-swatch">
+                    <div class="color-label">Primary</div>
+                    <div class="color-box" style="background: #059669;"></div>
+                    <div class="color-code">#059669</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Secondary</div>
+                    <div class="color-box" style="background: #6b7280;"></div>
+                    <div class="color-code">#6b7280</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Accent</div>
+                    <div class="color-box" style="background: #10b981;"></div>
+                    <div class="color-code">#10b981</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Success</div>
+                    <div class="color-box" style="background: #22c55e;"></div>
+                    <div class="color-code">#22c55e</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Warning</div>
+                    <div class="color-box" style="background: #eab308;"></div>
+                    <div class="color-code">#eab308</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Error</div>
+                    <div class="color-box" style="background: #dc2626;"></div>
+                    <div class="color-code">#dc2626</div>
+                </div>
+            </div>
+
+            <div class="components-demo">
+                <h3>Live Components</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">Download EPUB</button>
+                    <button class="btn btn-secondary">Customize</button>
+                </div>
+                <div class="input-demo">
+                    <input type="text" class="input" placeholder="Upload your PDF..." />
+                </div>
+                <div class="alert">
+                    <span>✓</span>
+                    <span>Conversion complete - 98% quality score</span>
+                </div>
+                <div class="metric-card">
+                    <strong>Tables:</strong> 12/12 preserved (100%)
+                </div>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Communicates success and positive outcomes. Green evokes growth, reliability, and "it works!" Perfect for emphasizing the relief and trust users feel when conversion succeeds.
+            </div>
+        </div>
+
+        <!-- Theme 3: Modern Indigo -->
+        <div class="theme-card theme3">
+            <div class="theme-header">
+                <div class="theme-title">3. Modern Indigo</div>
+                <div class="theme-personality">Curious • Innovative • Reader-Explorer</div>
+            </div>
+
+            <div class="palette">
+                <div class="color-swatch">
+                    <div class="color-label">Primary</div>
+                    <div class="color-box" style="background: #4f46e5;"></div>
+                    <div class="color-code">#4f46e5</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Secondary</div>
+                    <div class="color-box" style="background: #6b7280;"></div>
+                    <div class="color-code">#6b7280</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Accent</div>
+                    <div class="color-box" style="background: #8b5cf6;"></div>
+                    <div class="color-code">#8b5cf6</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Success</div>
+                    <div class="color-box" style="background: #10b981;"></div>
+                    <div class="color-code">#10b981</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Warning</div>
+                    <div class="color-box" style="background: #f59e0b;"></div>
+                    <div class="color-code">#f59e0b</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Error</div>
+                    <div class="color-box" style="background: #ef4444;"></div>
+                    <div class="color-code">#ef4444</div>
+                </div>
+            </div>
+
+            <div class="components-demo">
+                <h3>Live Components</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">Download EPUB</button>
+                    <button class="btn btn-secondary">Customize</button>
+                </div>
+                <div class="input-demo">
+                    <input type="text" class="input" placeholder="Upload your PDF..." />
+                </div>
+                <div class="alert">
+                    <span>✓</span>
+                    <span>Conversion complete - 98% quality score</span>
+                </div>
+                <div class="metric-card">
+                    <strong>Tables:</strong> 12/12 preserved (100%)
+                </div>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Balances professionalism with creativity and exploration. Indigo feels modern, thoughtful, and slightly playful - perfect for "readers who love to explore" while maintaining technical credibility.
+            </div>
+        </div>
+
+        <!-- Theme 4: Warm Slate -->
+        <div class="theme-card theme4">
+            <div class="theme-header">
+                <div class="theme-title">4. Warm Slate</div>
+                <div class="theme-personality">Refined • Timeless • Content-Focused</div>
+            </div>
+
+            <div class="palette">
+                <div class="color-swatch">
+                    <div class="color-label">Primary</div>
+                    <div class="color-box" style="background: #0f172a;"></div>
+                    <div class="color-code">#0f172a</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Secondary</div>
+                    <div class="color-box" style="background: #64748b;"></div>
+                    <div class="color-code">#64748b</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Accent</div>
+                    <div class="color-box" style="background: #475569;"></div>
+                    <div class="color-code">#475569</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Success</div>
+                    <div class="color-box" style="background: #10b981;"></div>
+                    <div class="color-code">#10b981</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Warning</div>
+                    <div class="color-box" style="background: #f59e0b;"></div>
+                    <div class="color-code">#f59e0b</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-label">Error</div>
+                    <div class="color-box" style="background: #ef4444;"></div>
+                    <div class="color-code">#ef4444</div>
+                </div>
+            </div>
+
+            <div class="components-demo">
+                <h3>Live Components</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">Download EPUB</button>
+                    <button class="btn btn-secondary">Customize</button>
+                </div>
+                <div class="input-demo">
+                    <input type="text" class="input" placeholder="Upload your PDF..." />
+                </div>
+                <div class="alert">
+                    <span>✓</span>
+                    <span>Conversion complete - 98% quality score</span>
+                </div>
+                <div class="metric-card">
+                    <strong>Tables:</strong> 12/12 preserved (100%)
+                </div>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Sophisticated and content-first. Neutral slate emphasizes the content (your books) over the interface. Perfect for readers who want a tool that "gets out of the way" while feeling premium and refined.
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: white; border-radius: 12px; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <h2 style="margin-bottom: 1rem;">Which theme resonates with your vision?</h2>
+        <p style="color: #666; margin-bottom: 1rem;">Consider how each theme makes you FEEL and which best represents Transfer2Read's personality:</p>
+        <ul style="list-style: none; text-align: left; max-width: 600px; margin: 0 auto;">
+            <li style="margin-bottom: 0.5rem;">🔵 <strong>Professional Blue</strong> - Maximum trust and technical credibility</li>
+            <li style="margin-bottom: 0.5rem;">🟢 <strong>Trust Green</strong> - Success-oriented, "it works!" feeling</li>
+            <li style="margin-bottom: 0.5rem;">🟣 <strong>Modern Indigo</strong> - Curious explorer meets professional tool</li>
+            <li style="margin-bottom: 0.5rem;">⚫ <strong>Warm Slate</strong> - Content-first, refined, timeless</li>
+        </ul>
+    </div>
+</body>
+</html>
