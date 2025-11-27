@@ -29,8 +29,8 @@ workflow_status:
   validate-prd: optional
   create-design: conditional
   create-architecture: /Users/dominhxuan/Desktop/Transfer2Read/docs/architecture.md
-  create-epics-and-stories: required
+  create-epics-and-stories: /Users/dominhxuan/Desktop/Transfer2Read/docs/epics.md
   test-design: recommended
   validate-architecture: optional
-  implementation-readiness: required
+  implementation-readiness: /Users/dominhxuan/Desktop/Transfer2Read/docs/implementation-readiness-report-2025-11-27.md
   sprint-planning: required
