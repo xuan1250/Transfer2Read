@@ -7,6 +7,18 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/mydatabase
       - TEST_DATABASE_URL=postgresql+asyncpg://postgres:password@db:5433/testdatabase
       - MAIL_SERVER=mailhog
+      - ACCESS_SECRET_KEY=dev_access_secret_key_change_in_production
+      - RESET_PASSWORD_SECRET_KEY=dev_reset_password_secret_key_change_in_production
+      - VERIFICATION_SECRET_KEY=dev_verification_secret_key_change_in_production
+      - CORS_ORIGINS=["http://localhost:3000"]
+      - FRONTEND_URL=http://localhost:3000
+      - MAIL_USERNAME=test
+      - MAIL_PASSWORD=test
+      - MAIL_FROM=test@test.com
+      - MAIL_PORT=1025
+      - MAIL_STARTTLS=False
+      - MAIL_SSL_TLS=False
+      - USE_CREDENTIALS=False
     ports:
       - "8000:8000"
     networks:
