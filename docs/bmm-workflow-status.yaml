@@ -20,17 +20,17 @@ project: "Transfer2Read"
 project_type: "greenfield"
 selected_track: "bmad-method"
 field_type: "greenfield"
-workflow_path: "d:/1. Artical Intelligent/transfer_app/.bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_path: "/Users/dominhxuan/Desktop/Transfer2Read/.bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
 workflow_status:
-  brainstorm-project: d:/1. Artical Intelligent/transfer_app/docs/brainstorming-session-results-2025-11-26.md
-  research: d:/1. Artical Intelligent/transfer_app/docs/research-user-2025-11-26.md
-  product-brief: d:/1. Artical Intelligent/transfer_app/docs/product-brief-Transfer2Read-2025-11-26.md
-  prd: d:/1. Artical Intelligent/transfer_app/docs/prd.md
+  brainstorm-project: /Users/dominhxuan/Desktop/Transfer2Read/docs/brainstorming-session-results-2025-11-26.md
+  research: /Users/dominhxuan/Desktop/Transfer2Read/docs/research-user-2025-11-26.md
+  product-brief: /Users/dominhxuan/Desktop/Transfer2Read/docs/product-brief-Transfer2Read-2025-11-26.md
+  prd: /Users/dominhxuan/Desktop/Transfer2Read/docs/prd.md
   validate-prd: optional
-  create-design: conditional
-  create-architecture: d:/1. Artical Intelligent/transfer_app/docs/architecture.md
+  create-design: /Users/dominhxuan/Desktop/Transfer2Read/docs/ux-design-specification.md
+  create-architecture: /Users/dominhxuan/Desktop/Transfer2Read/docs/architecture.md
   create-epics-and-stories: /Users/dominhxuan/Desktop/Transfer2Read/docs/epics.md
-  test-design: recommended
-  validate-architecture: optional
-  implementation-readiness: /Users/dominhxuan/Desktop/Transfer2Read/docs/implementation-readiness-report-2025-11-27.md
+  test-design: /Users/dominhxuan/Desktop/Transfer2Read/docs/test-design-system.md
+  validate-architecture: /Users/dominhxuan/Desktop/Transfer2Read/docs/architecture-validation-report-2025-11-27.md
+  implementation-readiness: /Users/dominhxuan/Desktop/Transfer2Read/docs/implementation-readiness-report-2025-11-28.md
   sprint-planning: required
