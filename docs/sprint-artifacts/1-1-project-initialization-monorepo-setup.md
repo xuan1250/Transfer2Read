@@ -326,3 +326,207 @@ No critical errors encountered. Minor issues resolved:
 
 **DELETED FILES:**
 None
+
+---
+
+## Senior Developer Review (AI)
+
+**Reviewer:** xavier
+**Date:** 2025-11-28
+**Outcome:** **BLOCKED** ❌
+
+### Summary
+
+Story 1.1 achieves 83% completion with solid foundational work: template initialized, dependencies installed, Docker services configured, and comprehensive documentation. However, **critical blockers prevent story approval**: Redis 8.4.0 service is missing from docker-compose.yml despite being required by architecture and explicitly listed in Task 4 for verification. Task 4 is falsely marked complete. Additionally, secrets are hardcoded in docker-compose.yml instead of using .env file. Story must be revised before proceeding.
+
+### Outcome Justification
+
+**BLOCKED** status assigned due to:
+1. **Task 4 Falsely Marked Complete**: Subtask 4.2 claims "postgres, redis, backend, frontend" services verified, but docker-compose.yml contains NO Redis service
+2. **AC #5 Partially Implemented**: Redis 8.4.0 required by architecture.md:62 and tech-spec-epic-1.md:23 but missing from docker-compose.yml
+3. **Architectural Violation**: Story 1.2 AC1.2.2 explicitly requires "Redis container running via Docker" - deferring Redis to Story 1.4 (per README.md:134) creates forward-blocking dependency issue
+
+### Key Findings
+
+**HIGH SEVERITY:**
+
+- [ ] [High] Add Redis 8.4.0 service to docker-compose.yml (AC #5, Task 4.2) [file: docker-compose.yml:1-86]
+  - Required by: architecture.md:62, tech-spec-epic-1.md:23, story Task 4 subtask 4.2
+  - Blocks: Story 1.2 AC1.2.2 ("Redis container running"), Story 1.4 (Celery workers need Redis broker)
+  - Current: docker-compose.yml only defines backend, frontend, db, db_test, mailhog
+  - Expected: Add redis service using image redis:8.4 with persistence (AOF+RDB)
+
+- [ ] [High] Move hardcoded secrets from docker-compose.yml to .env file [file: docker-compose.yml:10-12]
+  - Lines 10-12 expose ACCESS_SECRET_KEY, RESET_PASSWORD_SECRET_KEY, VERIFICATION_SECRET_KEY in version control
+  - Should reference ${ACCESS_SECRET_KEY} from .env file (already .gitignored)
+  - Current pattern dangerous even for dev environment
+
+**MEDIUM SEVERITY:**
+
+- [ ] [Med] Resolve Redis deferral contradiction in README.md [file: README.md:134]
+  - README states "Redis will be added in Story 1.4" but Story 1.2 AC1.2.2 explicitly requires Redis
+  - Update README to reflect Redis added in Story 1.1 after implementing above fix
+
+**ADVISORY NOTES:**
+
+- Note: Python version 3.12.9 used instead of 3.13 (documented in README.md:133, acceptable deviation)
+- Note: npm audit fix resolved 5 vulnerabilities (1 critical, 2 high, 1 moderate, 1 low) - good security hygiene
+- Note: Directory structure deviation from template (fastapi_backend→backend, nextjs-frontend→frontend) documented and acceptable
+
+### Acceptance Criteria Coverage
+
+**Summary:** 5 of 6 acceptance criteria fully implemented, 1 PARTIAL
+
+| AC# | Description | Status | Evidence | Notes |
+|-----|-------------|--------|----------|-------|
+| AC1 | Template v0.0.6 initialized | ✓ IMPLEMENTED | Git commit 1365b1e: "Initialize project with Vintasoftware template v0.0.6" | Verified via git log |
+| AC2 | Directory structure matches | ✓ IMPLEMENTED | frontend/, backend/, docker-compose.yml present at project root | Verified via ls command |
+| AC3 | Frontend dependencies installed | ✓ IMPLEMENTED | node_modules/ exists, package-lock.json generated [file: frontend/package-lock.json:1] | npm install completed successfully |
+| AC4 | Backend dependencies installed | ✓ IMPLEMENTED | requirements.txt:1-519 with all required packages; installed via UV (102 packages) | UV package manager used per story notes |
+| AC5 | Docker services start without errors | ✗ PARTIAL | docker-compose.yml:1-86 defines backend, frontend, db, db_test, mailhog | **CRITICAL: Redis 8.4.0 service MISSING** |
+| AC6 | .gitignore properly configured | ✓ IMPLEMENTED | .gitignore:118 (.env), .gitignore:158 (node_modules/), .gitignore:2 (__pycache__/) | All required patterns present |
+
+**AC Coverage Details:**
+
+**AC5 - Docker Services (PARTIAL IMPLEMENTATION):**
+- ✓ Backend service: docker-compose.yml:2-30
+- ✓ Frontend service: docker-compose.yml:55-70
+- ✓ PostgreSQL (db): docker-compose.yml:32-43
+- ✓ PostgreSQL test (db_test): docker-compose.yml:44-54
+- ✓ MailHog: docker-compose.yml:71-77
+- ❌ **Redis service: MISSING** (required by architecture.md:62, tech-spec-epic-1.md:23)
+
+### Task Completion Validation
+
+**Summary:** 4 of 5 completed tasks verified, **1 task FALSELY marked complete**
+
+| Task | Marked As | Verified As | Evidence | Notes |
+|------|-----------|-------------|----------|-------|
+| Task 1: Clone and initialize repository | [x] Complete | ✓ VERIFIED | Git commit 1365b1e, directories present, .gitignore:118/158/2 | All subtasks confirmed |
+| Task 2: Install frontend dependencies | [x] Complete | ✓ VERIFIED | node_modules/ exists, package-lock.json generated | npm install successful |
+| Task 3: Install backend dependencies | [x] Complete | ✓ VERIFIED | requirements.txt:1-519, story notes confirm 102 packages via UV | Method deviation acceptable (UV vs pip+venv) |
+| **Task 4: Verify Docker Compose configuration** | **[x] Complete** | **❌ FALSE COMPLETION** | Subtask 4.2 claims "postgres, redis, backend, frontend" verified but docker-compose.yml:1-86 has NO Redis service | **HIGH SEVERITY: Task falsely marked complete** |
+| Task 5: Documentation and handoff | [x] Complete | ✓ VERIFIED | README.md, .env.example created, deviations documented | All documentation requirements met |
+
+**Task 4 Detailed Validation:**
+
+**Claimed in Task 4, Subtask 4.2:** "Verify services defined: postgres, redis, backend, frontend (and possibly worker if included)"
+
+**Actual docker-compose.yml Services:**
+1. ✓ backend (lines 2-30)
+2. ✓ db / postgres (lines 32-43)
+3. ✓ db_test (lines 44-54)
+4. ✓ frontend (lines 55-70)
+5. ✓ mailhog (lines 71-77)
+6. ❌ **redis: NOT PRESENT**
+
+**Verdict:** Task 4, Subtask 4.2 is **FALSELY MARKED COMPLETE** because Redis service verification was claimed but Redis service does not exist in docker-compose.yml.
+
+### Test Coverage and Gaps
+
+**Test Execution Status:**
+- ✓ Unit tests: AC validation via git log, directory checks, .gitignore pattern matching
+- ✓ Integration tests: npm install verification (node_modules present), package-lock.json generated
+- ✓ E2E tests (claimed): docker-compose up successful per story notes, services accessible at localhost:3000/:8000/:8025
+- ❌ **Redis tests: NOT EXECUTED** (service doesn't exist)
+
+**Test Gaps:**
+- Redis connection test not performed (service missing)
+- No verification that Redis persistence (AOF+RDB) configured
+- Backend dependency import test failed in review environment (expected, dependencies in UV-managed venv)
+
+### Architectural Alignment
+
+**Architecture Compliance:**
+
+✓ **COMPLIANT:**
+- Frontend stack: Next.js 15.5.0 (spec: 15.0.3+), React 19.1.1, Tailwind CSS 3.4.13
+- Backend stack: FastAPI 0.115.6 (spec: 0.122.0 - minor version drift), SQLAlchemy 2.0.36, asyncpg 0.29.0
+- Database: PostgreSQL 17 (spec: 17.7 - close match)
+- Template: Vintasoftware v0.0.6 correctly initialized
+- Directory structure: frontend/, backend/, docker-compose.yml at root
+- Authentication: JWT via fastapi-users (template-provided)
+
+❌ **NON-COMPLIANT:**
+- **Redis 8.4.0: MISSING from docker-compose.yml** (architecture.md:62 explicitly requires it)
+- **Architectural assumption violated**: architecture.md:108 states "Docker Compose provides PostgreSQL 17.7 and Redis 8.4 automatically" - Redis NOT provided
+
+**Epic Tech-Spec Alignment:**
+
+❌ **DEVIATION:**
+- tech-spec-epic-1.md:23 lists "Redis 8.4.0" as in-scope for Epic 1 foundation
+- tech-spec-epic-1.md:612-625 specifies docker-compose.yml should include redis service
+- Story 1.2 AC1.2.2 (tech-spec line 699): "Redis container running via Docker" - will be BLOCKED without Redis in Story 1.1
+
+**Dependency Chain Impact:**
+- Story 1.2 (Backend Core): **BLOCKED** - AC1.2.2 explicitly requires Redis
+- Story 1.4 (Celery Workers): **BLOCKED** - Celery requires Redis as broker
+- Epic 4 (Conversion Pipeline): **BLOCKED** - Redis queue required for async jobs
+
+### Security Notes
+
+**Security Findings:**
+
+**HIGH RISK:**
+1. **Hardcoded Secrets in Version Control** (docker-compose.yml:10-12)
+   - ACCESS_SECRET_KEY, RESET_PASSWORD_SECRET_KEY, VERIFICATION_SECRET_KEY hardcoded
+   - Even with "dev_" prefix and "_change_in_production" suffix, this is dangerous pattern
+   - Recommendation: Move to .env file using ${VARIABLE} syntax
+   - `.env` already properly .gitignored (.gitignore:118)
+
+**MEDIUM RISK:**
+2. **Weak Default Database Password** (docker-compose.yml:36)
+   - POSTGRES_PASSWORD: password
+   - Acceptable for local dev but sets bad precedent
+   - README.md:49-53 includes proper warnings about production secrets
+
+**LOW RISK:**
+3. **MailHog Default Credentials** (.env.example:22-23)
+   - MAIL_USERNAME/PASSWORD: test/test
+   - Acceptable for local email testing tool
+
+**SECURITY POSITIVES:**
+- ✓ .gitignore properly excludes .env, secrets never committed
+- ✓ README includes openssl command to generate strong secrets (README.md:52-53)
+- ✓ CORS properly restricted to localhost:3000 (docker-compose.yml:13)
+- ✓ npm audit fix resolved 5 vulnerabilities (README.md:139)
+
+### Best-Practices and References
+
+**Tech Stack Detected:**
+- Frontend: Next.js 15.5.0, React 19.1.1, Tailwind CSS 3.4.13, Radix UI, TypeScript 5
+- Backend: FastAPI 0.115.6, SQLAlchemy 2.0.36, asyncpg 0.29.0, fastapi-users 13.0.0
+- Database: PostgreSQL 17
+- Tools: UV (Python package manager), Docker Compose, MailHog (email testing)
+
+**Best Practices Applied:**
+- ✓ Monorepo structure with clear frontend/backend separation
+- ✓ Docker Compose for reproducible dev environment
+- ✓ Environment variable templating (.env.example)
+- ✓ Comprehensive .gitignore (Python + Node.js patterns)
+- ✓ Dockerignore files to prevent build bloat
+- ✓ Clear documentation of deviations in README
+
+**Best Practices Violated:**
+- ❌ Secrets in version control (docker-compose.yml) instead of .env
+- ❌ Incomplete service configuration (Redis missing despite being required)
+
+**Relevant Documentation:**
+- [Next.js 15 Best Practices](https://nextjs.org/docs) - Latest stable release
+- [FastAPI Best Practices](https://fastapi.tiangolo.com/tutorial/best-practices/) - Async patterns, dependency injection
+- [Docker Compose Best Practices](https://docs.docker.com/compose/best-practices/) - Service orchestration
+- [Redis Docker Official Image](https://hub.docker.com/_/redis) - Use redis:8.4-alpine for smaller image size
+
+### Action Items
+
+**Code Changes Required:**
+
+- [ ] [High] Add Redis 8.4.0 service to docker-compose.yml (AC #5, Task 4.2) [file: docker-compose.yml:1-86]
+- [ ] [High] Move hardcoded secrets from docker-compose.yml to .env file [file: docker-compose.yml:10-12]
+- [ ] [Med] Update README.md Redis deferral note to reflect Story 1.1 inclusion [file: README.md:134]
+
+**Advisory Notes:**
+
+- Note: Python 3.12.9 acceptable deviation from 3.13 (documented, no blocking issues)
+- Note: Consider adding health checks to docker-compose services for production readiness
+- Note: UV package manager is faster alternative to pip, good choice for development workflow
