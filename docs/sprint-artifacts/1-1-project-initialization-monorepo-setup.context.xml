@@ -1,0 +1,437 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Project Initialization & Monorepo Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-project-initialization-monorepo-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to initialize the project repository with the Vintasoftware starter template</iWant>
+    <soThat>I have a production-ready foundation with type safety, authentication, and deployment structure</soThat>
+    <tasks>
+      - Task 1: Clone and initialize repository (AC: #1, #2, #6)
+        - Clone vintasoftware/nextjs-fastapi-starter template v0.0.6 from GitHub
+        - Verify directory structure: frontend/, backend/, docker-compose.yml, .gitignore
+        - Initialize Git repository if not already initialized
+        - Verify .gitignore includes: .env, .env.local, node_modules/, __pycache__/, .next/, dist/, *.pyc
+        - Create initial commit with message "Initialize project with Vintasoftware template v0.0.6"
+
+      - Task 2: Install frontend dependencies (AC: #3)
+        - Navigate to frontend/ directory
+        - Run npm install to install all Node.js dependencies
+        - Verify node_modules/ directory created
+        - Verify package-lock.json generated
+        - Check for any peer dependency warnings and resolve if critical
+
+      - Task 3: Install backend dependencies (AC: #4)
+        - Navigate to backend/ directory
+        - Create Python virtual environment: python3.13 -m venv venv
+        - Activate virtual environment
+        - Run pip install -r requirements.txt to install all Python dependencies
+        - Verify all packages installed without conflicts
+        - Check Python version compatibility (must be Python 3.13+)
+
+      - Task 4: Verify Docker Compose configuration (AC: #5)
+        - Review docker-compose.yml to understand service definitions
+        - Verify services defined: postgres, redis, backend, frontend
+        - Create .env file in project root with required environment variables
+        - Run docker-compose up -d to start all services
+        - Check service health: docker-compose ps
+        - Verify logs for each service
+        - Test connectivity: http://localhost:3000 (frontend) and http://localhost:8000 (backend)
+
+      - Task 5: Documentation and handoff
+        - Document any deviations from standard template setup in project README
+        - Create .env.example file with all required environment variables
+        - Verify setup instructions work
+        - Commit all configuration files to repository
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Repo initialized using vintasoftware/nextjs-fastapi-starter template v0.0.6
+    2. Directory structure matches Architecture doc (frontend/, backend/, docker-compose.yml)
+    3. Frontend dependencies installed successfully (npm install completes without errors)
+    4. Backend dependencies installed successfully (pip install -r requirements.txt completes without errors)
+    5. docker-compose up starts all services (frontend, backend, database) without errors
+    6. Git repository initialized with .gitignore properly configured to exclude .env, node_modules, __pycache__
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Architecture Documentation -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Initialization</title>
+        <section>Project Initialization (lines 11-50)</section>
+        <snippet>
+          Project initialized using Vintasoftware Next.js FastAPI Template v0.0.6 (verified 2025-11-27).
+          Template provides: Authentication System (JWT + fastapi-users), Database Setup (Async PostgreSQL + SQLAlchemy),
+          Type Safety (OpenAPI schema generation), Dev Environment (Docker Compose).
+          Custom implementation required: Celery Workers, S3 Storage, PyTorch AI Pipeline, PDF Processing, Background Jobs.
+        </snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Technology Stack</title>
+        <section>Decision Summary Table (lines 54-69)</section>
+        <snippet>
+          Foundation: Vintasoftware Template 0.0.6 | Frontend: Next.js 15.0.3 + React 19 | Backend: FastAPI 0.122.0 + Python 3.13.0 |
+          Runtime: Node.js 24.12.0 LTS | Database: PostgreSQL 17.7 | ORM: SQLAlchemy 2.0.36 | Message Broker: Redis 8.4.0 |
+          Deployment: Vercel (frontend) + Railway (backend containers)
+        </snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Structure</title>
+        <section>Project Structure (lines 70-97)</section>
+        <snippet>
+          transfer_app/ directory structure: frontend/ (Next.js with src/app/, src/components/ui/ + business/,
+          src/lib/, src/types/), backend/ (FastAPI with app/api/v1/, app/core/, app/db/, app/models/, app/schemas/,
+          app/services/), docker-compose.yml, README.md
+        </snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Development Environment</title>
+        <section>Prerequisites and Setup (lines 328-339)</section>
+        <snippet>
+          Prerequisites: Docker Desktop 4.x+, Node.js 24.12.0 LTS, Python 3.13.0, pip 24.x.
+          Setup: docker-compose up --build starts all services. Docker Compose provides PostgreSQL 17.7 and Redis 8.4 automatically.
+        </snippet>
+      </doc>
+
+      <!-- Epic Tech Spec -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Tech Spec - Overview</title>
+        <section>Overview and Scope (lines 10-37)</section>
+        <snippet>
+          Epic 1 establishes complete technical foundation using Vintasoftware Next.js FastAPI Template v0.0.6.
+          In Scope: Initialize repo, configure Next.js 15.0.3 + FastAPI 0.122.0, PostgreSQL 17.7, Redis 8.4.0,
+          Docker Compose dev environment, CI/CD to Vercel + Railway.
+          Out of Scope: PDF conversion, auth UI, file upload APIs, quality preview (later epics).
+        </snippet>
+      </doc>
+
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Tech Spec - Story 1.1 Workflow</title>
+        <section>Workflows - Story 1.1 (lines 277-284)</section>
+        <snippet>
+          Developer → Clone Vintasoftware Template v0.0.6 → Initialize Git repository →
+          Configure .gitignore (exclude .env, node_modules, __pycache__) → Install frontend dependencies (npm install) →
+          Install backend dependencies (pip install -r requirements.txt) → Verify directory structure matches Architecture
+        </snippet>
+      </doc>
+
+      <!-- UX Design Specification -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design - Design System Foundation</title>
+        <section>shadcn/ui Choice (lines 124-167)</section>
+        <snippet>
+          Design System: shadcn/ui (Radix UI + Tailwind CSS). Rationale: Aligns with architecture (Next.js 14 + Tailwind + shadcn/ui),
+          maximum customization via copy-paste, performance optimized, accessibility built-in, modern aesthetic.
+          Core components: Forms, Feedback, Navigation, Display, Interactive. Foundation: Radix UI + Tailwind CSS.
+        </snippet>
+      </doc>
+
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design - Color System</title>
+        <section>Professional Blue Theme (lines 332-388)</section>
+        <snippet>
+          Theme: Professional Blue. Primary: #2563eb (Blue 600), Secondary: #64748b (Slate 600), Accent: #0ea5e9 (Sky 500),
+          Success: #10b981 (Green 500). Neutral: White #ffffff, Gray 50 #f9fafb, Border #e5e7eb, Text Primary #0f172a.
+          Border radius: 6px default. Shadows: Default 0 4px 6px rgba(0,0,0,0.1). Transitions: 200ms ease-in-out.
+        </snippet>
+      </doc>
+
+      <!-- PRD References -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Technical Performance Targets</title>
+        <section>Success Criteria - Technical Performance (lines 86-96)</section>
+        <snippet>
+          Speed: Processing < 2 minutes for 300-page book. File size: EPUB ≤ 120% of PDF. Uptime: 99.5%.
+          Compatibility: EPUBs work on Apple Books, Kindle, Kobo, Google Play Books. Browser: Chrome, Firefox, Safari, Edge (latest 2 versions).
+        </snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- GREENFIELD INITIALIZATION - No application code exists yet -->
+      <note>
+        This is Story 1.1: Project Initialization. Repository currently contains only documentation and BMAD workflow system.
+        This story will CREATE the initial codebase by cloning the Vintasoftware Next.js FastAPI Template v0.0.6.
+      </note>
+
+      <!-- Expected Structure After Story Completion -->
+      <expected>
+        <artifact>
+          <path>frontend/</path>
+          <kind>directory</kind>
+          <reason>Next.js 15 application root - will be created by template clone</reason>
+        </artifact>
+
+        <artifact>
+          <path>backend/</path>
+          <kind>directory</kind>
+          <reason>FastAPI application root - will be created by template clone</reason>
+        </artifact>
+
+        <artifact>
+          <path>docker-compose.yml</path>
+          <kind>config</kind>
+          <reason>Development environment orchestration - will be created by template clone</reason>
+        </artifact>
+
+        <artifact>
+          <path>.gitignore</path>
+          <kind>config</kind>
+          <reason>Git exclusion rules - must verify/update after template clone to include .env, node_modules, __pycache__</reason>
+        </artifact>
+
+        <artifact>
+          <path>frontend/package.json</path>
+          <kind>manifest</kind>
+          <reason>Node.js dependencies - will specify Next.js 15.0.3, React 19, Tailwind CSS, shadcn/ui components</reason>
+        </artifact>
+
+        <artifact>
+          <path>backend/requirements.txt</path>
+          <kind>manifest</kind>
+          <reason>Python dependencies - will specify FastAPI 0.122.0, SQLAlchemy 2.0.36, asyncpg, fastapi-users</reason>
+        </artifact>
+      </expected>
+    </code>
+
+    <dependencies>
+      <!-- Prerequisites (Must be installed before story begins) -->
+      <prerequisites>
+        <item>Docker Desktop 4.x+ (for Docker Compose)</item>
+        <item>Node.js 24.12.0 LTS (required for Next.js 15)</item>
+        <item>Python 3.13.0 (required for FastAPI 0.122.0)</item>
+        <item>pip 24.x (comes with Python 3.13)</item>
+        <item>Git (for cloning template and repo management)</item>
+      </prerequisites>
+
+      <!-- Template Source -->
+      <template>
+        <source>https://github.com/vintasoftware/nextjs-fastapi-template</source>
+        <version>v0.0.6</version>
+        <verified>2025-11-27</verified>
+        <provides>
+          <package>Next.js 15 + React 19 + TypeScript 5</package>
+          <package>FastAPI + fastapi-users + SQLAlchemy</package>
+          <package>PostgreSQL 17.7 + Redis 8.4 (via Docker)</package>
+          <package>Tailwind CSS + shadcn/ui foundation</package>
+          <package>JWT authentication system</package>
+        </provides>
+      </template>
+
+      <!-- Frontend Dependencies (from package.json) -->
+      <frontend ecosystem="node">
+        <package name="next" version="15.0.3" />
+        <package name="react" version="^19.0.0" />
+        <package name="tailwindcss" version="^3.4.0" />
+        <package name="@radix-ui/react-*" version="latest" note="shadcn/ui components" />
+        <package name="axios" version="^1.6.0" note="API client" />
+        <package name="typescript" version="^5.3.0" dev="true" />
+      </frontend>
+
+      <!-- Backend Dependencies (from requirements.txt) -->
+      <backend ecosystem="python">
+        <package name="fastapi" version="0.122.0" />
+        <package name="sqlalchemy" version="2.0.36" note="Async ORM" />
+        <package name="asyncpg" version="0.29.0" note="PostgreSQL async driver" />
+        <package name="fastapi-users[sqlalchemy]" version="13.0.0" note="Auth system" />
+        <package name="uvicorn[standard]" version="0.30.0" note="ASGI server" />
+        <package name="alembic" version="1.13.0" note="Database migrations" />
+      </backend>
+
+      <!-- Docker Services -->
+      <docker>
+        <service name="postgres" image="postgres:17.7" />
+        <service name="redis" image="redis:8.4.0" />
+      </docker>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints -->
+    <constraint category="version">
+      Python version must be >=3.13.0 (required for FastAPI 0.122.0 compatibility)
+    </constraint>
+
+    <constraint category="version">
+      Node.js version must be >=24.12.0 LTS (required for Next.js 15 + React 19)
+    </constraint>
+
+    <constraint category="template">
+      MUST use Vintasoftware Next.js FastAPI Template v0.0.6 exactly - not main branch or other versions
+    </constraint>
+
+    <constraint category="structure">
+      Directory structure MUST match Architecture specification: frontend/, backend/, docker-compose.yml at project root
+    </constraint>
+
+    <constraint category="naming">
+      Backend: snake_case for files, variables, functions. PascalCase for classes.
+      Frontend: camelCase for files/variables/functions. PascalCase for components.
+      Database: snake_case for tables and columns.
+    </constraint>
+
+    <constraint category="security">
+      .gitignore MUST exclude: .env, .env.local, node_modules/, __pycache__/, .next/, dist/, *.pyc
+      NEVER commit secrets or environment files to Git
+    </constraint>
+
+    <constraint category="git">
+      Initial commit message must be: "Initialize project with Vintasoftware template v0.0.6"
+    </constraint>
+
+    <constraint category="environment">
+      All services MUST start successfully with single command: docker-compose up
+      No manual configuration steps allowed for basic startup
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- No API interfaces defined yet - this story only sets up infrastructure -->
+    <note>
+      This story does not implement user-facing APIs. The Vintasoftware template provides
+      baseline authentication endpoints (/api/auth/register, /api/auth/login) but these
+      are not part of Story 1.1 acceptance criteria. Story 1.2 will add /api/health endpoint.
+    </note>
+  </interfaces>
+  <tests>
+    <standards>
+      Epic 1 establishes foundational testing patterns for the Transfer2Read project:
+
+      **Backend Testing (Pytest + FastAPI TestClient):**
+      - Framework: pytest with pytest-asyncio for async tests
+      - Test organization: backend/tests/ with unit/, integration/, fixtures/ subdirectories
+      - Shared fixtures in conftest.py: test_client, test_db, authenticated_user
+      - Coverage target: 80% minimum (run: pytest --cov=app --cov-report=html)
+      - Async tests: Use @pytest.mark.asyncio decorator for testing async routes
+
+      **Frontend Testing (Vitest + React Testing Library):**
+      - Framework: Vitest 2.x (faster, better Next.js 15 integration than Jest)
+      - Test colocation: Place .test.tsx files next to components
+      - Render helpers: Custom render() with providers (QueryClient, AuthContext)
+      - Coverage target: 70% minimum (run: npm run test:coverage)
+      - Mock API calls: Use vi.mock() or MSW (Mock Service Worker)
+
+      **Integration Testing:**
+      - Docker Compose required: Tests run with services (PostgreSQL, Redis) available
+      - API + DB tests: Verify endpoints with real database connections
+      - Dependency override: Use app.dependency_overrides to mock external services
+
+      **E2E Testing:**
+      - Manual for Epic 1: Simple bash scripts for Docker Compose verification
+      - Full system checks: Docker startup, frontend-backend communication, deployment verification
+    </standards>
+
+    <locations>
+      <!-- Backend Test Locations -->
+      <location>backend/tests/unit/</location>
+      <note>Fast, isolated tests for configuration, utilities, module imports</note>
+
+      <location>backend/tests/integration/</location>
+      <note>API endpoint tests, database connection tests, service integration tests</note>
+
+      <location>backend/tests/fixtures/</location>
+      <note>Test data: sample files, mock responses, test fixtures</note>
+
+      <location>backend/tests/conftest.py</location>
+      <note>Shared pytest fixtures: test_client, test_db, authenticated_user</note>
+
+      <!-- Frontend Test Locations -->
+      <location>frontend/src/components/*.test.tsx</location>
+      <note>Component tests colocated with source files</note>
+
+      <location>frontend/src/app/page.test.tsx</location>
+      <note>Page-level tests for route components</note>
+
+      <location>frontend/__tests__/</location>
+      <note>Integration tests for complex user flows (optional for Epic 1)</note>
+
+      <location>frontend/vitest.setup.ts</location>
+      <note>Global test setup (@testing-library/jest-dom configuration)</note>
+    </locations>
+
+    <ideas>
+      <!-- AC #1: Template Initialization -->
+      <test id="AC1.1.1" type="manual">
+        Manual verification: Check .git folder exists, verify git remote URL contains starter template.
+        Command: git remote -v | grep "vintasoftware/nextjs-fastapi-template"
+      </test>
+
+      <!-- AC #2: Directory Structure -->
+      <test id="AC1.1.2" type="unit">
+        Unit test: Assert required directories exist using os.path.exists() or glob patterns.
+        Test: assert os.path.exists('frontend/src/app') and os.path.exists('backend/app/api') and os.path.exists('docker-compose.yml')
+      </test>
+
+      <!-- AC #3: Frontend Dependencies -->
+      <test id="AC1.1.3" type="integration">
+        Integration test: Run "npm list next react tailwindcss" in frontend/ directory.
+        Expected: All key packages installed without errors, versions match architecture spec.
+      </test>
+
+      <!-- AC #4: Backend Dependencies -->
+      <test id="AC1.1.4" type="integration">
+        Integration test: Run "pip list | grep -E 'fastapi|sqlalchemy|asyncpg'" in backend/.
+        Expected: All key packages present with correct versions (fastapi==0.122.0, etc).
+      </test>
+
+      <!-- AC #5: Docker Compose Startup -->
+      <test id="AC1.1.5" type="e2e">
+        E2E test: Run "docker-compose up -d" → Wait 30-60s → Check "docker-compose ps".
+        Expected: All services (frontend, backend, postgres, redis) show status "Up".
+        Additional: curl http://localhost:3000 (frontend) and http://localhost:8000 (backend) return 200.
+      </test>
+
+      <!-- AC #6: Git Configuration -->
+      <test id="AC1.1.6" type="unit">
+        Unit test: Assert .gitignore contains required patterns.
+        Commands:
+          grep -q "\.env" .gitignore && echo "PASS"
+          grep -q "node_modules" .gitignore && echo "PASS"
+          grep -q "__pycache__" .gitignore && echo "PASS"
+      </test>
+
+      <!-- Edge Cases -->
+      <test id="edge-case-1" type="integration">
+        Edge case: Python version mismatch - Verify pip install fails gracefully if Python < 3.13.
+        Test: Create venv with Python 3.11, attempt pip install -r requirements.txt, expect dependency conflict error.
+      </test>
+
+      <test id="edge-case-2" type="integration">
+        Edge case: Node.js version mismatch - Verify npm install shows warnings if Node.js < 24.
+        Test: Use nvm to switch to Node 20, run npm install, expect peer dependency warnings.
+      </test>
+
+      <test id="edge-case-3" type="e2e">
+        Edge case: Port conflicts - Verify docker-compose fails gracefully if ports 5432, 6379, 3000, or 8000 are in use.
+        Test: Start service on port 5432 manually, run docker-compose up, expect error message with clear guidance.
+      </test>
+
+      <!-- Smoke Tests -->
+      <test id="smoke-test-1" type="manual">
+        Smoke test: After all AC verified, create test commit and push to GitHub.
+        Verify: Repository reflects correct structure on GitHub web interface.
+      </test>
+    </ideas>
+  </tests>
+</story-context>
