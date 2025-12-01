@@ -43,7 +43,7 @@ story_location: /Users/dominhxuan/Desktop/Transfer2Read/docs/sprint-artifacts
 development_status:
   epic-1: contexted
   1-1-project-initialization-supabase-setup: done
-  1-2-backend-fastapi-supabase-integration: ready-for-dev
+  1-2-backend-fastapi-supabase-integration: review
   1-3-frontend-nextjs-supabase-client-setup: backlog
   1-4-celery-worker-ai-sdk-setup: backlog
   1-5-vercel-railway-deployment-configuration: backlog
