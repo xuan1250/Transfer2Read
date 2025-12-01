@@ -1,0 +1,343 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Project Initialization &amp; Supabase Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dominhxuan/Desktop/Transfer2Read/docs/sprint-artifacts/1-1-project-initialization-supabase-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to initialize the project from scratch with Supabase configuration</iWant>
+    <soThat>I have a production-ready foundation with managed backend services</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <title>Create Supabase project</title>
+        <subtasks>
+          <subtask id="1.1">Go to supabase.com and create new account (if needed)</subtask>
+          <subtask id="1.2">Create new project named "transfer2read" or "transfer_app"</subtask>
+          <subtask id="1.3">Select region closest to target users</subtask>
+          <subtask id="1.4">Note project URL (https://xxxxx.supabase.co)</subtask>
+          <subtask id="1.5">Navigate to Settings &gt; API to collect credentials</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2">
+        <title>Configure Supabase Storage buckets</title>
+        <subtasks>
+          <subtask id="2.1">Navigate to Storage section in Supabase dashboard</subtask>
+          <subtask id="2.2">Create `uploads` bucket (private, no public access)</subtask>
+          <subtask id="2.3">Create `downloads` bucket (private, no public access)</subtask>
+          <subtask id="2.4">Verify bucket creation and note bucket names</subtask>
+          <subtask id="2.5">Document bucket structure in project documentation</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <title>Enable Authentication providers</title>
+        <subtasks>
+          <subtask id="3.1">Navigate to Authentication &gt; Providers in Supabase dashboard</subtask>
+          <subtask id="3.2">Enable Email/Password provider</subtask>
+          <subtask id="3.3">Configure email templates (optional: customize welcome email)</subtask>
+          <subtask id="3.4">Note default auth settings (email confirmation required by default)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <title>Document environment variables</title>
+        <subtasks>
+          <subtask id="4.1">From Settings &gt; API, copy SUPABASE_URL (Project URL)</subtask>
+          <subtask id="4.2">Copy SUPABASE_ANON_KEY (anon public key - safe for frontend)</subtask>
+          <subtask id="4.3">Copy SUPABASE_SERVICE_KEY (service_role key - KEEP SECRET)</subtask>
+          <subtask id="4.4">Create credentials documentation file (.env.example templates)</subtask>
+          <subtask id="4.5">Add security notes about key usage (anon vs service_role)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <title>Initialize project directory structure</title>
+        <subtasks>
+          <subtask id="5.1">Create root project directory `transfer_app/`</subtask>
+          <subtask id="5.2">Create `frontend/` subdirectory for Next.js application</subtask>
+          <subtask id="5.3">Create `backend/` subdirectory for FastAPI application</subtask>
+          <subtask id="5.4">Create `docs/` subdirectory for documentation (if not exists)</subtask>
+          <subtask id="5.5">Verify directory structure matches architecture specification</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <title>Initialize Git repository</title>
+        <subtasks>
+          <subtask id="6.1">Run `git init` in project root</subtask>
+          <subtask id="6.2">Create `.gitignore` file with standard patterns</subtask>
+          <subtask id="6.3">Add `.env` to .gitignore (CRITICAL - prevent secret leakage)</subtask>
+          <subtask id="6.4">Add `node_modules/`, `__pycache__/`, `venv/` to .gitignore</subtask>
+          <subtask id="6.5">Create initial commit with project structure</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="7">
+        <title>Create README.md documentation</title>
+        <subtasks>
+          <subtask id="7.1">Create README.md in project root</subtask>
+          <subtask id="7.2">Document Supabase project setup steps</subtask>
+          <subtask id="7.3">Document environment variable requirements</subtask>
+          <subtask id="7.4">Add quick start guide for developers</subtask>
+          <subtask id="7.5">Include architecture overview and links to detailed docs</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">
+      <title>Supabase Project Created</title>
+      <description>New project at supabase.com with unique project URL</description>
+    </criterion>
+    <criterion id="2">
+      <title>Storage Buckets Configured</title>
+      <description>`uploads` bucket (private) for user PDFs and `downloads` bucket (private) for generated EPUBs</description>
+    </criterion>
+    <criterion id="3">
+      <title>Authentication Enabled</title>
+      <description>Email/Password provider active in Supabase dashboard</description>
+    </criterion>
+    <criterion id="4">
+      <title>Environment Variables Set</title>
+      <description>`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` documented</description>
+    </criterion>
+    <criterion id="5">
+      <title>Directory Structure Created</title>
+      <description>Directory structure created: `transfer_app/frontend/`, `transfer_app/backend/`</description>
+    </criterion>
+    <criterion id="6">
+      <title>Git Repository Initialized</title>
+      <description>Git repository initialized with `.gitignore` for secrets</description>
+    </criterion>
+    <criterion id="7">
+      <title>README.md Created</title>
+      <description>README.md created with Supabase setup instructions</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Initialization</title>
+        <section>Project Initialization &amp; Core Services Setup</section>
+        <snippet>
+          Built from scratch without starter template. Supabase project setup: Create at supabase.com, enable Email/Password auth, configure storage buckets (uploads/downloads - both private), collect SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY from Settings &gt; API.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Environment Configuration</title>
+        <section>Environment Configuration</section>
+        <snippet>
+          Frontend .env.local: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL. Backend .env: SUPABASE_URL, SUPABASE_SERVICE_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, REDIS_URL, CELERY_BROKER_URL, ENVIRONMENT=development.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - ADR-002 Supabase Decision</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>
+          Use Supabase for authentication, database, and file storage. Rationale: Single platform reduces complexity, production-ready auth with email/password and social logins, real-time capabilities, Row Level Security for data isolation, managed infrastructure with automatic backups, generous free tier.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1 Story 1.1 Definition</title>
+        <section>Story 1.1: Project Initialization &amp; Supabase Setup</section>
+        <snippet>
+          Initialize project from scratch with Supabase. Create Supabase project with storage buckets (uploads/downloads private), enable Email/Password auth, document environment variables, create directory structure (frontend/, backend/), initialize Git with .gitignore for secrets, create README with setup instructions.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Structure</title>
+        <section>Project Structure</section>
+        <snippet>
+          Root: transfer_app/ with frontend/ (Next.js 15 App), backend/ (FastAPI), docker-compose.yml (Redis only). Frontend structure: src/app/ (App Router), src/components/ (shadcn/ui), src/lib/ (utilities). Backend: app/api/ (routes), app/core/ (config), app/models/, app/services/, app/worker.py.
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>None (Greenfield)</path>
+        <kind>directory-structure</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Project structure doesn't exist yet. This story creates: transfer_app/frontend/, transfer_app/backend/, .gitignore, README.md, docker-compose.yml</reason>
+      </artifact>
+      <artifact>
+        <path>.git/</path>
+        <kind>version-control</kind>
+        <symbol>Git repository</symbol>
+        <lines>N/A</lines>
+        <reason>Git repository already initialized. Story adds .gitignore for proper secret exclusion</reason>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <kind>documentation</kind>
+        <symbol>Architecture spec</symbol>
+        <lines>1-487</lines>
+        <reason>Reference for project structure, environment variables, Supabase configuration requirements</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="supabase">
+        <package>Supabase Project (managed service)</package>
+        <version>Latest (cloud)</version>
+        <purpose>Unified backend: PostgreSQL + Auth + Storage</purpose>
+      </ecosystem>
+      <ecosystem name="frontend">
+        <package>Next.js (to be installed in Story 1.3)</package>
+        <version>15.0.3</version>
+        <purpose>React framework for frontend application</purpose>
+      </ecosystem>
+      <ecosystem name="backend">
+        <package>FastAPI (to be installed in Story 1.2)</package>
+        <version>0.122.0</version>
+        <purpose>Python async web framework for backend API</purpose>
+      </ecosystem>
+      <ecosystem name="infrastructure">
+        <package>Docker (Redis container)</package>
+        <version>Desktop 4.x+</version>
+        <purpose>Local Redis for Celery message broker</purpose>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Security</type>
+      <description>NEVER commit .env files to Git. Add .env, .env.local, .env.*.local to .gitignore immediately</description>
+      <source>Architecture - Security NFR</source>
+    </constraint>
+    <constraint>
+      <type>Architecture</type>
+      <description>Built from scratch (NO starter template). Full control over Supabase integration required</description>
+      <source>Architecture - Project Initialization</source>
+    </constraint>
+    <constraint>
+      <type>Supabase Configuration</type>
+      <description>Storage buckets MUST be private (no public access). RLS policies configured in later stories (2.1)</description>
+      <source>Architecture ADR-002</source>
+    </constraint>
+    <constraint>
+      <type>Directory Structure</type>
+      <description>Must match architecture spec: transfer_app/ with frontend/, backend/ subdirectories. Docker Compose only for Redis (PostgreSQL managed by Supabase)</description>
+      <source>Architecture - Project Structure</source>
+    </constraint>
+    <constraint>
+      <type>Environment Variables</type>
+      <description>Frontend uses NEXT_PUBLIC_ prefix for client-exposed vars (SUPABASE_ANON_KEY safe for frontend). Backend uses SUPABASE_SERVICE_KEY (KEEP SECRET - admin access)</description>
+      <source>Architecture - Environment Configuration</source>
+    </constraint>
+    <constraint>
+      <type>Regional Considerations</type>
+      <description>Supabase project region cannot be changed after creation. Choose region closest to target users for lowest latency</description>
+      <source>Story Dev Notes</source>
+    </constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Supabase Project Setup</name>
+      <kind>External Service</kind>
+      <signature>Manual configuration via Supabase Dashboard (supabase.com)</signature>
+      <path>N/A (Cloud service)</path>
+      <details>Create project → Enable Email/Password auth → Create storage buckets (uploads, downloads - both private) → Copy credentials from Settings &gt; API</details>
+    </interface>
+    <interface>
+      <name>Environment Variable Template</name>
+      <kind>Configuration</kind>
+      <signature>.env.example files for frontend and backend</signature>
+      <path>.env.example (root), frontend/.env.local.example, backend/.env.example</path>
+      <details>Document all required variables with placeholder values. Never commit actual .env files with secrets</details>
+    </interface>
+    <interface>
+      <name>Directory Structure Convention</name>
+      <kind>Project Layout</kind>
+      <signature>transfer_app/frontend/, transfer_app/backend/, docs/, docker-compose.yml</signature>
+      <path>Root directory</path>
+      <details>Matches Architecture spec Section "Project Structure". Frontend uses App Router (src/app/), backend uses FastAPI structure (app/api/, app/core/)</details>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Story 1.1 is primarily a manual setup and configuration story with NO automated tests required. Testing approach is VERIFICATION-BASED:
+      - Visual inspection of Supabase dashboard (project created, storage buckets visible, auth enabled)
+      - File system checks (directory structure exists, .gitignore configured)
+      - Manual credential validation (environment variables documented correctly)
+      - Git repository state verification (proper .gitignore, initial commit optional)
+
+      Future stories (1.2+) will establish automated testing frameworks (pytest for backend, Vitest for frontend).
+    </standards>
+    <locations>
+      N/A for Story 1.1 (no code to test). Future test locations:
+      - backend/tests/ (pytest, integration tests)
+      - frontend/src/__tests__/ or colocated .test.tsx files (Vitest, component tests)
+    </locations>
+    <ideas>
+      <test id="AC1" type="manual-verification">
+        <acceptance-criterion>Supabase Project Created</acceptance-criterion>
+        <verification>
+          1. Log into supabase.com
+          2. Verify project exists with unique project URL (https://xxxxx.supabase.co)
+          3. Navigate to Project Settings → API
+          4. Confirm SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY are visible and copied
+        </verification>
+      </test>
+      <test id="AC2" type="manual-verification">
+        <acceptance-criterion>Storage Buckets Configured</acceptance-criterion>
+        <verification>
+          1. Navigate to Supabase dashboard → Storage section
+          2. Verify "uploads" bucket exists, is PRIVATE (no public access checkbox)
+          3. Verify "downloads" bucket exists, is PRIVATE
+          4. Attempt to access bucket URL directly → Should fail (403 Forbidden)
+        </verification>
+      </test>
+      <test id="AC3" type="manual-verification">
+        <acceptance-criterion>Authentication Enabled</acceptance-criterion>
+        <verification>
+          1. Navigate to Authentication → Providers in Supabase dashboard
+          2. Verify Email/Password provider is toggled ON (green checkmark)
+          3. Check Email Templates are configured (optional customization can be deferred)
+        </verification>
+      </test>
+      <test id="AC4" type="manual-verification">
+        <acceptance-criterion>Environment Variables Documented</acceptance-criterion>
+        <verification>
+          1. Check for .env.example files in root, frontend/, backend/ (if directories created)
+          2. Verify SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY are documented
+          3. Verify placeholders used (e.g., "your-project-url-here") NOT actual secrets
+          4. Confirm .env, .env.local, .env.*.local are in .gitignore
+        </verification>
+      </test>
+      <test id="AC5" type="filesystem-check">
+        <acceptance-criterion>Directory Structure Created</acceptance-criterion>
+        <verification>
+          Run: ls -la /Users/dominhxuan/Desktop/Transfer2Read/
+          Expected directories: frontend/, backend/, docs/ (already exists)
+          Optional: Verify frontend/ has placeholder structure (README or package.json stub)
+        </verification>
+      </test>
+      <test id="AC6" type="git-check">
+        <acceptance-criterion>Git Repository Initialized with .gitignore</acceptance-criterion>
+        <verification>
+          1. Run: cat .gitignore
+          2. Verify patterns present: .env, .env.local, .env.*.local, node_modules/, __pycache__/, venv/, *.pyc
+          3. Run: git status → Verify .env files NOT tracked (if they exist)
+          4. Verify .gitignore itself IS committed
+        </verification>
+      </test>
+      <test id="AC7" type="documentation-check">
+        <acceptance-criterion>README.md Created with Supabase Setup Instructions</acceptance-criterion>
+        <verification>
+          1. Check README.md exists in project root
+          2. Verify sections: Project Overview, Prerequisites (Node.js, Python, Docker, Supabase account), Supabase Setup Instructions, Local Development Setup, Links to documentation
+          3. Confirm Supabase setup steps are clear (create project, configure buckets, collect credentials)
+        </verification>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

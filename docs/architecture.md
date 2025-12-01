@@ -6,93 +6,159 @@
 
 ## Executive Summary
 
-Transfer2Read is a high-fidelity PDF to EPUB converter designed to solve the "complex PDF" problem for technical and academic documents. The system employs a **Hybrid Intelligence Architecture**, utilizing a **Next.js** frontend for a responsive, modern user experience and a **FastAPI** backend powered by **PyTorch** for local, privacy-focused AI layout analysis. To ensure scalability and performance, long-running conversion tasks are offloaded to **Celery** workers backed by **Redis**, while file storage is managed via **S3-compatible** object storage. This architecture balances the need for heavy computational processing (AI models) with the requirement for a snappy, accessible web interface.
+Transfer2Read is a high-fidelity PDF to EPUB converter designed to solve the "complex PDF" problem for technical and academic documents. The system employs an **API-First Intelligence Architecture**, utilizing a **Next.js** frontend for a responsive, modern user experience and a **FastAPI** backend orchestrating **GPT-4o** and **Claude 3 Haiku** via **LangChain** for intelligent document analysis. To ensure scalability and performance, long-running conversion tasks are offloaded to **Celery** workers backed by **Redis**. All user data, authentication, and file storage are managed through **Supabase**, providing a unified, managed platform with real-time capabilities. This architecture balances the need for advanced AI processing with rapid development and simplified infrastructure management.
 
 ## Project Initialization
 
-The project is initialized using the **Vintasoftware Next.js FastAPI Template v0.0.6** (verified 2025-11-27) to provide a production-ready foundation.
+**Approach:** The project is built **from scratch** without using any starter template. This provides full control over the architecture and allows for clean integration of Supabase, LangChain, and custom conversion logic.
 
-### What the Starter Provides (No Manual Setup Needed)
+### Core Services Setup
 
-The template comes pre-configured with:
-- ✅ **Authentication System**: JWT-based auth using `fastapi-users`, password hashing, email recovery
-- ✅ **Database Setup**: Async PostgreSQL with SQLAlchemy, Docker Compose config
-- ✅ **Type Safety**: OpenAPI schema generation, frontend type definitions
-- ✅ **Dev Environment**: Docker Compose with all services (frontend, backend, DB, Redis)
-- ✅ **Protected Routes**: Frontend and backend route guards
-- ✅ **User Dashboard**: Basic user management UI
+**1. Supabase Project Setup:**
+- Create new Supabase project at [supabase.com](https://supabase.com)
+- Enable Authentication (Email/Password provider)
+- Create storage buckets:
+  - `uploads` (private) - for user uploaded PDFs
+  - `downloads` (private) - for generated EPUB files
+- Configure Row Level Security (RLS) policies for data isolation
+- Note your credentials from Settings > API:
+  - `SUPABASE_URL` - Your project URL
+  - `SUPABASE_ANON_KEY` - For frontend client (safe to expose)
+  - `SUPABASE_SERVICE_KEY` - For backend admin operations (keep secret)
 
-### What Requires Custom Implementation
+**2. AI API Keys:**
+- OpenAI API key from [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- Anthropic API key from [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 
-- ❌ **Celery Workers**: Need to add Celery configuration and worker process
-- ❌ **S3 Storage**: Need to integrate boto3 and configure S3 bucket
-- ❌ **PyTorch AI Pipeline**: Need to add layout detection model and conversion logic  
-- ❌ **PDF Processing**: Need to implement PyMuPDF + AI analysis pipeline
-- ❌ **Background Jobs**: Need to design job queue and progress tracking
-
-### Setup Commands
-
+**3. Project Scaffold (Built from Scratch):**
 ```bash
-# Clone specific template version
-git clone --branch v0.0.6 https://github.com/vintasoftware/nextjs-fastapi-template.git transfer_app
-cd transfer_app
+# Create project structure
+mkdir transfer_app && cd transfer_app
+mkdir frontend backend
 
-# Install Frontend Dependencies
+# Frontend - Next.js 15 with TypeScript
 cd frontend
-npm install
+npx create-next-app@15.0.3 . --typescript --tailwind --app --use-npm
+npm install @supabase/supabase-js@2.46.1 @supabase/auth-helpers-nextjs
+npm install axios @tanstack/react-query
 
-# Install Backend Dependencies
+# Backend - FastAPI with Python 3.13
 cd ../backend
-pip install -r requirements.txt
+python3.13 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install fastapi==0.122.0 uvicorn[standard]
+pip install celery[redis]==5.5.3 redis==5.0.1
+pip install sqlalchemy==2.0.36 supabase==2.24.0
+pip install langchain==0.3.12 langchain-openai==0.2.9 langchain-anthropic==0.2.5
+pip install pymupdf==1.24.10 ebooklib pydantic
 
-# Start Development Environment (Docker provides DB + Redis automatically)
+# Create docker-compose.yml for Redis
+cd ..
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+services:
+  redis:
+    image: redis:8.4.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+volumes:
+  redis-data:
+EOF
+
+# Start Redis
 docker-compose up -d
+```
+
+### Environment Configuration
+
+**Frontend `.env.local`:**
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+**Backend `.env`:**
+```bash
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+
+# AI APIs
+OPENAI_API_KEY=sk-your-openai-key
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
+
+# Celery
+REDIS_URL=redis://localhost:6379
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# App Config
+ENVIRONMENT=development
 ```
 
 ## Decision Summary
 
 | Category | Decision | Version | Source | Rationale |
 | -------- | -------- | ------- | ------ | --------- |
-| **Foundation** | **Vintasoftware Template** | 0.0.6 | PROVIDED BY STARTER | Production-ready auth, type safety, Docker setup. |
+| **Foundation** | **Next.js + FastAPI** | Custom | CUSTOM | Modern full-stack foundation with TypeScript and Python, built from scratch. |
 | **Frontend** | **Next.js** | 15.0.3 | CUSTOM | Latest stable (Nov 2025), React 19 support, App Router, Turbopack. |
 | **Backend** | **FastAPI** | 0.122.0 | CUSTOM | Latest stable (Nov 2025), high performance, native async, OpenAPI. |
 | **Runtime** | **Python** | 3.13.0 | CUSTOM | Latest stable (Oct 2024), compatible with FastAPI 0.122.0. |
 | **Runtime** | **Node.js** | 24.12.0 LTS | CUSTOM | Krypton LTS (Oct 2025), compatible with Next.js 15, support until 2027. |
-| **Async Processing** | **Celery** | 5.5.3 | CUSTOM | Latest stable (Jun 2025), robust task queue for CPU-intensive work. |
+| **Async Processing** | **Celery** | 5.5.3 | CUSTOM | Latest stable (Jun 2025), robust task queue for AI-intensive conversion work. |
 | **Message Broker** | **Redis** | 8.4.0 | CUSTOM | Latest stable (Nov 2025), high-performance broker + caching. |
-| **AI Inference** | **PyTorch** | 2.9.1 | CUSTOM | Latest stable (Nov 2025), flexible framework for layout detection. |
-| **AI Model** | **DocLayout-YOLO** | Latest | CUSTOM | Real-time layout detection (Oct 2024), YOLO-v10 based, optimized for documents. |
-| **File Storage** | **S3-Compatible (boto3)** | 1.36.0 | CUSTOM | Latest boto3 SDK, works with AWS S3 or alternatives (R2, MinIO). |
-| **Database** | **PostgreSQL** | 17.7 | PROVIDED BY STARTER | Latest stable (Nov 2025), advanced features, async support via AsyncPG. |
-| **ORM** | **SQLAlchemy** | 2.0.36 | PROVIDED BY STARTER | Latest stable, async support, type hints. |
+| **AI Framework** | **LangChain** | 0.3.12 | CUSTOM | Latest stable (Dec 2024), orchestration framework for LLM integration. |
+| **AI Model (Primary)** | **GPT-4o** | Latest API | CUSTOM | OpenAI's multimodal model, optimized for speed and quality. |
+| **AI Model (Fallback)** | **Claude 3 Haiku** | Latest API | CUSTOM | Anthropic's fast, cost-effective model for fallback scenarios. |
+| **Auth & Database** | **Supabase** | Latest | CUSTOM | Unified platform: PostgreSQL + Auth + Storage with real-time capabilities. |
+| **Supabase JS Client** | **@supabase/supabase-js** | 2.46.x | CUSTOM | Latest stable (Nov 2024), Next.js App Router compatible, frontend + backend. |
+| **Supabase Python Client** | **supabase-py** | 2.24.0 | CUSTOM | Latest stable (Nov 2025), async support, server-side operations. |
+| **LangChain OpenAI** | **langchain-openai** | 0.2.x | CUSTOM | Latest stable, GPT-4o support, structured outputs. |
+| **LangChain Anthropic** | **langchain-anthropic** | 0.2.x | CUSTOM | Latest stable, Claude 3 support, streaming responses. |
+| **ORM** | **SQLAlchemy** | 2.0.36 | CUSTOM | Latest stable, async support, type hints for backend operations. |
 | **Deployment** | **Vercel + Railway** | N/A | CUSTOM | Vercel for frontend (edge network), Railway for backend containers. |
+
+> **Version Verification:** All versions verified 2025-12-01 via web search for current stable releases.
 
 ## Project Structure
 
 ```
 transfer_app/
-├── frontend/                   # Next.js 14 Application
+├── frontend/                   # Next.js 15 Application
 │   ├── src/
 │   │   ├── app/                # App Router (Pages & Layouts)
 │   │   ├── components/         # React Components (shadcn/ui)
 │   │   │   ├── ui/             # Primitive UI components
 │   │   │   └── business/       # Domain-specific components
-│   │   ├── lib/                # Utilities & API Clients
-│   │   └── types/              # Shared Types (generated)
+│   │   ├── lib/                # Utilities & Clients
+│   │   │   ├── supabase.ts     # Supabase client initialization
+│   │   │   └── api-client.ts   # Backend API client
+│   │   └── types/              # Shared Types
+│   └── .env.local              # Supabase + API URLs
 ├── backend/                    # FastAPI Application
 │   ├── app/
 │   │   ├── api/                # API Endpoints (Routes)
 │   │   │   └── v1/
+│   │   │       ├── upload.py   # File upload endpoint
+│   │   │       └── jobs.py     # Job status/download endpoints
 │   │   ├── core/               # Config, Security, Logging
-│   │   ├── db/                 # Database connection & migrations
+│   │   │   ├── config.py       # Environment variables
+│   │   │   └── supabase.py     # Supabase client setup
 │   │   ├── models/             # SQLAlchemy ORM Models
-│   │   ├── schemas/            # Pydantic Schemas (Data Validation)
+│   │   │   └── job.py          # ConversionJob model
+│   │   ├── schemas/            # Pydantic Schemas (Validation)
 │   │   ├── services/           # Business Logic Layer
-│   │   │   ├── conversion/     # PDF Processing Pipeline
-│   │   │   ├── ai/             # PyTorch Model Inference
-│   │   │   └── storage/        # S3 Interface
+│   │   │   ├── conversion/     # PDF → EPUB Pipeline
+│   │   │   ├── ai/             # LangChain AI Integration
+│   │   │   │   ├── gpt4.py     # GPT-4o handler
+│   │   │   │   └── claude.py   # Claude 3 handler
+│   │   │   └── storage/        # Supabase Storage Interface
 │   │   └── worker.py           # Celery Worker Entrypoint
-├── docker-compose.yml          # Local dev orchestration
+│   └── .env                    # Supabase + AI API keys
+├── docker-compose.yml          # Redis for local dev
 └── README.md
 ```
 
@@ -100,32 +166,34 @@ transfer_app/
 
 | FR Category | Primary Component | Data Store | Key Logic |
 | ----------- | ----------------- | ---------- | --------- |
-| **User Account & Access** | Backend `api/auth` | PostgreSQL (`users`) | `fastapi-users` library for auth flows. |
-| **PDF File Upload** | Backend `api/upload` | S3 Bucket (`uploads/`) | Stream upload to S3, validate PDF mime-type. |
-| **AI Analysis & Conversion** | Celery Worker | N/A (Ephemeral) | `services.ai` runs PyTorch models; `services.conversion` handles PyMuPDF. |
-| **AI Structural Analysis** | Celery Worker | N/A | Heuristic + AI detection of TOC/Chapters. |
-| **Conversion Process** | Backend `api/jobs` | Redis (Queue), PG (Status) | Async task dispatch, progress polling via API. |
-| **EPUB Output** | Celery Worker | S3 Bucket (`downloads/`) | EPUB generation, upload result to S3. |
-| **Usage Limits** | Backend Middleware | PostgreSQL (`usage_logs`) | Check counts before dispatching job. |
+| **User Account & Access** | Supabase Auth | Supabase PostgreSQL (`auth.users`) | Supabase Auth SDK for signup/login/recovery flows. |
+| **PDF File Upload** | Backend `api/upload` | Supabase Storage (`uploads/`) | Stream upload to Supabase Storage, validate PDF mime-type. |
+| **AI Analysis & Conversion** | Celery Worker | N/A (API-based) | LangChain orchestrates GPT-4o/Claude Haiku for layout analysis. |
+| **AI Structural Analysis** | Celery Worker | N/A | LLM-based detection of TOC/Chapters/Sections via prompt engineering. |
+| **Conversion Process** | Backend `api/jobs` | Redis (Queue), Supabase PG (Status) | Async task dispatch, progress polling via API. |
+| **EPUB Output** | Celery Worker | Supabase Storage (`downloads/`) | EPUB generation, upload result to Supabase Storage. |
+| **Usage Limits** | Backend Middleware | Supabase PostgreSQL (`usage_logs`) | Check counts before dispatching job. |
 
 ## Technology Stack Details
 
 ### Core Technologies
 - **Language:** TypeScript 5.x (Frontend), Python 3.13.0 (Backend)
-- **Styling:** Tailwind CSS 3.x (PROVIDED BY STARTER)
-- **UI Library:** shadcn/ui (Radix UI based, PROVIDED BY STARTER)
-- **ORM:** SQLAlchemy 2.0.36 Async (PROVIDED BY STARTER)
-- **Schema Validation:** Pydantic v2 (PROVIDED BY STARTER)
+- **Styling:** Tailwind CSS 3.x
+- **UI Library:** shadcn/ui (Radix UI based)
+- **ORM:** SQLAlchemy 2.0.36 Async
+- **Schema Validation:** Pydantic v2
 - **Task Queue:** Celery 5.5.3
 - **PDF Library:** PyMuPDF 1.24.x
+- **AI SDKs:** LangChain 0.3.x, OpenAI Python SDK, Anthropic Python SDK
 - **Testing:** Pytest 8.x (Backend), Vitest 2.x (Frontend)
 
 ### Integration Points
-- **Frontend <-> Backend:** REST API via generated Axios/Fetch client. Types shared via OpenAPI generation (PROVIDED BY STARTER).
-- **Backend <-> Worker:** Redis 8.4.0 Message Broker.
-- **Backend <-> Storage:** S3 API via boto3 1.36.0.
-- **Backend <-> Database:** AsyncPG driver (PROVIDED BY STARTER).
-- **Worker <-> AI Model:** PyTorch 2.9.1 loading DocLayout-YOLO weights from Hugging Face.
+- **Frontend <-> Supabase:** Supabase JS client for auth, real-time data, and storage.
+- **Frontend <-> Backend:** REST API via Axios/Fetch for conversion job management.
+- **Backend <-> Worker:** Redis 8.4.0 Message Broker for Celery task queue.
+- **Backend <-> Supabase:** Supabase Python client + SQLAlchemy for database operations.
+- **Backend <-> Storage:** Supabase Storage API for file uploads/downloads.
+- **Worker <-> AI APIs:** LangChain with OpenAI (GPT-4o) and Anthropic (Claude 3 Haiku) API clients.
 
 ## Novel Pattern Designs
 
@@ -139,29 +207,44 @@ The core value proposition relies on a robust conversion pipeline that doesn't b
 3.  **Client:** Polls `GET /jobs/{id}` for progress/status.
 
 **AI Model Specification:**
-- **Model:** DocLayout-YOLO (github.com/opendatalab/DocLayout-YOLO)
-- **Version:** Latest release (October 2024)
-- **Architecture:** YOLO-v10 based, optimized for real-time document layout detection
-- **Capabilities:** Detects text blocks, tables, images, titles, headers, footers across 23 layout categories
-- **Source:** Pre-trained weights from Hugging Face Model Hub
-- **Loading Pattern:** Lazy load in worker on first task (cached in memory for subsequent tasks)
-- **Location:** `backend/app/services/ai/models/doclayout_yolo.pt`
-- **Inference:** ~28ms per page on NVIDIA GPU, ~100ms on CPU
+- **Primary Model:** GPT-4o (OpenAI)
+  - **Version:** Latest production release
+  - **Capabilities:** Multimodal understanding (text + images), document structure analysis, high-quality text extraction
+  - **Usage:** Primary model for PDF layout analysis and content extraction
+  - **Cost:** ~$2.50/1M input tokens, ~$10/1M output tokens
+  - **Speed:** ~2-5 seconds per page (API latency included)
+  
+- **Fallback Model:** Claude 3 Haiku (Anthropic)
+  - **Version:** Latest production release
+  - **Capabilities:** Fast text processing, cost-effective for simple documents
+  - **Usage:** Fallback when GPT-4o fails or for cost optimization on simple PDFs
+  - **Cost:** ~$0.25/1M input tokens, ~$1.25/1M output tokens
+  - **Speed:** ~1-3 seconds per page
+
+- **Orchestration:** LangChain 0.3.x
+  - **Document Loaders:** PyPDFLoader for text extraction
+  - **Text Splitters:** RecursiveCharacterTextSplitter for chunking large documents
+  - **Chains:** Custom chains for layout analysis → structure detection → EPUB generation
+  - **Retry Logic:** Built-in retry with exponential backoff for API failures
 
 **Pipeline Steps:**
-1.  **Ingest:** Load PDF with PyMuPDF (fitz library).
-2.  **Analyze (AI):** Render page to image → Pass to DocLayout-YOLO → Get bounding boxes + labels (Table, Image, Text, Title).
-3.  **Structure:** Build logical document tree using detected titles/headers (Chapters > Sections).
-4.  **Reflow:** Extract text/objects based on layout bounding boxes, preserve reading order.
-5.  **Generate:** Build EPUB container structure (OPF, NCX, XHTML per chapter).
+1.  **Ingest:** Load PDF with PyMuPDF (fitz library) for text and image extraction.
+2.  **Analyze (AI):** Send page content + rendered images to GPT-4o via LangChain → Identify structure (titles, headings, paragraphs, tables, images).
+3.  **Structure:** Build logical document tree using AI-detected hierarchy (Chapters > Sections > Subsections).
+4.  **Reflow:** Extract and reformat content based on AI analysis, preserve semantic reading order.
+5.  **Generate:** Build EPUB container structure (OPF, NCX, XHTML per chapter) with proper metadata.
 
 **Failure Handling:**
 - **Celery Retries:** Max 3 retries with exponential backoff (1min, 5min, 15min)
-- **Timeout:** 10 minute max per job (configurable via env var)
+- **Timeout:** 15 minute max per job (LLM API calls can be slower than local inference)
 - **Worker Crash:** Job remains in PROCESSING state → Manual cleanup or auto-requeue after 30min
-- **S3 Failure:** Retry S3 operations 3 times before failing job
-- **AI Model Error:** Fall back to heuristic text extraction (no layout analysis) + log warning
-- **User Notification:** Failed jobs return error message + timestamp in `GET /jobs/{id}` response
+- **API Failures:** 
+  - OpenAI API error → Automatic fallback to Claude 3 Haiku
+  - Both APIs fail → Retry with exponential backoff (3 attempts)
+  - Rate limit hit → Queue job with delay based on retry-after header
+- **AI Quality Issues:** Validate AI output structure → Fall back to heuristic extraction if malformed
+- **Storage Failure:** Retry Supabase Storage operations 3 times before failing job
+- **User Notification:** Failed jobs return error message + timestamp + suggested actions in `GET /jobs/{id}` response
 ## Implementation Patterns
 
 ### Naming Conventions
@@ -300,12 +383,24 @@ test('triggers upload on click', async () => {
 
 ## Security Architecture
 
-- **Authentication:** JWT (JSON Web Tokens) stored in HttpOnly, Secure cookies.
+- **Authentication:** Supabase Auth with JWT tokens, managed sessions, and secure cookie handling.
+- **Authorization:** Row Level Security (RLS) policies in Supabase PostgreSQL ensure users only access their own data.
 - **File Security:**
-    - Uploads are private S3 objects.
-    - Downloads via short-lived Presigned URLs.
-    - Automatic expiration/deletion of files after 30 days (Lifecycle Policy).
-- **Input Validation:** Strict Pydantic models for JSON; Magic-byte checking for file uploads (ensure real PDF).
+    - Uploads and downloads are private Supabase Storage objects.
+    - Access via signed URLs with configurable expiration (default 1 hour).
+    - Automatic file cleanup via Supabase Storage lifecycle policies (30 days).
+- **API Security:**
+    - Backend validates Supabase JWT tokens on protected endpoints.
+    - Rate limiting middleware to prevent abuse.
+    - CORS configured to allow only trusted frontend origins.
+- **Input Validation:** 
+    - Strict Pydantic models for JSON payloads.
+    - Magic-byte checking for file uploads (ensure real PDF).
+    - File size limits enforced (configurable, default 50MB).
+- **Secrets Management:**
+    - API keys stored in environment variables, never in code.
+    - Supabase service keys used only in backend, anon keys in frontend.
+    - Separate keys for development and production environments.
 
 ## Performance Considerations
 
@@ -317,36 +412,72 @@ test('triggers upload on click', async () => {
 
 ## Deployment Architecture
 
-- **Frontend:** Deployed to **Vercel** (Edge Network).
-- **Backend API:** Deployed to **Railway** (Container).
-- **Worker:** Deployed to **Railway** (Container, scaled independently).
-- **Data:** PostgreSQL and Redis managed on **Railway**.
-- **Storage:** AWS S3 (or R2/MinIO).
+- **Frontend:** Deployed to **Vercel** (Edge Network with automatic HTTPS and CDN).
+- **Backend API + Worker:** Deployed to **Railway** (Containers, scale independently).
+  - API container: FastAPI service handling HTTP requests
+  - Worker container: Celery worker processing conversion jobs
+- **Redis:** Managed Redis on **Railway** or **Upstash** for Celery message broker.
+- **Database + Auth + Storage:** Fully managed by **Supabase**.
+  - PostgreSQL database with automatic backups
+  - Authentication service
+  - File storage with CDN
+
+**Environment Variables:**
+- Frontend: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`
+- Backend: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `REDIS_URL`
 
 ## Development Environment
 
 ### Prerequisites (Verified Versions)
-- **Docker Desktop:** 4.x+ (includes Docker Compose)
+- **Docker Desktop:** 4.x+ (for local Redis only)
 - **Node.js:** 24.12.0 LTS (download: nodejs.org/en/download)
 - **Python:** 3.13.0 (download: python.org/downloads)
 - **pip:** 24.x (comes with Python 3.13)
+- **Supabase Account:** Free tier available at supabase.com
+- **OpenAI API Key:** From platform.openai.com
+- **Anthropic API Key:** From console.anthropic.com
 
 ### Setup Commands
 ```bash
-# Start all services (DB, Redis, API, Worker, Frontend)
-# Docker Compose provides PostgreSQL 17.7 and Redis 8.4 automatically via starter template
-docker-compose up --build
+# Start Redis for Celery (local development)
+# Supabase services are cloud-managed, no local setup needed
+docker-compose up redis -d
+
+# Run frontend
+cd frontend && npm run dev
+
+# Run backend API
+cd backend && uvicorn app.main:app --reload
+
+# Run Celery worker (separate terminal)
+cd backend && celery -A app.worker worker --loglevel=info
 ```
 
 ## Architecture Decision Records (ADRs)
 
-### ADR-001: Hybrid Intelligence Architecture
-- **Decision:** Run AI models locally (on server) rather than using 3rd party AI APIs.
-- **Rationale:** Privacy is a core value proposition. High volume of text processing would be cost-prohibitive with GPT-4/Claude APIs. PyTorch native implementation allows fine-tuned control over the layout analysis pipeline.
+### ADR-001: API-First Intelligence Architecture
+- **Decision:** Use cloud-based LLM APIs (GPT-4o, Claude 3) via LangChain instead of self-hosted PyTorch models.
+- **Rationale:** 
+  - **Speed to Market:** No model training, fine-tuning, or infrastructure management required.
+  - **Quality:** State-of-the-art multimodal models (GPT-4o) provide superior document understanding compared to specialized layout detection models.
+  - **Scalability:** No GPU infrastructure needed, scales automatically with API provider capacity.
+  - **Cost-Effectiveness:** Pay-per-use pricing more economical than maintaining GPU servers for intermittent workloads.
+  - **Maintenance:** API providers handle model updates, improvements, and infrastructure.
+  - **Trade-off:** Accepts API costs and external dependency in exchange for development velocity and quality.
 
-### ADR-002: Async Processing with Celery
+### ADR-002: Supabase as Unified Backend Platform
+- **Decision:** Use Supabase for authentication, database, and file storage instead of self-managed PostgreSQL + S3.
+- **Rationale:**
+  - **Developer Experience:** Single platform reduces integration complexity and configuration overhead.
+  - **Built-in Auth:** Production-ready authentication with email/password, social logins, and JWT management.
+  - **Real-time Capabilities:** Subscriptions for live job status updates (future enhancement).
+  - **Row Level Security:** Database-level security policies enforce data isolation.
+  - **Managed Infrastructure:** No database administration, automatic backups, point-in-time recovery.
+  - **Cost:** Generous free tier for development, predictable pricing for production.
+
+### ADR-003: Async Processing with Celery
 - **Decision:** Use Celery for conversion tasks.
-- **Rationale:** PDF conversion is time-consuming (>30s). HTTP requests must return quickly. Celery provides robust retries, scheduling, and worker management that simple background tasks lack.
+- **Rationale:** PDF conversion with LLM API calls is time-consuming (2-5+ seconds per page). HTTP requests must return quickly. Celery provides robust retries, scheduling, and worker management that simple background tasks lack. Redis as broker provides fast, reliable message passing.
 
 ---
 

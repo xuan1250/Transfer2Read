@@ -1,0 +1,231 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Backend FastAPI &amp; Supabase Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-2-backend-fastapi-supabase-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to set up FastAPI with Supabase Python client</iWant>
+    <soThat>the backend can authenticate users and access managed PostgreSQL</soThat>
+    <tasks>
+      - Task 1: Set up FastAPI backend structure (AC: #1, #7)
+        - 1.1: Create `backend/` directory with proper Python package structure
+        - 1.2: Install FastAPI 0.122.0 and uvicorn[standard] via pip
+        - 1.3: Create `backend/app/main.py` with FastAPI app initialization
+        - 1.4: Install SQLAlchemy 2.0.36 for ORM support
+        - 1.5: Create `backend/requirements.txt` with all core dependencies
+      - Task 2: Configure Supabase Python client (AC: #2, #5)
+        - 2.1: Install Supabase Python client 2.24.0 (`supabase==2.24.0`)
+        - 2.2: Create `backend/app/core/` directory for configuration modules
+        - 2.3: Create `backend/app/core/supabase.py` with client initialization
+        - 2.4: Implement async Supabase client getter function
+        - 2.5: Add connection verification logic
+      - Task 3: Set up Redis container for Celery broker (AC: #3)
+        - 3.1: Create `docker-compose.yml` in project root
+        - 3.2: Define Redis 8.4.0-alpine service in docker-compose
+        - 3.3: Configure Redis persistence (volume mapping)
+        - 3.4: Expose Redis port 6379 for local access
+        - 3.5: Test Redis container startup with `docker-compose up -d redis`
+      - Task 4: Configure environment variables and secrets (AC: #4)
+        - 4.1: Create `backend/.env.example` template with all required variables
+        - 4.2: Document Supabase credential retrieval (URL, anon key, service key)
+        - 4.3: Add AI API key placeholders (OPENAI_API_KEY, ANTHROPIC_API_KEY)
+        - 4.4: Configure Redis connection URL (redis://localhost:6379)
+        - 4.5: Add `.env` to `.gitignore` to prevent secret leakage
+      - Task 5: Implement health check endpoint (AC: #6)
+        - 5.1: Create `backend/app/api/` directory structure
+        - 5.2: Create `backend/app/api/health.py` with health check route
+        - 5.3: Implement Supabase connection health check
+        - 5.4: Implement Redis connection health check
+        - 5.5: Return JSON response with status of all services
+        - 5.6: Handle connection failures gracefully (503 Service Unavailable)
+      - Task 6: Integration testing and verification (AC: #1-7)
+        - 6.1: Start Redis container via docker-compose
+        - 6.2: Start FastAPI backend with `uvicorn app.main:app --reload`
+        - 6.3: Test `GET /api/health` endpoint returns 200 OK
+        - 6.4: Verify Supabase connection status is "connected"
+        - 6.5: Verify Redis connection status is "connected"
+        - 6.6: Write integration test for health endpoint
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. **FastAPI 0.122.0** installed with `uvicorn[standard]`
+    2. **Supabase Python Client 2.24.0** installed and configured
+    3. **Redis 8.4.0** container running via `docker-compose.yml` (for Celery only)
+    4. Backend `.env` file with Supabase credentials:
+       - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+       - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` (placeholders for now)
+       - `REDIS_URL=redis://localhost:6379`
+    5. **Supabase client initialized** in `backend/app/core/supabase.py`
+    6. Health check endpoint `GET /api/health` returns:
+       - `200 OK` with Supabase connection status
+       - Redis connection status
+    7. **SQLAlchemy 2.0.36** installed for local models (if needed)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Project Initialization</section>
+        <snippet>Project built from scratch without starter template. Supabase used as unified backend platform (PostgreSQL + Auth + Storage). FastAPI 0.122.0 backend with Python 3.13.0. Redis 8.4.0 for Celery broker. Deploy to Vercel (frontend) + Railway (backend).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Core Services Setup</section>
+        <snippet>Supabase project setup: Create at supabase.com, enable Email/Password auth, create storage buckets (uploads, downloads), configure RLS policies. Note credentials: SUPABASE_URL, SUPABASE_ANON_KEY (frontend), SUPABASE_SERVICE_KEY (backend admin).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Backend Environment Configuration</section>
+        <snippet>Backend .env file requires: SUPABASE_URL, SUPABASE_SERVICE_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, REDIS_URL=redis://localhost:6379, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, ENVIRONMENT=development.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Project Structure - Backend</section>
+        <snippet>Backend structure: backend/app/ contains main.py (FastAPI app), api/ (endpoints), core/ (config.py, supabase.py), models/ (SQLAlchemy ORM), schemas/ (Pydantic), services/ (business logic), worker.py (Celery entrypoint).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>Decision: Use Supabase for auth, database, and storage. Rationale: Developer experience (single platform), built-in auth with JWT, real-time capabilities, Row Level Security for data isolation, managed infrastructure with automatic backups.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Foundation components: FastAPI 0.122.0 (latest stable, Nov 2025) + Python 3.13.0, PostgreSQL 17.7 (async via AsyncPG) + SQLAlchemy 2.0.36, Redis 8.4.0 for Celery 5.5.3 task queue, Supabase for managed backend services.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>APIs and Interfaces - Health Check Endpoint</section>
+        <snippet>GET /api/health returns 200 OK with JSON: {status: "healthy", database: "connected", redis: "connected", timestamp}. Returns 503 Service Unavailable if any service fails with specific failure details.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Dependencies - Backend</section>
+        <snippet>Core dependencies: fastapi==0.122.0, uvicorn[standard]==0.30.0, pydantic==2.8.0, pydantic-settings==2.4.0, supabase==2.24.0, sqlalchemy==2.0.36, asyncpg==0.29.0, celery==5.5.3, redis==5.0.0, boto3==1.36.0, python-multipart, python-magic, structlog.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>N/A - Greenfield Project</path>
+        <kind>N/A</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>This is Story 1.2 - first backend code to be created. No existing backend codebase. Story 1.1 (Supabase setup) is still in progress. This story establishes the backend foundation from scratch.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="fastapi" version="0.122.0" />
+        <package name="uvicorn[standard]" version="0.30.0" />
+        <package name="pydantic" version="2.8.0" />
+        <package name="pydantic-settings" version="2.4.0" />
+        <package name="supabase" version="2.24.0" />
+        <package name="sqlalchemy" version="2.0.36" />
+        <package name="asyncpg" version="0.29.0" />
+        <package name="redis" version="5.0.1" />
+        <package name="celery" version="5.5.3" />
+        <package name="python-dotenv" version="1.0.0" />
+        <package name="pytest" version="8.3.0" />
+        <package name="pytest-asyncio" version="0.23.0" />
+        <package name="httpx" version="0.27.0" />
+      </python>
+      <docker>
+        <service name="redis" image="redis:8.4.0-alpine" purpose="Celery message broker for async task queue" />
+      </docker>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - **Architecture Pattern:** Follow FastAPI best practices - separate api/, core/, models/, schemas/, services/ directories
+    - **Configuration Management:** Use Pydantic Settings for environment variable validation
+    - **Supabase Integration:** Use service_role key for backend (bypasses RLS), anon key reserved for frontend
+    - **Security:** NEVER commit .env files to Git - verify .gitignore includes it
+    - **Error Handling:** Health endpoint must gracefully handle connection failures and return 503 with specific error details
+    - **Async Support:** Use async/await patterns for Supabase and database operations
+    - **Dependency Management:** Pin exact versions in requirements.txt for reproducibility
+    - **Docker Persistence:** Redis container must use volume mapping for data persistence
+    - **Testing:** Write integration tests using pytest-asyncio and httpx AsyncClient
+    - **Code Quality:** Follow PEP 8 style guide, use type hints for all functions
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/health</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        GET /api/health
+        Response 200: {status: "healthy", database: "connected", redis: "connected", timestamp: ISO8601}
+        Response 503: {status: "unhealthy", database: "disconnected: error_msg", redis: "connected", timestamp: ISO8601}
+      </signature>
+      <path>backend/app/api/health.py</path>
+    </interface>
+    <interface>
+      <name>get_supabase_client()</name>
+      <kind>Function signature</kind>
+      <signature>
+        def get_supabase_client() -> Client:
+            """Initialize Supabase client with service role key for admin operations."""
+            return create_client(supabase_url, supabase_key)
+      </signature>
+      <path>backend/app/core/supabase.py</path>
+    </interface>
+    <interface>
+      <name>Settings</name>
+      <kind>Pydantic model</kind>
+      <signature>
+        class Settings(BaseSettings):
+            SUPABASE_URL: str
+            SUPABASE_SERVICE_KEY: str
+            OPENAI_API_KEY: str
+            ANTHROPIC_API_KEY: str
+            REDIS_URL: str
+            CELERY_BROKER_URL: str
+            CELERY_RESULT_BACKEND: str
+            ENVIRONMENT: str
+            class Config:
+                env_file = ".env"
+      </signature>
+      <path>backend/app/core/config.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend testing uses pytest 8.3.0 with pytest-asyncio for async test support. Integration tests use httpx.AsyncClient with FastAPI TestClient pattern. Tests organized in backend/tests/ with unit/ and integration/ subdirectories. Use @pytest.mark.asyncio decorator for async tests. Coverage target: 80% minimum for backend code. Test naming: test_*.py files, test_* functions.
+    </standards>
+    <locations>
+      - backend/tests/integration/test_health.py
+      - backend/tests/unit/test_config.py
+      - backend/tests/conftest.py (shared fixtures)
+    </locations>
+    <ideas>
+      - AC#1: Test FastAPI app initialization and uvicorn server startup
+      - AC#2,5: Test Supabase client initialization with valid/invalid credentials
+      - AC#3: Test Redis connection via docker-compose (integration test)
+      - AC#4: Test environment variable loading and validation using Pydantic Settings
+      - AC#6: Test health check endpoint returns 200 when all services available
+      - AC#6: Test health check endpoint returns 503 when Redis unavailable
+      - AC#6: Test health check endpoint returns 503 when Supabase unavailable
+      - AC#7: Test SQLAlchemy async engine creation and connection pooling
+      - Edge case: Test health check with partial service failures
+      - Edge case: Test concurrent health check requests (load testing)
+    </ideas>
+  </tests>
+</story-context>

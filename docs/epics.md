@@ -1,9 +1,10 @@
 # Transfer2Read - Epic and Story Breakdown
 
 **Project:** Transfer2Read  
-**Generated:** 2025-11-27  
-**Created by:** xavier (PM)  
-**Context:** PRD + UX Design + Architecture  
+**Originally Created:** 2025-11-27  
+**Last Updated:** 2025-12-01 (Architecture Enhancement)  
+**Product Manager:** xavier  
+**Context:** PRD + UX Design + Architecture (Supabase + API-Based AI)  
 
 ---
 
@@ -17,23 +18,39 @@ This document provides a comprehensive breakdown of Transfer2Read into **impleme
 
 **Usage:** Dev agents will use this document during Phase 4 (Implementation) to build the application story-by-story.
 
+**Version History:**
+- **2025-11-27:** Initial epic breakdown with PRD + UX + Architecture (original PyTorch-based)
+- **2025-12-01:** Enhanced with updated Architecture (Supabase + LangChain + GPT-4o/Claude API-based AI)
+
 ---
 
 ## Step 0: Workflow Mode Detection
 
-🆕 **INITIAL CREATION MODE**
+🔄 **UPDATE MODE - Architecture Enhancement**
 
-No existing epics found - Creating the initial epic breakdown.
+Existing epics found from 2025-11-27. Enhancing stories with NEW architecture context.
 
 **Available Context:**
-- ✅ PRD (required) - Complete functional requirements
-- ✅ Product Brief - Vision and market positioning  
-- ✅ UX Design - Complete interaction patterns, mockups (Direction 3: Preview Focused), components
-- ✅ Architecture - Technical stack (Next.js + FastAPI), deployment decisions, data models
+- ✅ PRD (required) - Complete functional requirements (47 FRs)
+- ✅ UX Design - Complete specification (Direction 3: Preview Focused, Professional Blue theme)
+- ✅ **Architecture (UPDATED 2025-12-01)** - New technical stack with Supabase + API-based AI
 
-**Context Quality:** EXCELLENT - Full planning phase complete (PRD + UX + Architecture)
+**Architecture Changes Incorporated:**
 
-This epic breakdown will incorporate ALL available context for maximum implementation clarity.
+**Major Updates:**
+1. **Authentication & Database:** Added **Supabase** for unified auth, PostgreSQL, and file storage (replaces self-managed PostgreSQL + S3)
+2. **AI Processing:** Changed from local PyTorch models → **API-based AI** (GPT-4o primary, Claude 3 Haiku fallback via LangChain)
+3. **Deployment:** Updated to **Vercel** (frontend) + **Railway** (backend + workers)
+4. **Storage:** Migrated from generic S3 → **Supabase Storage** with built-in security policies
+
+**Technical Stack (Current):**
+- Frontend: Next.js 15.0.3 + shadcn/ui + **Supabase JS Client**
+- Backend: FastAPI 0.122.0 + **Supabase Python Client** + LangChain 0.3.12
+- AI: **GPT-4o** (OpenAI) + **Claude 3 Haiku** (Anthropic) via LangChain
+- Queue: Celery 5.5.3 + Redis 8.4.0
+- Database/Auth/Storage: **Supabase** (managed PostgreSQL + Auth + Storage)
+
+This update enhances all stories with specific Supabase integration details and API-based AI implementation guidance.
 
 ---
 
@@ -265,120 +282,151 @@ Validating that EVERY FR maps to at least one epic:
 **User Value:** Necessary infrastructure to enable the application to exist (Greenfield Exception)  
 **FR Coverage:** Infrastructure enabler for all FRs
 
-#### Story 1.1: Project Initialization & Monorepo Setup
+#### Story 1.1: Project Initialization & Supabase Setup
 
 **User Story:**
 As a **Developer**,  
-I want **to initialize the project repository with the Vintasoftware starter**,  
-So that **I have a production-ready foundation with type safety and structure.**
+I want **to initialize the project from scratch with Supabase configuration**,  
+So that **I have a production-ready foundation with managed backend services.**
 
 **Acceptance Criteria:**
-- [ ] Repo initialized using `vintasoftware/nextjs-fastapi-starter` template
-- [ ] Directory structure matches Architecture doc (`frontend/`, `backend/`, `docker-compose.yml`)
-- [ ] Frontend dependencies installed (`npm install`)
-- [ ] Backend dependencies installed (`pip install -r requirements.txt`)
-- [ ] `docker-compose up` starts all services (frontend, backend, db) without errors
-- [ ] Git repository initialized with `.gitignore` properly configured
+- [ ] **Supabase Project Created:** New project at supabase.com with unique project URL
+- [ ] **Storage Buckets Configured:**
+  - `uploads` bucket (private) for user PDFs
+  - `downloads` bucket (private) for generated EPUBs
+- [ ] **Authentication Enabled:** Email/Password provider active in Supabase dashboard
+- [ ] **Environment Variables Set:** `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` documented
+- [ ] Directory structure created: `transfer_app/frontend/`, `transfer_app/backend/`
+- [ ] Git repository initialized with `.gitignore` for secrets
+- [ ] **README.md** created with Supabase setup instructions
 
 **Technical Notes:**
-- Follow Architecture: Next.js 14 (App Router) + FastAPI
-- Ensure Python 3.11+ environment
-- Configure basic linting (ESLint, Prettier, Ruff/Black)
+- Architecture ADR-002: Supabase as unified backend platform
+- **NO starter template** - built from scratch for full control
+- Supabase free tier sufficient for development
+- Row Level Security (RLS) policies configured manually in later stories
 
 **Prerequisites:** None
 
 ---
 
-#### Story 1.2: Backend Core & Database Configuration
+#### Story 1.2: Backend FastAPI & Supabase Integration
 
 **User Story:**
 As a **Developer**,  
-I want **to configure FastAPI with PostgreSQL and Redis**,  
-So that **the application has a working data layer and caching system.**
+I want **to set up FastAPI with Supabase Python client**,  
+So that **the backend can authenticate users and access managed PostgreSQL.**
 
 **Acceptance Criteria:**
-- [ ] PostgreSQL 15+ container running via Docker
-- [ ] Redis container running via Docker
-- [ ] FastAPI configured with `asyncpg` driver and SQLAlchemy (Async)
-- [ ] Database migration system (Alembic) initialized
-- [ ] Basic health check endpoint `GET /api/health` returns 200 OK and DB status
-- [ ] Environment variables configured for local development (`.env`)
+- [ ] **FastAPI 0.122.0** installed with `uvicorn[standard]`
+- [ ] **Supabase Python Client 2.24.0** installed and configured
+- [ ] **Redis 8.4.0** container running via `docker-compose.yml` (for Celery only)
+- [ ] Backend `.env` file with Supabase credentials:
+  - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+  - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` (placeholders for now)
+  - `REDIS_URL=redis://localhost:6379`
+- [ ] **Supabase client initialized** in `backend/app/core/supabase.py`
+- [ ] Health check endpoint `GET /api/health` returns:
+  - `200 OK` with Supabase connection status
+  - Redis connection status
+- [ ] **SQLAlchemy 2.0.36** installed for local models (if needed)
 
 **Technical Notes:**
-- Architecture Decision: Use AsyncPG for performance
-- Architecture Decision: Use Pydantic v2 for schema validation
-- Verify connection strings in `backend/app/core/config.py`
+- **Architecture:** Supabase handles PostgreSQL (no local DB container)
+- **Supabase Python SDK:** Use for server-side admin operations (service role key)
+- **No Alembic migrations** for Supabase-managed tables (use Supabase Studio)
+- Docker only runs Redis (not PostgreSQL)
 
 **Prerequisites:** Story 1.1
 
 ---
 
-#### Story 1.3: Frontend Foundation & UI Library
+#### Story 1.3: Frontend Next.js & Supabase Client Setup
 
 **User Story:**
 As a **Developer**,  
-I want **to set up Next.js with shadcn/ui and the Professional Blue theme**,  
-So that **I can build UI components consistent with the UX design.**
+I want **to set up Next.js 15 with Supabase JS client and shadcn/ui**,  
+So that **I can build authenticated UI with the Professional Blue theme.**
 
 **Acceptance Criteria:**
-- [ ] Next.js 14 App Router configured
-- [ ] Tailwind CSS installed and configured
-- [ ] shadcn/ui initialized (`npx shadcn-ui@latest init`)
-- [ ] "Professional Blue" color tokens added to `tailwind.config.ts` (Primary: `#2563eb`, etc.)
-- [ ] Font families configured (Inter/Sans, Mono) per UX spec
-- [ ] Basic layout component created (TopBar placeholder, Main content area)
-- [ ] Landing page renders with correct theme colors
+- [ ] **Next.js 15.0.3** initialized with TypeScript, Tailwind CSS, App Router
+- [ ] **Supabase JS Client 2.46.1** installed: `@supabase/supabase-js`, `@supabase/auth-helpers-nextjs`
+- [ ] **shadcn/ui** initialized (`npx shadcn-ui@latest init`)
+- [ ] **Professional Blue theme** configured in `tailwind.config.ts`:
+  - Primary: `#2563eb`, Secondary: `#64748b`, Accent: `#0ea5e9`
+  - Success: `#10b981`, Warning: `#f59e0b`, Error: `#ef4444`
+- [ ] **Supabase client** initialized in `src/lib/supabase.ts` (server and browser clients)
+- [ ] **Frontend `.env.local`** configured:
+  - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- [ ] System fonts configured (UX Spec Section 4.2)
+- [ ] Basic layout with TopBar renders on `/` route
 
 **Technical Notes:**
-- UX Spec Section 4.1: Implement all color tokens
-- UX Spec Section 4.2: Configure typography
-- UX Spec Section 2.1: Use shadcn/ui copy-paste model
+- UX Spec: Professional Blue color system (Section 4.1)
+- Architecture: Supabase Auth Helpers for Next.js App Router
+- Use separate clients for server components vs. client components
 
 **Prerequisites:** Story 1.1
 
 ---
 
-#### Story 1.4: Async Worker Infrastructure
+#### Story 1.4: Celery Worker & AI SDK Setup
 
 **User Story:**
 As a **Developer**,  
-I want **to configure Celery with Redis**,  
-So that **long-running PDF conversions can be processed in the background.**
+I want **to configure Celery workers with LangChain AI libraries**,  
+So that **long-running AI-powered conversions can be processed asynchronously.**
 
 **Acceptance Criteria:**
-- [ ] Celery configured in `backend/app/core/celery_app.py`
-- [ ] Redis configured as Celery broker and backend
+- [ ] **Celery 5.5.3** installed with Redis backend
+- [ ] **LangChain 0.3.12** installed with OpenAI and Anthropic integrations:
+  - `langchain-openai==0.2.9` (GPT-4o support)
+  - `langchain-anthropic==0.2.5` (Claude 3 Haiku support)
+- [ ] **PDF Processing:** `pymupdf==1.24.10`, `ebooklib` installed
+- [ ] Celery app configured in `backend/app/core/celery_app.py`
 - [ ] Worker entrypoint `backend/app/worker.py` created
-- [ ] Docker Compose updated to include `worker` service
-- [ ] Test task dispatched from API and executed by worker successfully
-- [ ] Worker logs visible in Docker output
+- [ ] **Docker Compose:** Worker service added (shares backend code, mounts API keys)
+- [ ] **Test task:** Dispatch AI call from API → Worker executes → Returns response
+- [ ] Worker logs show LangChain initialization and API connectivity
 
 **Technical Notes:**
-- Architecture ADR-002: Async Processing with Celery
-- Ensure worker shares code/models with backend service
+- Architecture ADR-001: API-First Intelligence Architecture
+- **No PyTorch/GPU dependencies** - all AI via OpenAI/Anthropic APIs
+- Worker environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+- LangChain provides retry logic and fallback orchestration
 
 **Prerequisites:** Story 1.2
 
 ---
 
-#### Story 1.5: Deployment Pipeline Configuration
+#### Story 1.5: Vercel + Railway Deployment Configuration
 
 **User Story:**
 As a **DevOps Engineer**,  
-I want **to configure deployment pipelines for Vercel and Railway**,  
-So that **code changes are automatically deployed to production.**
+I want **to configure deployment to Vercel (frontend) and Railway (backend + workers)**,  
+So that **the application is production-ready with managed Supabase services.**
 
 **Acceptance Criteria:**
-- [ ] Frontend project connected to Vercel (Production & Preview environments)
-- [ ] Backend/Worker/DB services configured on Railway
-- [ ] Environment variables synced to Vercel and Railway
-- [ ] CI/CD pipeline (GitHub Actions) runs tests on PR
-- [ ] Successful deployment of "Hello World" app to public URL
-- [ ] Frontend can communicate with Backend in production environment
+- [ ] **Vercel Project:** Frontend connected to GitHub repo
+  - Production and Preview environments configured
+  - Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`
+- [ ] **Railway Project:** Two services deployed:
+  - **API Service:** FastAPI backend with Supabase keys, AI API keys
+  - **Worker Service:** Celery worker with same environment
+  - **Redis Service:** Managed Redis for Celery broker
+- [ ] **Supabase Production:** Production Supabase project (separate from dev)
+- [ ] **CORS Configuration:** Backend allows Vercel production domain
+- [ ] **Health Check:** Public URLs accessible:
+  - Frontend: `https://transfer2read.vercel.app`
+  - Backend: `https://transfer-api.railway.app/api/health` → `200 OK`
+- [ ] **Secrets Management:** All API keys stored in Railway secrets (not committed)
+- [ ] **CI/CD:** GitHub Actions runs tests on PR before deployment
 
 **Technical Notes:**
-- Architecture Deployment Section: Vercel (Edge) + Railway (Container)
-- Configure CORS on backend to allow Vercel domain
+- Architecture: Vercel (frontend edge) + Railway (backend containers)
+- **No database deployment** - Supabase is fully managed
+- Railway auto-deploys from `main` branch
 
 **Prerequisites:** Story 1.4
 
@@ -390,96 +438,129 @@ So that **code changes are automatically deployed to production.**
 **User Value:** Users can identify themselves, save their work, and access the platform securely  
 **FR Coverage:** FR1, FR2, FR3, FR4, FR5, FR6, FR7
 
-#### Story 2.1: Backend Authentication System
+#### Story 2.1: Supabase Authentication Setup
 
 **User Story:**
 As a **Developer**,  
-I want **to implement the authentication backend using `fastapi-users`**,  
-So that **the API supports secure registration, login, and token management.**
+I want **to configure Supabase Auth for the backend and frontend**,  
+So that **users can register, log in, and maintain secure sessions.**
 
 **Acceptance Criteria:**
-- [ ] `fastapi-users` installed and configured with SQLAlchemy adapter
-- [ ] User model created with fields: `email`, `hashed_password`, `is_active`, `is_superuser`, `tier` (default: FREE)
-- [ ] JWT authentication transport configured (HttpOnly cookies + Bearer token)
-- [ ] Endpoints exposed: `/auth/register`, `/auth/login`, `/auth/logout`
-- [ ] Password hashing using bcrypt
-- [ ] Protected route decorator (`@current_user`) created and tested
-- [ ] Unit tests for auth flow (register -> login -> access protected route)
+- [ ] **Supabase Auth Providers Enabled:**
+  - Email/Password authentication active in Supabase dashboard
+  - Email confirmation templates configured (welcome email, password reset)
+- [ ] **User Table Extended:** Custom `user_metadata` fields in Supabase:
+  - `tier` (enum: FREE, PRO, PREMIUM, default: FREE)
+  - `created_at`, `updated_at` timestamps
+- [ ] **Row Level Security (RLS) Policies:** Applied to `conversion_jobs` table:
+  - Users can only read/write their own jobs
+  - Policy: `auth.uid() = user_id`
+- [ ] **Backend Auth Middleware:** Dependency created to validate Supabase JWT tokens
+  - Extract `user_id` from JWT for protected routes
+  - Return `401 Unauthorized` if token invalid
+- [ ] **Test Endpoints Created:**
+  - `POST /auth/test-protected` → Returns `user_id` from JWT
+  - Unit tests validate token verification
 
 **Technical Notes:**
-- Architecture: Use `fastapi-users` library
-- Security NFR12: Bcrypt hashing
-- Security NFR13: Session tokens expire (configure JWT lifetime)
+- **Architecture:** Supabase Auth replaces fastapi-users (simpler, managed)
+- **Security NFR12:** Passwords hashed by Supabase (bcrypt)
+- **Security NFR13:** JWT tokens managed by Supabase (configurable expiry)
+- **No password storage** in backend - Supabase handles all auth logic
 
 **Prerequisites:** Story 1.2
 
 ---
 
-#### Story 2.2: Frontend Authentication Pages
+#### Story 2.2: Frontend Supabase Auth UI
 
 **User Story:**
 As a **User**,  
-I want **to sign up and log in using a clean, professional interface**,  
-So that **I can access my account.**
+I want **to sign up and log in using Supabase-powered authentication**,  
+So that **I can securely access my account.**
 
 **Acceptance Criteria:**
-- [ ] Login page created (`/login`) with Email/Password form
-- [ ] Registration page created (`/register`)
-- [ ] Form validation (email format, password length) using Zod + React Hook Form
-- [ ] Error handling (invalid credentials, user already exists) displayed clearly
-- [ ] Successful login redirects to Dashboard
-- [ ] "Forgot Password" link (UI only for now)
-- [ ] Styling matches "Professional Blue" theme (shadcn/ui Card, Input, Button)
+- [ ] **Login Page** (`/login`) created with:
+  - Email and Password input fields (shadcn/ui components)
+  - "Sign In" button triggers `supabase.auth.signInWithPassword()`
+  - Error handling: Display auth errors ("Invalid credentials", "Email not confirmed")
+  - "Forgot Password?" link (UI only for now)
+- [ ] **Registration Page** (`/register`) created with:
+  - Email and Password fields with validation (Zod + React Hook Form)
+  - Password strength indicator
+  - "Sign Up" button triggers `supabase.auth.signUp()`
+  - Success message: "Check your email to confirm your account"
+- [ ] **Auth State Management:**
+  - `useUser` hook created using `@supabase/auth-helpers-nextjs`
+  - Protected routes redirect to `/login` if not authenticated
+  - Successful login redirects to `/dashboard`
+- [ ] **Styling:** Professional Blue theme applied (shadcn/ui Card, Input, Button)
 
 **Technical Notes:**
+- **Supabase Client:** Use `createClientComponentClient()` for auth actions
+- **Email Confirmation:** Required by default (staged rollout can disable)
 - UX Spec: Clean, minimalist forms
-- Use `react-hook-form` for state management
-- Integrate with API endpoints from Story 2.1
 
 **Prerequisites:** Story 1.3, Story 2.1
 
 ---
 
-#### Story 2.3: Social Authentication Integration
+#### Story 2.3: Social Authentication (Google & GitHub)
 
 **User Story:**
 As a **User**,  
-I want **to log in using my Google or GitHub account**,  
+I want **to log in using my Google or GitHub account via Supabase**,  
 So that **I don't have to remember another password.**
 
 **Acceptance Criteria:**
-- [ ] Backend: Google and GitHub OAuth clients configured in `fastapi-users`
-- [ ] Frontend: "Sign in with Google" and "Sign in with GitHub" buttons added to Login/Register pages
-- [ ] OAuth callback route handled correctly
-- [ ] User account created automatically on first social login
-- [ ] Environment variables for OAuth Client IDs/Secrets configured
+- [ ] **Supabase OAuth Providers Configured:**
+  - Google OAuth enabled in Supabase dashboard (Client ID/Secret from Google Cloud)
+  - GitHub OAuth enabled (Client ID/Secret from GitHub Developer Settings)
+- [ ] **Frontend Social Login Buttons:**
+  - "Sign in with Google" and "Sign in with GitHub" buttons on `/login` and `/register`
+  - Buttons trigger `supabase.auth.signInWithOAuth({ provider: 'google' })`
+- [ ] **OAuth Callback Handling:**
+  - Callback route `/auth/callback` handles OAuth redirect
+  - Successful auth redirects to `/dashboard`
+  - User account auto-created with `tier: FREE` on first social login
+- [ ] **User Metadata:** Social logins populate `user_metadata` with provider info
 
 **Technical Notes:**
 - FR2: Social authentication
-- Security NFR15: OAuth 2.0 standards
+- Security NFR15: OAuth 2.0 standards (handled by Supabase)
+- **Redirect URLs:** Configure in Supabase dashboard (e.g., `http://localhost:3000/auth/callback`)
 
 **Prerequisites:** Story 2.1, Story 2.2
 
 ---
 
-#### Story 2.4: User Profile & Password Management
+#### Story 2.4: Password Reset & User Profile
 
 **User Story:**
 As a **User**,  
-I want **to view my profile and reset my password if forgotten**,  
+I want **to reset my forgotten password and view my profile**,  
 So that **I can manage my account security.**
 
 **Acceptance Criteria:**
-- [ ] Backend: `/auth/forgot-password` and `/auth/reset-password` endpoints enabled
-- [ ] Backend: Email sending service configured (can use console/mock for dev)
-- [ ] Frontend: Forgot Password request page
-- [ ] Frontend: Reset Password page (token via URL)
-- [ ] Frontend: User Profile page (`/settings`) displaying email and current tier
-- [ ] Users can change their password from the Settings page
+- [ ] **Forgot Password Flow:**
+  - "Forgot Password" link on `/login` opens `/forgot-password` page
+  - User enters email → Calls `supabase.auth.resetPasswordForEmail()`
+  - Supabase sends password reset email with magic link
+  - User clicks link → Redirected to `/reset-password` with token
+- [ ] **Reset Password Page:**
+  - Form accepts new password (with strength validation)
+  - Submit calls `supabase.auth.updateUser({ password: newPassword })`
+  - Success redirects to `/login` with confirmation message
+- [ ] **User Profile Page** (`/settings`):
+  - Displays user email (read-only)
+  - Displays current tier (FREE/PRO/PREMIUM)
+  - "Change Password" form (for email/password users only)
+  - "Delete Account" button (confirmation dialog)
 
 **Technical Notes:**
 - FR4: Password reset
 - FR5: View profile
+- **Supabase handles email** sending (configure SMTP in dashboard or use default)
 
 **Prerequisites:** Story 2.2
 
@@ -512,51 +593,70 @@ So that **I know what features and limits apply to me.**
 **User Value:** Users can get their PDF files into the system and track past conversions  
 **FR Coverage:** FR8, FR9, FR10, FR11, FR12, FR13, FR14, FR15
 
-#### Story 3.1: S3 Storage Service Implementation
+#### Story 3.1: Supabase Storage Service Implementation
 
 **User Story:**
 As a **Developer**,  
-I want **to implement a storage service wrapper for S3**,  
-So that **the application can securely upload and download user files.**
+I want **to implement file upload/download using Supabase Storage**,  
+So that **users can securely manage PDFs and EPUBs with built-in authentication.**
 
 **Acceptance Criteria:**
-- [ ] `boto3` (or `aioboto3`) installed and configured
-- [ ] Service class created with methods: `upload_file`, `generate_presigned_url`, `delete_file`
-- [ ] S3 Bucket configured via environment variables
-- [ ] Unit tests using `moto` to mock S3 interactions
-- [ ] File naming strategy implemented (UUIDs to prevent collisions)
-- [ ] Lifecycle policy configuration documented (auto-delete after 30 days)
+- [ ] **Supabase Storage Buckets:**
+  - `uploads` bucket configured (private, RLS enabled)
+  - `downloads` bucket configured (private, RLS enabled)
+- [ ] **RLS Policies Created:**
+  - `uploads`: Users can only upload/read files in folder `{user_id}/*`
+  - `downloads`: Users can only read files in folder `{user_id}/*`
+- [ ] **Backend Storage Service** (`backend/app/services/storage/supabase_storage.py`):
+  - `upload_file(bucket, path, file_data)` → Returns public URL
+  - `generate_signed_url(bucket, path, expires_in=3600)` → Returns temp URL
+  - `delete_file(bucket, path)` → Removes file
+- [ ] **File Naming Strategy:** `{user_id}/{job_id}/{filename}` to prevent collisions
+- [ ] **Unit Tests:** Mock Supabase Storage client, test upload/download/delete
+- [ ] **Lifecycle Policy:** Configure auto-delete after 30 days (via Supabase dashboard or SQL trigger)
 
 **Technical Notes:**
-- Architecture: Decouple storage from compute
-- Security NFR10: Encryption at rest (S3 server-side encryption)
-- Security NFR14: Auto-deletion policy
+- **Architecture ADR-002:** Supabase Storage (replaces generic S3)
+- **Security NFR10:** Encryption at rest (Supabase default)
+- **Security NFR14:** Auto-deletion after 30 days
+- **No boto3 needed** - use `supabase.storage` API
 
 **Prerequisites:** Story 1.2
 
 ---
 
-#### Story 3.2: PDF Upload API & Validation
+#### Story 3.2: PDF Upload API with Supabase Integration
 
 **User Story:**
 As a **Developer**,  
-I want **to create an API endpoint for PDF uploads**,  
-So that **users can send files to the server with proper validation.**
+I want **to create an API endpoint for PDF uploads to Supabase Storage**,  
+So that **authenticated users can securely upload files.**
 
 **Acceptance Criteria:**
-- [ ] `POST /api/v1/upload` endpoint created
-- [ ] Input validation: File type MUST be PDF (check magic bytes, not just extension)
-- [ ] File size validation based on user tier (50MB for Free, Unlimited for Pro)
-- [ ] File uploaded to S3 `uploads/` prefix
-- [ ] Database record created in `conversion_jobs` table (Status: UPLOADED)
-- [ ] Response returns `job_id`
+- [ ] `POST /api/v1/upload` endpoint created:
+  - **Authentication Required:** Extract `user_id` from Supabase JWT
+  - **Input Validation:**
+    - File type MUST be PDF (check magic bytes, not just extension)
+    - File size validation based on user tier:
+      - FREE: Max 50MB (FR10)
+      - PRO/PREMIUM: Unlimited (FR11)
+  - **Upload to Supabase Storage:**
+    - Upload to `uploads/{user_id}/{job_id}/input.pdf`
+    - Store file metadata in `conversion_jobs` table (Supabase PostgreSQL)
+  - **Database Record:**
+    - Insert into `conversion_jobs` table: `user_id`, `status: UPLOADED`, `input_path`, `created_at`
+    - Return `{ "job_id": "uuid", "status": "UPLOADED" }`
+- [ ] **Error Handling:**
+  - 400: Invalid file type
+  - 413: File too large for tier
+  - 401: Unauthorized (no valid JWT)
 
 **Technical Notes:**
-- FR12: Validate PDF
-- FR10/11: Size limits
-- Use `python-magic` or similar for mime-type detection
+- FR12: Validate PDF (use `python-magic` for mime-type)
+- FR10/11: Size limits by tier
+- **Supabase RLS** enforces user-specific folder access
 
-**Prerequisites:** Story 3.1, Story 2.1 (for user tier check)
+**Prerequisites:** Story 3.1, Story 2.1
 
 ---
 
@@ -584,24 +684,30 @@ So that **I can easily start the conversion process.**
 
 ---
 
-#### Story 3.4: Conversion History Backend
+#### Story 3.4: Conversion History Backend with Supabase
 
 **User Story:**
 As a **Developer**,  
-I want **to track conversion jobs in the database**,  
-So that **users can view their history and re-download files.**
+I want **to track conversion jobs in Supabase PostgreSQL**,  
+So that **users can view history and re-download files securely.**
 
 **Acceptance Criteria:**
-- [ ] `ConversionJob` model created (User FK, Status, Input/Output S3 Keys, Created At)
-- [ ] `GET /api/v1/jobs` endpoint (List user's jobs, pagination)
-- [ ] `GET /api/v1/jobs/{id}` endpoint (Job details)
-- [ ] `DELETE /api/v1/jobs/{id}` endpoint (Soft delete record, schedule S3 deletion)
-- [ ] `GET /api/v1/jobs/{id}/download` endpoint (Returns S3 presigned URL)
+- [ ] **`conversion_jobs` Table** created in Supabase:
+  - Columns: `id` (UUID), `user_id` (UUID FK to auth.users), `status` (enum), `input_path`, `output_path`, `quality_report` (JSONB), `created_at`, `completed_at`
+  - **RLS Policy:** `SELECT/UPDATE/DELETE` allowed where `auth.uid() = user_id`
+- [ ] **API Endpoints:**
+  - `GET /api/v1/jobs` → List user's jobs (pagination), filters by `user_id` from JWT
+  - `GET /api/v1/jobs/{id}` → Job details (validates ownership via RLS)
+  - `DELETE /api/v1/jobs/{id}` → Soft delete record, schedule Supabase Storage file removal
+  - `GET /api/v1/jobs/{id}/download` → Returns Supabase Storage signed URL (1-hour expiry)
+- [ ] **Supabase RLS Enforcement:** Backend trusts RLS, no manual user_id filtering needed
+- [ ] **Unit Tests:** Validate RLS policies prevent cross-user access
 
 **Technical Notes:**
 - FR13: View history
-- FR14: Re-download
+- FR14: Re-download (signed URLs)
 - FR15: Delete history
+- **Supabase RLS** provides automatic multi-tenancy
 
 **Prerequisites:** Story 3.2
 
@@ -658,89 +764,151 @@ So that **the multi-step conversion process is managed reliably.**
 
 ---
 
-#### Story 4.2: Layout Analysis & OCR Integration
+####Story 4.2: LangChain AI Layout Analysis Integration
 
 **User Story:**
 As a **Developer**,  
-I want **to integrate the `marker` or `surya` library**,  
-So that **I can extract text, tables, and images with layout preservation.**
+I want **to integrate GPT-4o via LangChain for PDF layout analysis**,  
+So that **complex elements (tables, equations, images) are extracted with high fidelity.**
 
 **Acceptance Criteria:**
-- [ ] `marker-pdf` (or chosen engine) integrated into worker environment
-- [ ] PDF processing task extracts Markdown with tables and equations (FR16, FR17, FR19)
-- [ ] Images extracted and saved to temporary storage (FR18)
-- [ ] Multi-column layouts correctly reflowed to single column (FR20)
-- [ ] Performance benchmark: 300-page PDF processed within acceptable limits
+- [ ] **LangChain Document Loader:**
+  - Use `PyPDFLoader` from LangChain to extract text + page images
+  - Extract pages with `pymupdf` for image rendering (GPT-4o vision input)
+- [ ] **GPT-4o Integration** (`backend/app/services/ai/gpt4.py`):
+  - Initialize `ChatOpenAI(model="gpt-4o", temperature=0)`
+  - Prompt: "Analyze this PDF page image. Identify: tables, equations, images, multi-column layouts. Return structured JSON."
+  - Input: Page text + rendered image (base64)
+  - Output: Structured JSON with detected elements and positions
+- [ ] **Claude 3 Haiku Fallback** (`backend/app/services/ai/claude.py`):
+  - Trigger on OpenAI API failure or rate limit
+  - Same prompt structure, faster/cheaper processing
+- [ ] **Detection Output:**
+  - Tables: Count, positions, cell content (FR17)
+  - Images: Count, positions, captions (FR18)
+  - Equations: Count, LaTeX representations (FR19)
+  - Multi-column detection: Flag + reflow instructions (FR20)
+- [ ] **Performance:** 
+  - 300-page PDF analyzed in ~5-15 minutes (API latency)
+  - Parallel processing for non-sequential pages
 
 **Technical Notes:**
+- **Architecture ADR-001:** API-First Intelligence (no local models)
 - FR16-FR25: Core extraction requirements
-- Ensure GPU acceleration is configured if available (or optimized CPU fallback)
+- **Cost Optimization:** Use Claude for simple pages, GPT-4o for complex
+- **Retry Logic:** LangChain built-in exponential backoff
 
 **Prerequisites:** Story 4.1
 
 ---
 
-#### Story 4.3: Structure Recognition & TOC Generation
+#### Story 4.3: AI-Powered Structure Recognition & TOC Generation
 
 **User Story:**
 As a **Developer**,  
-I want **to analyze the extracted content to identify chapters and headers**,  
-So that **the final EPUB has a correct Table of Contents.**
+I want **to use GPT-4o to analyze document structure and generate TOC**,  
+So that **the final EPUB has semantic chapter organization.**
 
 **Acceptance Criteria:**
-- [ ] Algorithm implemented to detect chapter headers (Heuristics + Font size analysis)
-- [ ] Table of Contents (NCX/NavMap) data structure generated (FR27)
-- [ ] Chapter breaks inserted into Markdown stream (FR28)
-- [ ] Hierarchical headers (H1, H2, H3) correctly tagged (FR29)
+- [ ] **Structure Analysis Prompt:**
+  - Input: Full extracted text from PDF (or chunked for large docs)
+  - Prompt: "Analyze this document. Identify: chapter titles, section headers, hierarchy (H1/H2/H3). Return JSON with TOC structure."
+  - GPT-4o returns: `{ "toc": [{ "title": "Chapter 1", "level": 1, "page": 5 }, ...] }`
+- [ ] **TOC Generation:**
+  - Parse AI response to build EPUB NCX/NavMap structure (FR27)
+  - Insert chapter breaks into content (FR28)
+  - Tag hierarchical headers correctly (H1, H2, H3) (FR29)
+- [ ] **Heuristic Fallback:**
+  - If AI fails, use font-size heuristics (larger text = headers)
+  - Detect common patterns: "Chapter X", "Section Y"
+- [ ] **Output:** Structured intermediate format (JSON or enriched Markdown)
 
 **Technical Notes:**
 - FR26: Auto-detect structure
-- Output should be a structured intermediate format (e.g., JSON or enriched Markdown)
+- FR27-FR29: TOC and header tagging
+- **AI Advantage:** Better semantic understanding than pure heuristics
 
 **Prerequisites:** Story 4.2
 
 ---
 
-#### Story 4.4: EPUB Generation Service
+#### Story 4.4: EPUB Generation from AI-Analyzed Content
 
 **User Story:**
 As a **Developer**,  
-I want **to convert the structured Markdown into a valid EPUB file**,  
-So that **users can read the content on their devices.**
+I want **to convert AI-analyzed content into valid EPUB files**,  
+So that **users can read on their e-readers with preserved formatting.**
 
 **Acceptance Criteria:**
-- [ ] `pandoc` or python `ebooklib` integration
-- [ ] Markdown + Images converted to EPUB v3 format
-- [ ] Metadata embedded (Title, Author, Cover Image)
-- [ ] Custom CSS injected for consistent styling (FR22: Fonts)
-- [ ] Validation: Generated EPUB passes `epubcheck`
-- [ ] Output file saved to S3 and Job updated with download URL
+- [ ] **EPUB Generation Library:**
+  - Use Python `ebooklib` for EPUB v3 creation
+  - Alternative: `pandoc` CLI for Markdown → EPUB conversion
+- [ ] **Content Assembly:**
+  - Convert AI-detected elements to EPUB XHTML:
+    - Tables → HTML `<table>` with CSS styling (FR17)
+    - Images → Embedded images with `<img>` tags (FR18)
+    - Equations → MathML or high-quality PNG fallback (FR19)
+    - Multi-column content → Single-column XHTML (FR20)
+- [ ] **Metadata Embedding:**
+  - Title, Author (extracted from PDF or user-provided)
+  - Cover image (first page thumbnail or custom)
+  - AI-generated TOC from Story 4.3
+- [ ] **Font Embedding:**
+  - Embed fonts for special characters (FR22)
+  - Support mixed-language documents (EN, ZH, JP, etc.)
+- [ ] **EPUB Validation:**
+  - Run `epubcheck` to validate EPUB 3.0 spec compliance
+  - Verify file size ≤ 120% of original PDF (FR37)
+- [ ] **Upload to Supabase Storage:**
+  - Save EPUB to `downloads/{user_id}/{job_id}/output.epub`
+  - Update `conversion_jobs` table with `output_path` and status `COMPLETED`
 
 **Technical Notes:**
-- FR36: Reflowable EPUB
-- FR39: Compatibility (Kindle/Apple Books)
-- FR37: File size optimization
+- FR36: Reflowable EPUB generation
+- FR39-FR40: Compatibility with Apple Books, Kindle, Kobo
+- **CSS Styling:** Custom stylesheet for consistent rendering
 
 **Prerequisites:** Story 4.3
 
 ---
 
-#### Story 4.5: Automated Quality Assurance
+#### Story 4.5: AI-Based Quality Assurance & Confidence Scoring
 
 **User Story:**
 As a **Developer**,  
-I want **to run automated quality checks on the generated content**,  
-So that **we can guarantee high fidelity.**
+I want **to calculate quality confidence scores from AI analysis**,  
+So that **users can trust conversion fidelity metrics.**
 
 **Acceptance Criteria:**
-- [ ] Confidence score calculated based on OCR confidence and layout complexity
-- [ ] "Detected Elements" count (Tables, Images, Equations) logged (FR33)
-- [ ] Warning flags generated for potential issues (e.g., "Low confidence on page 45")
-- [ ] Quality report JSON stored with the job
+- [ ] **Confidence Score Calculation:**
+  - Aggregate AI confidence scores from GPT-4o responses
+  - Weight by element complexity:
+    - Simple text: 99% base confidence
+    - Tables: AI confidence on table structure
+    - Equations: AI confidence on LaTeX accuracy
+    - Images: 100% (preserved as-is)
+- [ ] **Detected Elements Count:**
+  - Log: Tables found, Images found, Equations found (FR33)
+  - Store in `quality_report` JSONB field
+- [ ] **Warning Flags:**
+  - Low confidence (<80%) on specific pages → Flag for user review
+  - Example: "Page 45: Table detected but low confidence (72%)"
+- [ ] **Quality Report JSON:**
+  ```json
+  {
+    "overall_confidence": 95,
+    "tables": { "count": 12, "avg_confidence": 93 },
+    "images": { "count": 8 },
+    "equations": { "count": 5, "avg_confidence": 97 },
+    "warnings": ["Page 45: Low table confidence"]
+  }
+  ```
+- [ ] Store quality report in `conversion_jobs.quality_report` (JSONB)
 
 **Technical Notes:**
-- FR24/25: Fidelity targets
-- Used for the "Quality Preview" epic later
+- FR24/25: Fidelity targets (95%+ complex, 99%+ text)
+- **AI Advantage:** Real confidence scores vs. heuristic guesses
+- Used for Epic 5 Quality Preview
 
 **Prerequisites:** Story 4.2
 
@@ -846,23 +1014,33 @@ So that **I can read my book and help improve the system.**
 **User Value:** Free users can try the service, paying users get unlimited access  
 **FR Coverage:** FR41-FR47
 
-#### Story 6.1: Usage Tracking Service
+#### Story 6.1: Usage Tracking with Supabase PostgreSQL
 
 **User Story:**
 As a **Developer**,  
-I want **to track how many conversions each user performs per month**,  
-So that **we can enforce fair usage limits.**
+I want **to track conversion usage per user in Supabase PostgreSQL**,  
+So that **tier limits are enforced fairly.**
 
 **Acceptance Criteria:**
-- [ ] `UserUsage` model created (User FK, Month, Conversion Count)
-- [ ] Service method `increment_usage(user_id)` implemented
-- [ ] Service method `get_usage(user_id)` returns current count and limit
-- [ ] Background job (Celery beat) to reset usage counts on 1st of month (or rolling window)
-- [ ] Unit tests for increment logic and reset logic
+- [ ] **`user_usage` Table** created in Supabase:
+  - Columns: `user_id` (UUID FK), `month` (DATE), `conversion_count` (INT), `updated_at`
+  - **RLS Policy:** Users can only read their own usage stats
+- [ ] **Backend Service** (`backend/app/services/usage_tracker.py`):
+  - `increment_usage(user_id)` → Increments count for current month
+  - `get_usage(user_id)` → Returns current count and tier limit
+  - Atomic increment using Supabase RPC or PostgreSQL function
+- [ ] **Monthly Reset:**
+  - Scheduled job (Celery Beat or Supabase pg_cron) resets counts on 1st of month
+  - Alternative: Rolling 30-day window
+- [ ] **Caching:**
+  - Cache current user usage in Redis for fast lookups
+  - Sync to Supabase PostgreSQL for persistence
+- [ ] **Unit Tests:** Validate increment logic and reset behavior
 
 **Technical Notes:**
 - FR45: Track conversion count
-- Store in Redis for fast access, sync to DB for persistence
+- **Supabase PostgreSQL** provides ACID guarantees
+- Redis caching reduces database hits during upload
 
 **Prerequisites:** Story 1.2, Story 2.1
 
@@ -947,22 +1125,38 @@ So that **I can monitor the health of the application.**
 | **6. Usage Tiers** | 4 | Low | Limit Enforcement, Admin |
 | **Total** | **28 Stories** | | **Full MVP** |
 
-### Validation Checklist
+### Validation Summary (Updated 2025-12-01)
 
 - ✅ **FR Coverage:** All 47 FRs are mapped to specific stories.
-- ✅ **Architecture Alignment:**
-    - Stack: Next.js + FastAPI + Celery + Redis + Postgres (Confirmed in Epics 1, 4)
-    - Auth: `fastapi-users` (Confirmed in Epic 2)
-    - Storage: S3 (Confirmed in Epic 3)
-    - AI: `marker`/`surya` (Confirmed in Epic 4)
+- ✅ **Architecture Alignment (NEW):**
+    - **Frontend:** Next.js 15.0.3 + shadcn/ui + **Supabase JS Client 2.46.1**
+    - **Backend:** FastAPI 0.122.0 + **Supabase Python Client 2.24.0** + **LangChain 0.3.12**
+    - **AI:** **GPT-4o (OpenAI)** + **Claude 3 Haiku (Anthropic)** via LangChain (API-based)
+    - **Database/Auth/Storage:** **Supabase** (managed PostgreSQL + Auth + File Storage)
+    - **Queue:** Celery 5.5.3 + Redis 8.4.0
+    - **Deployment:** **Vercel** (frontend) + **Railway** (backend + workers)
 - ✅ **UX Alignment:**
-    - "Professional Blue" theme (Epic 1)
+    - "Professional Blue" theme (Epic 1, Story 1.3)
     - "Pre-Download Quality Verification" pattern (Epic 5)
     - Drag-and-drop Upload (Epic 3)
 - ✅ **Story Quality:**
     - All stories have BDD Acceptance Criteria
-    - All stories have Technical Notes
+    - All stories updated with Supabase and API-based AI implementation details
     - All stories have Prerequisites defined
+    - **NEW:** Specific version numbers and library references (LangChain, Supabase clients)
+
+**Architecture Changes Summary:**
+
+| Component | Old (2025-11-27) | New (2025-12-01) |
+|-----------|------------------|------------------|
+| **Project Init** | Vintasoftware starter template | Built from scratch |
+| **Database** | Self-managed PostgreSQL + Alembic | Supabase PostgreSQL (managed) |
+| **Auth** | fastapi-users library | Supabase Auth (managed) |
+| **Storage** | Generic S3 (boto3) | Supabase Storage with RLS |
+| **AI Processing** | PyTorch local models (marker/surya) | LangChain + GPT-4o + Claude 3 Haiku (API) |
+| **Deployment** | Vercel + Railway (DB in Railway) | Vercel + Railway + Supabase (managed) |
+
+**Impact:** All 28 stories enhanced with specific Supabase and API-based AI implementation guidance.
 
 ### Next Steps
 
