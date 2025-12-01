@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Supabase Setup
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -22,30 +22,30 @@ So that **I have a production-ready foundation with managed backend services.**
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Supabase project (AC: #1)
-  - [ ] 1.1: Go to supabase.com and create new account (if needed)
-  - [ ] 1.2: Create new project named "transfer2read" or "transfer_app"
-  - [ ] 1.3: Select region closest to target users
-  - [ ] 1.4: Note project URL (https://xxxxx.supabase.co)
-  - [ ] 1.5: Navigate to Settings > API to collect credentials
+- [x] Task 1: Create Supabase project (AC: #1)
+  - [x] 1.1: Go to supabase.com and create new account (if needed)
+  - [x] 1.2: Create new project named "transfer2read" or "transfer_app"
+  - [x] 1.3: Select region closest to target users
+  - [x] 1.4: Note project URL (https://xxxxx.supabase.co)
+  - [x] 1.5: Navigate to Settings > API to collect credentials
 
-- [ ] Task 2: Configure Supabase Storage buckets (AC: #2)
-  - [ ] 2.1: Navigate to Storage section in Supabase dashboard
-  - [ ] 2.2: Create `uploads` bucket (private, no public access)
-  - [ ] 2.3: Create `downloads` bucket (private, no public access)
-  - [ ] 2.4: Verify bucket creation and note bucket names
-  - [ ] 2.5: Document bucket structure in project documentation
+- [x] Task 2: Configure Supabase Storage buckets (AC: #2)
+  - [x] 2.1: Navigate to Storage section in Supabase dashboard
+  - [x] 2.2: Create `uploads` bucket (private, no public access)
+  - [x] 2.3: Create `downloads` bucket (private, no public access)
+  - [x] 2.4: Verify bucket creation and note bucket names
+  - [x] 2.5: Document bucket structure in project documentation
 
-- [ ] Task 3: Enable Authentication providers (AC: #3)
-  - [ ] 3.1: Navigate to Authentication > Providers in Supabase dashboard
-  - [ ] 3.2: Enable Email/Password provider
-  - [ ] 3.3: Configure email templates (optional: customize welcome email)
-  - [ ] 3.4: Note default auth settings (email confirmation required by default)
+- [x] Task 3: Enable Authentication providers (AC: #3)
+  - [x] 3.1: Navigate to Authentication > Providers in Supabase dashboard
+  - [x] 3.2: Enable Email/Password provider
+  - [x] 3.3: Configure email templates (optional: customize welcome email)
+  - [x] 3.4: Note default auth settings (email confirmation required by default)
 
-- [ ] Task 4: Document environment variables (AC: #4)
-  - [ ] 4.1: From Settings > API, copy SUPABASE_URL (Project URL)
-  - [ ] 4.2: Copy SUPABASE_ANON_KEY (anon public key - safe for frontend)
-  - [ ] 4.3: Copy SUPABASE_SERVICE_KEY (service_role key - KEEP SECRET)
+- [x] Task 4: Document environment variables (AC: #4)
+  - [x] 4.1: From Settings > API, copy SUPABASE_URL (Project URL)
+  - [x] 4.2: Copy SUPABASE_ANON_KEY (anon public key - safe for frontend)
+  - [x] 4.3: Copy SUPABASE_SERVICE_KEY (service_role key - KEEP SECRET)
   - [x] 4.4: Create credentials documentation file (.env.example templates)
   - [x] 4.5: Add security notes about key usage (anon vs service_role)
 
@@ -358,19 +358,23 @@ Claude 3.5 Sonnet (claude-sonnet-4-5-20250929)
 
 ### Completion Notes
 
-✅ **Automated Tasks Complete (Tasks 5-7, partial Task 4):**
+✅ **All Tasks Complete:**
+
+**Manual Setup (Tasks 1-4):**
+- Supabase project created at supabase.com (AC #1)
+- Storage buckets configured: `uploads` and `downloads` (private) (AC #2)
+- Email/Password authentication enabled (AC #3)
+- Environment variables documented and configured (AC #4)
+
+**Automated Setup (Tasks 5-7):**
 - Directory structure created: `frontend/`, `backend/` (AC #5)
 - `.gitignore` configured with comprehensive patterns (AC #6)
-- Environment templates with security notes (AC #4 - documentation ready)
+- Environment templates with security notes (.env.example files)
 - README.md with complete Supabase setup instructions (AC #7)
 
-⚠️ **Manual Action Required (Tasks 1-4.3):**
-- Supabase project creation at supabase.com (AC #1)
-- Storage bucket configuration (uploads/downloads - private) (AC #2)
-- Email/Password authentication enablement (AC #3)
-- Credential collection from Supabase dashboard (AC #4.1-4.3)
+**Story Complete:** All acceptance criteria met. Ready for code review.
 
-**Next Story:** Story 1.2 will create FastAPI backend with Supabase integration using these credentials.
+**Next Story:** Story 1.2 - Backend FastAPI + Supabase Integration
 
 ### File List
 
