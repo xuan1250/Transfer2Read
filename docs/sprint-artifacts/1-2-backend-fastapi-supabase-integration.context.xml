@@ -3,7 +3,7 @@
     <epicId>1</epicId>
     <storyId>2</storyId>
     <title>Backend FastAPI &amp; Supabase Integration</title>
-    <status>drafted</status>
+    <status>done</status>
     <generatedAt>2025-12-01</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/sprint-artifacts/1-2-backend-fastapi-supabase-integration.md</sourceStoryPath>
