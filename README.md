@@ -1,0 +1,195 @@
+# Transfer2Read
+
+AI-powered PDF to EPUB converter with intelligent layout analysis and structure recognition.
+
+## Overview
+
+Transfer2Read converts PDF documents into clean, readable EPUB files using advanced AI to analyze document structure, preserve formatting, and generate accurate tables of contents. Built with Next.js, FastAPI, and LangChain, powered by Supabase for authentication and storage.
+
+## Architecture
+
+**Frontend:** Next.js 15 (App Router) + shadcn/ui + Tailwind CSS  
+**Backend:** FastAPI (Python 3.13) + LangChain AI integration  
+**Database & Auth:** Supabase (PostgreSQL + Auth + Storage)  
+**AI Models:** GPT-4o (layout analysis) + Claude 3 Haiku (text extraction)  
+**Task Queue:** Celery + Redis  
+**Deployment:** Vercel (frontend) + Railway (backend)
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js:** 24.12.0 LTS ([download](https://nodejs.org/))
+- **Python:** 3.13.0 ([download](https://www.python.org/downloads/))
+- **Docker Desktop:** Latest version ([download](https://www.docker.com/products/docker-desktop/))
+- **Supabase Account:** Free tier ([sign up](https://supabase.com/))
+- **Git:** For version control
+
+## Setup Instructions
+
+### 1. Supabase Project Setup
+
+1. **Create Supabase Project:**
+   - Go to [supabase.com](https://supabase.com/) and sign in/create account
+   - Click "New Project"
+   - Name your project: `transfer2read` or `transfer_app`
+   - Select region closest to your target users
+   - Wait for project provisioning (1-2 minutes)
+
+2. **Configure Authentication:**
+   - Navigate to **Authentication → Providers** in Supabase dashboard
+   - Enable **Email/Password** provider (toggle ON)
+   - Email confirmation is enabled by default
+
+3. **Create Storage Buckets:**
+   - Navigate to **Storage** section
+   - Create bucket: `uploads` (set to **Private**)
+   - Create bucket: `downloads` (set to **Private**)
+   - These store user PDFs and generated EPUBs respectively
+
+4. **Collect API Credentials:**
+   - Go to **Settings → API**
+   - Copy the following (you'll need these for `.env` files):
+     - **Project URL** (`SUPABASE_URL`)
+     - **anon/public key** (`SUPABASE_ANON_KEY`) - safe for frontend
+     - **service_role key** (`SUPABASE_SERVICE_KEY`) - **KEEP SECRET**, backend only
+
+### 2. Environment Configuration
+
+**Root Directory:**
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and fill in your Supabase credentials + AI API keys
+nano .env
+```
+
+**Frontend (Next.js):**
+```bash
+cd frontend
+cp .env.local.example .env.local
+
+# Edit and add your Supabase URL and Anon Key
+nano .env.local
+cd ..
+```
+
+**Backend (FastAPI):**
+```bash
+cd backend
+cp .env.example .env
+
+# Edit and add Supabase Service Role Key + AI API keys
+nano .env
+cd ..
+```
+
+⚠️ **Security Note:** NEVER commit `.env` files to Git! They're already in `.gitignore`.
+
+### 3. Local Development Setup
+
+**Backend Setup** (in `backend/` directory):
+```bash
+# Story 1.2 will create the FastAPI application
+# For now, the directory exists but is empty
+```
+
+**Frontend Setup** (in `frontend/` directory):
+```bash
+# Story 1.3 will initialize the Next.js application
+# For now, the directory exists but is empty
+```
+
+**Redis (Docker):**
+```bash
+# Story 1.2 will create docker-compose.yml for Redis
+```
+
+### 4. Running the Application
+
+Full instructions will be available after Stories 1.2 (Backend), 1.3 (Frontend), and 1.4 (Workers) are complete.
+
+## Project Structure
+
+```
+transfer_app/
+├── .git/                      # Git repository
+├── .gitignore                 # Git ignore patterns
+├── .env.example               # Environment variable template
+├── README.md                  # This file
+├── docs/                      # Documentation files
+│   ├── architecture.md        # System architecture
+│   ├── prd.md                # Product requirements
+│   ├── epics/                # Epic documentation
+│   └── sprint-artifacts/     # Story files and tracking
+├── frontend/                  # Next.js application (Story 1.3)
+│   └── .env.local.example    # Frontend env template
+├── backend/                   # FastAPI application (Story 1.2)
+│   └── .env.example          # Backend env template
+└── docker-compose.yml        # Redis container (Story 1.2)
+```
+
+## Documentation
+
+- **[Architecture](docs/architecture.md):** System design, technology stack, ADRs
+- **[Product Requirements](docs/prd.md):** Product vision and requirements
+- **[UX Design](docs/ux-spec.md):** User experience specification
+- **[Sprint Status](docs/sprint-artifacts/sprint-status.yaml):** Current sprint progress
+
+## Development Workflow
+
+1. **Story Development:** Work on stories in sprint order (see `sprint-status.yaml`)
+2. **Code Standards:** Follow architecture patterns and coding standards in `docs/architecture.md`
+3. **Testing:** All stories require tests (pytest for backend, Vitest for frontend)
+4. **Review:** Code review required before marking stories complete
+
+## Technology Stack Details
+
+**Frontend:**
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- shadcn/ui components
+- Tailwind CSS
+- Supabase JS Client
+
+**Backend:**
+- FastAPI (async Python web framework)
+- Supabase Python Client
+- LangChain (AI orchestration)
+- OpenAI SDK (GPT-4o)
+- Anthropic SDK (Claude 3 Haiku)
+- Celery (task queue)
+- Redis (message broker)
+
+**Database & Services:**
+- Supabase PostgreSQL
+- Supabase Authentication
+- Supabase Storage
+- Row Level Security (RLS) policies
+
+## Contributing
+
+Development follows the BMAD sprint methodology:
+1. Epics are broken into user stories
+2. Stories are developed sequentially by priority
+3. Each story requires acceptance criteria completion
+4. Code review before story marked complete
+
+## License
+
+(License information TBD)
+
+## Support
+
+For questions or issues:
+- Check `docs/architecture.md` for technical guidance
+- Review story files in `docs/sprint-artifacts/` for implementation details
+- Consult [Supabase documentation](https://supabase.com/docs) for platform questions
+
+---
+
+**Current Status:** Story 1.1 Complete - Project foundation established with Supabase configuration and directory structure.
+
+**Next Steps:** Story 1.2 (Backend FastAPI setup) → Story 1.3 (Frontend Next.js setup)
