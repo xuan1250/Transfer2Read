@@ -41,3 +41,7 @@ async def root():
 # Register health check routes
 from app.api.health import router as health_router
 app.include_router(health_router, prefix="/api", tags=["health"])
+
+# Register test AI routes
+from app.api.v1.test_ai import router as test_ai_router
+app.include_router(test_ai_router, prefix="/api/v1", tags=["test-ai"])

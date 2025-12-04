@@ -1,0 +1,240 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.4</storyId>
+    <title>Celery Worker &amp; AI SDK Setup</title>
+    <status>done</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-4-celery-worker-ai-sdk-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to configure Celery workers with LangChain AI libraries</iWant>
+    <soThat>long-running AI-powered conversions can be processed asynchronously</soThat>
+    <tasks>
+      - Task 1: Install Celery and dependencies (Celery 5.5.3, LangChain 0.3.12, OpenAI/Anthropic integrations, PyMuPDF, ebooklib)
+      - Task 2: Configure Celery application (broker URL, result backend, task serialization, autodiscovery)
+      - Task 3: Create Celery worker entrypoint (worker.py with startup logging)
+      - Task 4: Configure AI API credentials (OpenAI and Anthropic keys in .env and config.py)
+      - Task 5: Implement test AI task (test_ai_connection with GPT-4o and Claude 3 Haiku fallback)
+      - Task 6: Create API endpoint to trigger test task (POST /api/v1/test-ai and GET /api/v1/test-ai/{task_id})
+      - Task 7: Update Docker Compose for worker service (shares backend code, mounts API keys)
+      - Task 8: Integration testing and verification (worker startup, AI connectivity, task execution)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Celery 5.5.3 installed with Redis backend
+    2. LangChain 0.3.12 installed with OpenAI (langchain-openai==0.2.9) and Anthropic (langchain-anthropic==0.2.5) integrations
+    3. PDF Processing libraries installed: pymupdf==1.24.10, ebooklib
+    4. Celery app configured in backend/app/core/celery_app.py with Redis broker, JSON serialization, task tracking
+    5. Worker entrypoint backend/app/worker.py created with LangChain initialization logging
+    6. Docker Compose worker service added (shares backend code, mounts all environment variables including AI API keys)
+    7. Test task implemented: API → Worker → AI call → Response (with task status tracking)
+    8. Worker logs show LangChain initialization and API connectivity confirmation
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-001: API-First Intelligence Architecture</section>
+        <snippet>Decision to use cloud-based LLM APIs (GPT-4o, Claude 3) via LangChain instead of self-hosted PyTorch models. Rationale: Speed to market, state-of-the-art quality, no GPU infrastructure, pay-per-use cost model.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-003: Async Processing with Celery</section>
+        <snippet>PDF conversion with LLM API calls is time-consuming (2-5+ seconds per page). Celery provides robust retries, scheduling, and worker management. Redis as broker provides fast, reliable message passing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>AI Model Specification</section>
+        <snippet>Primary: GPT-4o (multimodal, ~$2.50-$10/1M tokens, ~2-5s per page). Fallback: Claude 3 Haiku (~$0.25-$1.25/1M tokens, ~1-3s per page). LangChain orchestrates document loaders, text splitters, chains, and retry logic.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Failure Handling</section>
+        <snippet>Celery: Max 3 retries with exponential backoff (1min, 5min, 15min), 15 minute timeout. API failures: OpenAI error → automatic Claude fallback. Both fail → retry 3x with exponential backoff. Rate limit → delay based on retry-after header.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Technology Stack</section>
+        <snippet>Celery 5.5.3, Redis 8.4.0, LangChain 0.3.12, langchain-openai 0.2.9, langchain-anthropic 0.2.5, PyMuPDF 1.24.10, ebooklib, Python 3.13.0 (or compatible 3.12+).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics</title>
+        <section>Epic 1, Story 1.4: Celery Worker &amp; AI SDK Setup</section>
+        <snippet>Configure Celery workers with LangChain for async AI-powered conversions. Prerequisites: Story 1.2 (FastAPI + Redis). Technical Notes: No PyTorch/GPU dependencies, all AI via OpenAI/Anthropic APIs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/1-3-frontend-nextjs-supabase-client-setup.md</path>
+        <title>Story 1.3 Completion</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Backend API at localhost:8000, Redis running via docker-compose, Python 3.12.9 used (consistency), Pydantic Settings for config, .env.example with placeholders only. Health check endpoint can be extended for Celery worker status.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>configuration</kind>
+        <symbol>Settings</symbol>
+        <lines>12-42</lines>
+        <reason>Existing Pydantic Settings class. MUST extend with OPENAI_API_KEY and ANTHROPIC_API_KEY (already defined as Optional fields). Follow this pattern for type-safe config validation.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/main.py</path>
+        <kind>application</kind>
+        <symbol>app</symbol>
+        <lines>9-43</lines>
+        <reason>FastAPI app instance. Register test AI endpoints here using app.include_router() pattern (see health_router example on line 42-43).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/requirements.txt</path>
+        <kind>dependencies</kind>
+        <symbol>N/A</symbol>
+        <lines>17-18</lines>
+        <reason>Celery 5.5.3 already listed. ADD: langchain==0.3.12, langchain-openai==0.2.9, langchain-anthropic==0.2.5, pymupdf==1.24.10, ebooklib to this file.</reason>
+      </artifact>
+      <artifact>
+        <path>docker-compose.yml</path>
+        <kind>infrastructure</kind>
+        <symbol>redis</symbol>
+        <lines>4-17</lines>
+        <reason>Redis service already configured on port 6379. ADD worker service that shares backend code, uses same Redis broker, mounts AI API keys from environment.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/health.py</path>
+        <kind>controller</kind>
+        <symbol>health_check</symbol>
+        <lines>N/A</lines>
+        <reason>Health check endpoint pattern. Create similar test_ai.py endpoint with POST and GET routes for task dispatch and status checking.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/supabase.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client</symbol>
+        <lines>N/A</lines>
+        <reason>Supabase client initialization pattern. Reference for creating langchain AI client initialization functions in new ai_tasks.py module.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <!-- Existing dependencies from requirements.txt -->
+        <package name="fastapi" version="0.122.0"/>
+        <package name="uvicorn[standard]" version="0.30.0"/>
+        <package name="pydantic" version=">=2.11.7,&lt;3.0.0"/>
+        <package name="pydantic-settings" version="2.4.0"/>
+        <package name="supabase" version="2.24.0"/>
+        <package name="sqlalchemy" version="2.0.36"/>
+        <package name="asyncpg" version="0.29.0"/>
+        <package name="redis" version="5.0.1"/>
+        <package name="celery" version="5.5.3"/>
+        <package name="boto3" version="1.36.0"/>
+        <package name="python-dotenv" version="1.0.0"/>
+        <package name="python-multipart" version="0.0.9"/>
+        <package name="structlog" version="24.1.0"/>
+        
+        <!-- NEW dependencies to add in Story 1.4 -->
+        <package name="langchain" version="0.3.12" status="TO_ADD"/>
+        <package name="langchain-openai" version="0.2.9" status="TO_ADD"/>
+        <package name="langchain-anthropic" version="0.2.5" status="TO_ADD"/>
+        <package name="pymupdf" version="1.24.10" status="TO_ADD"/>
+        <package name="ebooklib" version="latest" status="TO_ADD"/>
+      </python>
+      <docker>
+        <service name="redis" image="redis:8.4.0-alpine" status="EXISTING"/>
+        <service name="worker" image="backend" status="TO_ADD" description="Celery worker service sharing backend code"/>
+      </docker>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Python Version: Use Python 3.12.9 for consistency with Story 1.2 backend (acceptable variance from Architecture 3.13.0)</constraint>
+    <constraint>Configuration Pattern: Use Pydantic Settings class for all config values (follow backend/app/core/config.py pattern)</constraint>
+    <constraint>Security: NEVER commit real API keys to .env.example (use placeholder values only)</constraint>
+    <constraint>Celery Settings: Task serializer MUST be 'json', accept_content=['json'], result_serializer='json', timezone='UTC'</constraint>
+    <constraint>Timeout Configuration: Set task_time_limit=900 (15 minutes), task_soft_time_limit=840 (14 minutes warning)</constraint>
+    <constraint>Task Tracking: Enable task_track_started=True for progress tracking in future stories</constraint>
+    <constraint>Retry Logic: Max 3 retries with exponential backoff (1min, 5min, 15min) for API failures</constraint>
+    <constraint>Logging: Use structlog for structured logging (already configured in backend)</constraint>
+    <constraint>Error Handling: OpenAI API failure → automatic Claude 3 Haiku fallback, both fail → retry with exponential backoff</constraint>
+    <constraint>Naming Conventions: snake_case for Python files, functions. PascalCase for classes. Follow Architecture Section: Implementation Patterns</constraint>
+    <constraint>No Deprecated Patterns: Avoid datetime.utcnow() (use datetime.now(timezone.utc)) and Pydantic V1 Config (use model_config as in config.py)</constraint>
+    <constraint>Docker Environment: Worker service MUST mount all backend environment variables (Supabase, Redis, OpenAI, Anthropic keys)</constraint>
+    <constraint>Cost Optimization: Test tasks should use minimal tokens to avoid API costs during development</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Celery App</name>
+      <kind>task_queue</kind>
+      <signature>celery_app = Celery("transfer2read", broker=settings.REDIS_URL, backend=settings.REDIS_URL, include=['app.tasks.ai_tasks'])</signature>
+      <path>backend/app/core/celery_app.py</path>
+      <description>Celery application instance with Redis broker and result backend. Import in worker.py and task modules.</description>
+    </interface>
+    <interface>
+      <name>Test AI Task</name>
+      <kind>celery_task</kind>
+      <signature>@celery_app.task(bind=True, max_retries=3) def test_ai_connection(self, provider="openai")</signature>
+      <path>backend/app/tasks/ai_tasks.py</path>
+      <description>Celery task to test AI connectivity. Accepts provider parameter ("openai" or "anthropic"). Returns {"status": "success", "response": "AI response text"}.</description>
+    </interface>
+    <interface>
+      <name>POST /api/v1/test-ai</name>
+      <kind>REST_endpoint</kind>
+      <signature>POST /api/v1/test-ai (body: {"provider": "openai" | "anthropic"}) → {"task_id": "uuid", "status": "PENDING"}</signature>
+      <path>backend/app/api/v1/test_ai.py</path>
+      <description>Dispatch test AI task to Celery worker. Returns task ID for status polling.</description>
+    </interface>
+    <interface>
+      <name>GET /api/v1/test-ai/{task_id}</name>
+      <kind>REST_endpoint</kind>
+      <signature>GET /api/v1/test-ai/{task_id} → {"status": "PENDING|SUCCESS|FAILURE", "result": {...}}</signature>
+      <path>backend/app/api/v1/test_ai.py</path>
+      <description>Check Celery task status using AsyncResult. Returns task state and result/error.</description>
+    </interface>
+    <interface>
+      <name>Settings.OPENAI_API_KEY</name>
+      <kind>configuration</kind>
+      <signature>OPENAI_API_KEY: Optional[str] = None</signature>
+      <path>backend/app/core/config.py</path>
+      <description>OpenAI API key for GPT-4o access. Load from environment variable. Used in LangChain ChatOpenAI initialization.</description>
+    </interface>
+    <interface>
+      <name>Settings.ANTHROPIC_API_KEY</name>
+      <kind>configuration</kind>
+      <signature>ANTHROPIC_API_KEY: Optional[str] = None</signature>
+      <path>backend/app/core/config.py</path>
+      <description>Anthropic API key for Claude 3 Haiku access. Load from environment variable. Used in LangChain ChatAnthropic initialization.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend testing uses pytest 8.3.0 with pytest-asyncio 0.21.2 for async tests. Tests are organized in tests/ directory with unit/ and integration/ subdirectories. Use FastAPI TestClient for integration tests. Mock external services (Celery, AI APIs) using app.dependency_overrides. Coverage target: 80% minimum. Follow patterns from tests/integration/test_health.py for API endpoint testing.
+    </standards>
+    <locations>
+      <location>backend/tests/integration/</location>
+      <location>backend/tests/unit/</location>
+      <location>backend/tests/conftest.py (shared fixtures)</location>
+    </locations>
+    <ideas>
+      <test ac="1,2,3" description="Unit test: Verify Celery and LangChain packages import successfully without errors"/>
+      <test ac="4" description="Unit test: Validate Celery app configuration (broker URL, result backend, task serialization settings)"/>
+      <test ac="5" description="Unit test: Test worker.py imports and startup logging without actually starting worker"/>
+      <test ac="7" description="Integration test: Mock AI API responses, dispatch test task via POST /api/v1/test-ai, verify task ID returned"/>
+      <test ac="7" description="Integration test: Mock Celery AsyncResult, test GET /api/v1/test-ai/{task_id} status endpoint"/>
+      <test ac="8" description="Integration test (manual): Start worker with real API keys, verify LangChain initialization logs"/>
+      <test ac="7" description="Integration test: Test OpenAI failure → Claude fallback behavior using mocked API errors"/>
+      <test ac="6" description="Integration test (manual): docker-compose up worker, verify worker service starts and connects to Redis"/>
+    </ideas>
+  </tests>
+</story-context>

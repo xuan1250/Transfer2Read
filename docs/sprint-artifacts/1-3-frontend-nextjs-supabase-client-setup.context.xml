@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>Frontend Next.js & Supabase Client Setup</title>
+    <status>done</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-3-frontend-nextjs-supabase-client-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to set up Next.js 15 with Supabase JS client and shadcn/ui</iWant>
+    <soThat>I can build authenticated UI with the Professional Blue theme</soThat>
+    <tasks>
+      - Initialize Next.js 15 with TypeScript and App Router (7 subtasks)
+      - Install and configure Supabase JS client (7 subtasks)
+      - Configure environment variables (6 subtasks)
+      - Initialize and configure shadcn/ui (6 subtasks)
+      - Configure Professional Blue theme in Tailwind (7 subtasks)
+      - Create basic layout with TopBar (7 subtasks)
+      - Integration testing and verification (7 subtasks)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Next.js 15.0.3 initialized with TypeScript, Tailwind CSS, App Router</criterion>
+    <criterion id="AC2">Supabase JS Client 2.46.1 installed: @supabase/supabase-js, @supabase/auth-helpers-nextjs</criterion>
+    <criterion id="AC3">shadcn/ui initialized (npx shadcn-ui@latest init)</criterion>
+    <criterion id="AC4">Professional Blue theme configured in tailwind.config.ts with Primary (#2563eb), Secondary (#64748b), Accent (#0ea5e9), Success (#10b981), Warning (#f59e0b), Error (#ef4444)</criterion>
+    <criterion id="AC5">Supabase client initialized in src/lib/supabase.ts (server and browser clients)</criterion>
+    <criterion id="AC6">Frontend .env.local configured with NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL=http://localhost:8000</criterion>
+    <criterion id="AC7">System fonts configured (UX Spec Section 4.2)</criterion>
+    <criterion id="AC8">Basic layout with TopBar renders on / route</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Transfer2Read - Product Requirements Document</title>
+        <section>User Experience Principles</section>
+        <snippet>Interface should feel Professional yet approachable, Clean and uncluttered, with confidence-building elements. Radical Simplicity, Transparency Through Feedback, and Trust Through Preview are core UX principles.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Transfer2Read - Product Requirements Document</title>
+        <section>Web Application Specific Requirements</section>
+        <snippet>SPA architecture for fluid, responsive user experience. Browser compatibility: Chrome, Firefox, Safari, Edge (latest 2 versions). Performance targets: Initial page load < 2 seconds on 3G, Time to interactive < 3 seconds.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Transfer2Read - Product Requirements Document</title>
+        <section>Accessibility Standards</section>
+        <snippet>WCAG 2.1 Level AA Compliance required. Keyboard navigation for all core functions, screen reader compatibility, sufficient color contrast ratios (4.5:1 minimum), focus indicators for interactive elements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Project Initialization - Frontend Setup</section>
+        <snippet>Next.js 15 with TypeScript, built from scratch using create-next-app@15.0.3. Supabase JS Client 2.46.1 for frontend auth and data access. Use @supabase/auth-helpers-nextjs for App Router integration. No starter template - full control over architecture.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Technology Stack - Frontend</section>
+        <snippet>Language: TypeScript 5.x. Styling: Tailwind CSS 3.x. UI Library: shadcn/ui (Radix UI based, copy-paste model for full customization). ORM: N/A (Supabase handles database). Testing: Vitest 2.x.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Project Structure - Frontend</section>
+        <snippet>frontend/src/app/ (App Router pages & layouts), src/components/ui/ (shadcn/ui primitives), src/components/business/ (domain components), src/lib/supabase.ts (client initialization), src/lib/api-client.ts (backend API client).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Integration Points - Frontend to Supabase</section>
+        <snippet>Supabase JS client for auth, real-time data, and storage. Frontend uses SUPABASE_ANON_KEY (safe to expose, respects Row Level Security). Three client variants: createClientComponentClient(), createServerComponentClient(), createRouteHandlerClient().</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>Frontend uses Supabase anon key for client-side operations (respects RLS policies). Built-in auth with email/password and social logins. Real-time capabilities for live job status updates (future enhancement). Managed infrastructure with automatic backups.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Transfer2Read UX Design Specification</title>
+        <section>Section 2.1 - Design System Choice</section>
+        <snippet>Decision: shadcn/ui (Radix UI + Tailwind CSS). Copy-paste approach gives full ownership for customization. Accessibility built-in (WCAG compliance, keyboard navigation, screen reader support). Seamless Next.js 15 App Router integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Transfer2Read UX Design Specification</title>
+        <section>Section 4.1 - Color System Professional Blue</section>
+        <snippet>Theme: Trustworthy, Confident, Technical Excellence. Primary: Blue 600 (#2563eb) for main CTAs, active states. Secondary: Slate 600 (#64748b) for secondary actions. Accent: Sky 500 (#0ea5e9) for links, highlights. Success: Green 500 (#10b981), Warning: Amber 500 (#f59e0b), Error: Red 500 (#ef4444). Neutral grayscale: White (#ffffff), Gray 50 (#f9fafb), Gray 200 (#e5e7eb), Slate 900 (#0f172a) for text.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Transfer2Read UX Design Specification</title>
+        <section>Section 4.2 - Typography System</section>
+        <snippet>System fonts: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif. Rationale: Fast loading, native feel, excellent cross-platform rendering. Type scale: H1 (40px, Bold), H2 (32px, Semibold), Body (16px, Regular), Body Small (14px).</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Transfer2Read UX Design Specification</title>
+        <section>Section 7.2 - TopBar Component</section>
+        <snippet>Component: Header with border-b, white background. Container: mx-auto px-4 h-16, flex items-center justify-between. Brand: text-xl font-semibold text-primary "Transfer2Read". Navigation: Button variants (ghost) for History, Settings.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Transfer2Read - Epic and Story Breakdown</title>
+        <section>Epic 1, Story 1.3 - Frontend Next.js & Supabase Client Setup</section>
+        <snippet>Set up Next.js 15 with Supabase JS client, shadcn/ui, and Professional Blue theme. Prerequisites: Story 1.1 (Supabase project), Story 1.2 (Backend API). Enables authenticated UI development with design system foundation.</snippet>
+      </doc>
+    </docs>
+    
+    <code>
+      <artifact>
+        <path>backend/app/core/supabase.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client</symbol>
+        <lines>11-28</lines>
+        <reason>Backend Supabase client implementation - reference pattern for frontend client setup. Frontend will use similar pattern but with anon_key instead of service_role_key.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/health.py</path>
+        <kind>endpoint</kind>
+        <symbol>health_check</symbol>
+        <lines>19-78</lines>
+        <reason>Health check endpoint available at http://localhost:8000/api/health. Frontend can use this to verify backend connectivity during integration testing.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>configuration</kind>
+        <symbol>Settings</symbol>
+        <lines>14-30</lines>
+        <reason>Backend environment configuration pattern using Pydantic Settings. Frontend should follow similar pattern for type-safe env variable access.</reason>
+      </artifact>
+      <artifact>
+        <path>docker-compose.yml</path>
+        <kind>infrastructure</kind>
+        <symbol>redis</symbol>
+        <lines>4-10</lines>
+        <reason>Redis container for Celery (backend only). Frontend doesn't interact with Redis directly but should be aware of backend infrastructure.</reason>
+      </artifact>
+    </code>
+    
+    <dependencies>
+      <frontend>
+        <framework name="Next.js" version="15.0.3" />
+        <framework name="React" version="19.x" />
+        <framework name="TypeScript" version="5.x" />
+        <package name="@supabase/supabase-js" version="2.46.1" />
+        <package name="@supabase/auth-helpers-nextjs" version="latest" />
+        <package name="tailwindcss" version="3.x" />
+        <package name="shadcn/ui" version="latest" note="Copy-paste components, not npm package" />
+        <package name="radix-ui" version="latest" note="Primitives for shadcn/ui" />
+      </frontend>
+      <backend>
+        <note>Backend dependencies documented in Story 1.2. Frontend will integrate with FastAPI backend via REST API at http://localhost:8000</note>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Built from scratch using create-next-app (no starter template). Provides full control over Supabase integration and custom frontend architecture.</constraint>
+    <constraint type="security">Frontend MUST use SUPABASE_ANON_KEY (NEXT_PUBLIC_SUPABASE_ANON_KEY), NOT service_role_key. Anon key is safe to expose in browser and respects Row Level Security policies.</constraint>
+    <constraint type="security">Environment variables with NEXT_PUBLIC_ prefix are accessible in browser. Never use NEXT_PUBLIC_ for sensitive backend-only keys.</constraint>
+    <constraint type="architecture">Three Supabase client variants required for Next.js App Router: createClientComponentClient() for client components, createServerComponentClient() for server components, createRouteHandlerClient() for API routes.</constraint>
+    <constraint type="styling">Professional Blue theme MUST be configured in tailwind.config.ts with exact color values from UX Spec: Primary #2563eb, Secondary #64748b, Accent #0ea5e9, Success #10b981, Warning #f59e0b, Error #ef4444.</constraint>
+    <constraint type="styling">System fonts required (UX Spec 4.2): -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif. No custom web fonts to ensure fast page load.</constraint>
+    <constraint type="architecture">shadcn/ui components live in src/components/ui/ directory. Copy-paste model provides full ownership and customization capability.</constraint>
+    <constraint type="integration">Backend API available at http://localhost:8000 (from Story 1.2). CORS already configured to allow localhost:3000 and localhost:3001.</constraint>
+    <constraint type="integration">Supabase project URL from Story 1.1: https://hxwjvlcnjohsewqfoyxq.supabase.co. Use this in NEXT_PUBLIC_SUPABASE_URL.</constraint>
+    <constraint type="performance">Initial page load < 2 seconds on 3G (PRD NFR). Time to interactive < 3 seconds. Requires optimized bundle, lazy loading, code splitting.</constraint>
+    <constraint type="accessibility">WCAG 2.1 Level AA compliance required. Color contrast ratios 4.5:1 minimum, keyboard navigation, screen reader support, focus indicators.</constraint>
+    <constraint type="testing">Manual verification required for this story. Automated testing (Vitest, React Testing Library) will be added in future stories.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Supabase Client (Client Component)</name>
+      <kind>function</kind>
+      <signature>createClient(): SupabaseClient</signature>
+      <path>src/lib/supabase.ts</path>
+      <description>Creates Supabase client for use in client components. Uses createClientComponentClient() from @supabase/auth-helpers-nextjs.</description>
+    </interface>
+    <interface>
+      <name>Supabase Client (Server Component)</name>
+      <kind>function</kind>
+      <signature>createServerClient(): SupabaseClient</signature>
+      <path>src/lib/supabase.ts</path>
+      <description>Creates Supabase client for server components. Uses createServerComponentClient() with cookies from next/headers.</description>
+    </interface>
+    <interface>
+      <name>Supabase Client (Route Handler)</name>
+      <kind>function</kind>
+      <signature>createRouteClient(): SupabaseClient</signature>
+      <path>src/lib/supabase.ts</path>
+      <description>Creates Supabase client for API route handlers. Uses createRouteHandlerClient() with cookies from next/headers.</description>
+    </interface>
+    <interface>
+      <name>Backend Health Check</name>
+      <kind>REST endpoint</kind>
+      <signature>GET http://localhost:8000/api/health</signature>
+      <path>backend/app/api/health.py</path>
+      <description>Health check endpoint returning {"status": "healthy", "database": "connected", "redis": "connected", "timestamp": "ISO8601"}. Use for frontend-backend connectivity verification.</description>
+    </interface>
+    <interface>
+      <name>TopBar Component</name>
+      <kind>React component</kind>
+      <signature>export function TopBar(): JSX.Element</signature>
+      <path>src/components/layout/TopBar.tsx</path>
+      <description>Main navigation bar with Transfer2Read branding, navigation buttons (History, Settings). Professional Blue theme styling. Should be included in root layout.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual verification required for this foundational story. Verify dev server starts, root route renders TopBar, Professional Blue colors visible, no TypeScript compilation errors, Supabase client initializes without errors, environment variables accessible. Future stories will add automated testing with Vitest and React Testing Library following patterns from Architecture testing section.
+    </standards>
+    
+    <locations>
+      frontend/src/**/*.test.ts
+      frontend/src/**/*.test.tsx
+      frontend/__tests__/
+    </locations>
+    
+    <ideas>
+      <idea ac="AC1">Verify Next.js 15.0.3 installed in package.json, App Router structure exists (src/app/ directory), dev server starts successfully with npm run dev</idea>
+      <idea ac="AC2">Verify Supabase packages installed (@supabase/supabase-js@2.46.1, @supabase/auth-helpers-nextjs), no installation errors in package-lock.json</idea>
+      <idea ac="AC3">Verify components.json created by shadcn/ui init, src/components/ui/ directory exists, base components (Button, Card, Input) installed successfully</idea>
+      <idea ac="AC4">Verify tailwind.config.ts contains Professional Blue color definitions, inspect rendered elements in browser DevTools confirm correct color application (#2563eb for primary, etc.)</idea>
+      <idea ac="AC5">Verify src/lib/supabase.ts exports three client factory functions, test client initialization doesn't throw errors, verify client connects to correct Supabase project URL</idea>
+      <idea ac="AC6">Verify .env.local contains NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL, verify variables accessible via process.env.NEXT_PUBLIC_* in browser console</idea>
+      <idea ac="AC7">Verify computed font-family in browser DevTools matches system font stack from UX Spec (starts with -apple-system)</idea>
+      <idea ac="AC8">Verify root route (http://localhost:3000) renders TopBar component, TopBar displays "Transfer2Read" branding, navigation buttons visible, npm run build completes without TypeScript errors</idea>
+    </ideas>
+  </tests>
+</story-context>

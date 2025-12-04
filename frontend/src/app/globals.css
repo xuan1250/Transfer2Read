@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@layer base {
+  :root {
+    /* Professional Blue Theme - Light Mode */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%; /* Slate 900 for text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%; /* Blue 600 - #2563eb */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+
+    --secondary: 215.4 16.3% 46.9%; /* Slate 600 - #64748b */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 40% 96.1%; /* Gray 50 */
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 199.1 89.1% 48.4%; /* Sky 500 - #0ea5e9 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%; /* Red 500 - #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84.1% 39.4%; /* Green 500 - #10b981 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 37.7 92.1% 50.2%; /* Amber 500 - #f59e0b */
+    --warning-foreground: 0 0% 100%;
+
+    --border: 214.3 31.8% 91.4%; /* Gray 200 */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%; /* Primary color for focus rings */
+
+    --chart-1: 221.2 83.2% 53.3%; /* Primary blue */
+    --chart-2: 160 84.1% 39.4%; /* Success green */
+    --chart-3: 199.1 89.1% 48.4%; /* Accent sky */
+    --chart-4: 37.7 92.1% 50.2%; /* Warning amber */
+    --chart-5: 0 84.2% 60.2%; /* Destructive red */
+
+    --radius: 0.5rem
+  }
+  .dark {
+
+    --background: 0 0% 3.9%;
+
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+
+    --input: 0 0% 14.9%;
+
+    --ring: 0 0% 83.1%;
+
+    --chart-1: 220 70% 50%;
+
+    --chart-2: 160 60% 45%;
+
+    --chart-3: 30 80% 55%;
+
+    --chart-4: 280 65% 60%;
+
+    --chart-5: 340 75% 55%
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
