@@ -144,6 +144,109 @@ transfer_app/
 3. **Testing:** All stories require tests (pytest for backend, Vitest for frontend)
 4. **Review:** Code review required before marking stories complete
 
+## Production Deployment
+
+Transfer2Read is deployed using modern cloud platforms for automatic scaling and zero-downtime updates.
+
+### Deployment Architecture
+
+- **Frontend:** Vercel (Edge Network with global CDN)
+- **Backend API:** Railway (Containerized FastAPI)
+- **Worker:** Railway (Containerized Celery)
+- **Redis:** Railway (Managed Redis for task queue)
+- **Database + Auth + Storage:** Supabase (Managed PostgreSQL + Auth + Storage)
+
+### Production URLs
+
+```bash
+# Frontend (Replace with your actual Vercel URL)
+https://transfer2read.vercel.app
+
+# Backend API (Replace with your actual Railway URL)
+https://your-backend.railway.app
+
+# API Health Check
+https://your-backend.railway.app/api/health
+
+# API Documentation (Swagger)
+https://your-backend.railway.app/docs
+```
+
+### Deployment Guide
+
+**📖 For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**
+
+The deployment guide includes:
+- Step-by-step setup for Supabase, Vercel, and Railway
+- Environment variable configuration
+- CORS and security setup
+- Verification procedures
+- Troubleshooting common issues
+- Rollback procedures
+
+### Quick Deployment Checklist
+
+- [ ] Create production Supabase project
+- [ ] Deploy frontend to Vercel
+- [ ] Deploy backend + worker to Railway
+- [ ] Configure environment variables on all platforms
+- [ ] Verify health endpoints
+- [ ] Test end-to-end functionality
+- [ ] Confirm CI/CD pipeline works
+
+### Environment Variables
+
+**Frontend (Vercel):**
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+NEXT_PUBLIC_API_URL=https://your-backend.railway.app
+```
+
+**Backend (Railway - API and Worker services):**
+```bash
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGc...
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+REDIS_URL=redis://railway-redis:6379  # Auto-provided by Railway
+CELERY_BROKER_URL=redis://railway-redis:6379/0
+CELERY_RESULT_BACKEND=redis://railway-redis:6379/0
+ENVIRONMENT=production
+```
+
+### CI/CD Pipeline
+
+GitHub Actions automatically runs tests on every pull request:
+- **Backend Tests:** pytest with coverage
+- **Frontend Build:** Next.js production build
+- **Linting:** Code quality checks
+
+Deployments are automatic:
+- **Push to main → Auto-deploy** to Vercel (frontend) and Railway (backend)
+- **Pull requests → Preview deployments** on Vercel
+
+### Troubleshooting Deployment
+
+**Frontend not loading:**
+1. Check Vercel deployment logs
+2. Verify environment variables are set
+3. Test API endpoint directly
+
+**Backend 500 errors:**
+1. Check Railway logs for errors
+2. Verify Supabase credentials
+3. Test health endpoint: `/api/health`
+
+**Worker not processing:**
+1. Check Railway worker logs
+2. Verify Redis connection
+3. Ensure environment variables match API service
+
+For detailed troubleshooting, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md#troubleshooting)
+
+
+
 ## Technology Stack Details
 
 **Frontend:**
