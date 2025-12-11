@@ -51,7 +51,7 @@ development_status:
 
   epic-2: contexted
   2-1-supabase-authentication-setup: done
-  2-2-frontend-supabase-auth-ui: ready-for-dev
+  2-2-frontend-supabase-auth-ui: done
   2-3-social-authentication-google-github: backlog
   2-4-password-reset-user-profile: backlog
   2-5-subscription-tier-display: backlog
