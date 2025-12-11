@@ -46,7 +46,7 @@ development_status:
   1-2-backend-fastapi-supabase-integration: done
   1-3-frontend-nextjs-supabase-client-setup: done
   1-4-celery-worker-ai-sdk-setup: done
-  1-5-vercel-railway-deployment-configuration: in-progress
+  1-5-vercel-railway-deployment-configuration: done
   epic-1-retrospective: optional
 
   epic-2: backlog
