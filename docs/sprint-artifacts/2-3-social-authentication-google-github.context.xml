@@ -1,0 +1,378 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Social Authentication (Google & GitHub)</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-3-social-authentication-google-github.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to log in using my Google or GitHub account via Supabase</iWant>
+    <soThat>I don't have to remember another password</soThat>
+    <tasks>
+- Task 1: Configure Google OAuth in Supabase (AC: #1)
+  - 1.1: Create Google Cloud project at console.cloud.google.com
+  - 1.2: Enable "Google+ API" for the project
+  - 1.3: Create OAuth 2.0 Client ID (Web application)
+  - 1.4: In Supabase dashboard configure Google provider
+  - 1.5: Test Google OAuth in Supabase
+
+- Task 2: Configure GitHub OAuth in Supabase (AC: #1)
+  - 2.1: Create GitHub OAuth app at github.com/settings/developers
+  - 2.2: Set Authorization callback URL
+  - 2.3: Note Client ID and Client Secret
+  - 2.4: In Supabase dashboard configure GitHub provider
+  - 2.5: Test GitHub OAuth in Supabase
+
+- Task 3: Create OAuth callback route (AC: #3)
+  - 3.1: Create frontend/src/app/auth/callback/route.ts
+  - 3.2: Handle error cases
+  - 3.3: Test callback route
+
+- Task 4: Add social login buttons to login page (AC: #2)
+  - 4.1: Create frontend/src/components/auth/SocialLoginButtons.tsx
+  - 4.2: Implement click handlers
+  - 4.3: Add loading state
+  - 4.4: Import and render in login page
+
+- Task 5: Add social login buttons to register page (AC: #2)
+  - 5.1: Import and render SocialLoginButtons
+  - 5.2: Position appropriately
+  - 5.3: Ensure consistent styling
+
+- Task 6: Test OAuth flows end-to-end (AC: #3, #4)
+  - 6.1: Test Google OAuth
+  - 6.2: Test GitHub OAuth
+  - 6.3: Test subsequent login
+  - 6.4: Verify user metadata
+
+- Task 7: Handle edge cases and errors (AC: #3)
+  - 7.1: Test OAuth cancellation
+  - 7.2: Test invalid OAuth configuration
+  - 7.3: Add error handling to callback
+  - 7.4: Test production URLs
+
+- Task 8: Update documentation and build (AC: #1, #2, #3, #4)
+  - 8.1: Document OAuth setup steps
+  - 8.2: Run TypeScript build
+  - 8.3: Verify no build errors
+  - 8.4: Run ESLint
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Supabase OAuth Providers Configured:**
+   - Google OAuth enabled in Supabase dashboard (Client ID/Secret from Google Cloud)
+   - GitHub OAuth enabled (Client ID/Secret from GitHub Developer Settings)
+
+2. **Frontend Social Login Buttons:**
+   - "Sign in with Google" and "Sign in with GitHub" buttons on /login and /register
+   - Buttons trigger supabase.auth.signInWithOAuth({ provider })
+
+3. **OAuth Callback Handling:**
+   - Callback route /auth/callback handles OAuth redirect
+   - Successful auth redirects to /dashboard
+   - User account auto-created with tier: FREE on first social login
+
+4. **User Metadata:** Social logins populate user_metadata with provider info
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD: OAuth Requirements -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>User Account & Access (FR1-FR7)</section>
+        <snippet>FR2: Users can create accounts using social authentication (Google, GitHub). FR3: Users can log in securely with email/password or social auth.</snippet>
+      </doc>
+
+      <!-- Tech Spec: OAuth Flow -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Detailed Design - Workflows and Sequencing</section>
+        <snippet>OAuth Flow: 1. User clicks "Sign in with Google/GitHub" 2. Frontend calls supabase.auth.signInWithOAuth 3. Browser redirects to provider OAuth consent 4. Provider redirects to /auth/callback with token 5. Supabase exchanges token and creates/updates user 6. Frontend receives session and redirects to /dashboard</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Services and Modules</section>
+        <snippet>Supabase Auth Client (Frontend): Handle signup, signin, signout, OAuth flows. Location: frontend/src/lib/supabase.ts. useUser Hook: React hook for auth state management at frontend/src/hooks/useUser.ts</snippet>
+      </doc>
+
+      <!-- Architecture: Supabase OAuth Integration -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>Authentication: Supabase Auth with JWT tokens, managed sessions, and secure cookie handling. System enforces OAuth 2.0 security standards for social authentication (NFR15).</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>Built-in Auth: Production-ready authentication with email/password, social logins, and JWT management. Row Level Security: Database-level security policies enforce data isolation.</snippet>
+      </doc>
+
+      <!-- UX Design: Social Login Buttons -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Component Library Strategy</section>
+        <snippet>Upload Interface components: UploadZone, Button (Primary/Secondary), ProgressBar. Customization: Dialog, Select, Slider, RadioGroup. Navigation: TopBar with brand + action buttons.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Visual Foundation - Professional Blue Theme</section>
+        <snippet>Primary: Blue 600 (#2563eb) for main CTAs and primary actions. Secondary: Slate 600 (#64748b) for secondary buttons. Success: Green 500 (#10b981) for positive indicators.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Supabase Client Setup -->
+      <artifact>
+        <path>frontend/src/lib/supabase/client.ts</path>
+        <kind>client-library</kind>
+        <symbol>createClient</symbol>
+        <lines>1-14</lines>
+        <reason>Primary Supabase client factory for OAuth calls in client components</reason>
+      </artifact>
+
+      <!-- Existing Login Page -->
+      <artifact>
+        <path>frontend/src/app/login/page.tsx</path>
+        <kind>page</kind>
+        <symbol>LoginPage</symbol>
+        <lines>70-151</lines>
+        <reason>Current login page where social login buttons will be added below email/password form</reason>
+      </artifact>
+
+      <!-- Existing Register Page -->
+      <artifact>
+        <path>frontend/src/app/register/page.tsx</path>
+        <kind>page</kind>
+        <symbol>RegisterPage</symbol>
+        <lines>127-216</lines>
+        <reason>Current register page where social login buttons will be added above email/password form</reason>
+      </artifact>
+
+      <!-- shadcn/ui Button Component -->
+      <artifact>
+        <path>frontend/src/components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>1-58</lines>
+        <reason>shadcn/ui Button with variant="outline" for social login buttons</reason>
+      </artifact>
+
+      <!-- Auth Guard -->
+      <artifact>
+        <path>frontend/src/components/auth/AuthGuard.tsx</path>
+        <kind>component</kind>
+        <symbol>AuthGuard</symbol>
+        <lines>N/A</lines>
+        <reason>HOC that protects /dashboard route - social OAuth users will flow through this</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <!-- Frontend Dependencies (Already Installed) -->
+      <frontend>
+        <package name="@supabase/supabase-js" version="2.46.1">Supabase client for auth.signInWithOAuth()</package>
+        <package name="@supabase/auth-helpers-nextjs">Next.js App Router helpers (createRouteHandlerClient for callback)</package>
+        <package name="react-hook-form" version="7.x">Form state management</package>
+        <package name="zod" version="3.x">Schema validation</package>
+        <package name="@hookform/resolvers" version="3.x">Zod + React Hook Form integration</package>
+        <package name="lucide-react">Icons library (Github icon available)</package>
+      </frontend>
+
+      <!-- No Backend Dependencies Required -->
+      <note>OAuth is handled entirely by Supabase. No backend code changes needed for Story 2.3</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- From Dev Notes -->
+    <constraint type="architecture">Use Supabase Auth for all OAuth flows - no custom OAuth logic</constraint>
+    <constraint type="styling">Follow Professional Blue theme: Primary Blue #2563eb for CTAs, outline variant for social buttons</constraint>
+    <constraint type="component">Use shadcn/ui Button component with variant="outline" for social login buttons</constraint>
+    <constraint type="layout">Maintain Card-based layout (max-w-md) with centered positioning from existing auth pages</constraint>
+    <constraint type="security">OAuth 2.0 standards enforced by Supabase (NFR15)</constraint>
+    <constraint type="routing">OAuth callback must handle code exchange and redirect to /dashboard</constraint>
+    <constraint type="user-flow">Social login users auto-assigned tier: FREE via existing trigger from Story 2.1</constraint>
+    <constraint type="testing">Manual E2E testing only - no automated tests for MVP</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Supabase Auth API -->
+    <interface>
+      <name>supabase.auth.signInWithOAuth</name>
+      <kind>function</kind>
+      <signature>signInWithOAuth({ provider: 'google' | 'github', options?: { redirectTo: string } })</signature>
+      <path>@supabase/supabase-js</path>
+      <usage>Triggers OAuth flow - redirects to provider consent screen</usage>
+    </interface>
+
+    <!-- Next.js Route Handler for Callback -->
+    <interface>
+      <name>createRouteHandlerClient</name>
+      <kind>function</kind>
+      <signature>createRouteHandlerClient(cookies: ReadonlyRequestCookies)</signature>
+      <path>@supabase/auth-helpers-nextjs</path>
+      <usage>Creates Supabase client for OAuth callback route to exchange code for session</usage>
+    </interface>
+
+    <!-- Redirect URLs (OAuth Configuration) -->
+    <interface>
+      <name>OAuth Redirect URIs</name>
+      <kind>configuration</kind>
+      <signature>https://your-project.supabase.co/auth/v1/callback</signature>
+      <path>Google Cloud Console, GitHub Developer Settings</path>
+      <usage>Authorized redirect URI for OAuth providers - must match Supabase project URL</usage>
+    </interface>
+
+    <!-- Frontend Callback Route -->
+    <interface>
+      <name>/auth/callback</name>
+      <kind>route</kind>
+      <signature>GET /auth/callback?code=... (handled by Route Handler)</signature>
+      <path>frontend/src/app/auth/callback/route.ts (NEW FILE)</path>
+      <usage>Exchanges OAuth code for session, redirects to /dashboard or /login with error</usage>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+**Testing Framework:** Manual E2E testing for MVP (no automated tests per Dev Notes).
+
+**Backend Testing (Pytest):** Existing framework uses pytest with async fixtures (httpx.AsyncClient). Backend tests located in backend/tests/ with conftest.py providing shared fixtures. However, Story 2.3 requires NO backend changes (OAuth handled by Supabase), so no backend tests needed.
+
+**Frontend Testing (Future):** Vitest + React Testing Library for component tests. Not implemented for MVP authentication flows per architecture testing guidance.
+
+**Manual Testing Approach:** Comprehensive E2E testing documented in story Dev Notes with specific checklist for OAuth flows (Google, GitHub), error handling, and edge cases.
+    </standards>
+
+    <locations>
+      <location>Manual testing only - no automated test files for Story 2.3</location>
+      <location>Future frontend tests: frontend/src/components/auth/*.test.tsx</location>
+      <location>Backend tests exist at: backend/tests/unit/ and backend/tests/integration/ but NOT needed for this story</location>
+    </locations>
+
+    <ideas>
+      <!-- Mapped to Acceptance Criteria -->
+      <test ac="AC1" type="manual">
+        <description>Google OAuth Provider Configuration</description>
+        <steps>
+          1. Navigate to Supabase dashboard → Authentication → Providers → Google
+          2. Verify Google provider is enabled
+          3. Check Client ID and Client Secret are configured
+          4. Test sign-in using Supabase dashboard "Test" button
+        </steps>
+      </test>
+
+      <test ac="AC1" type="manual">
+        <description>GitHub OAuth Provider Configuration</description>
+        <steps>
+          1. Navigate to Supabase dashboard → Authentication → Providers → GitHub
+          2. Verify GitHub provider is enabled
+          3. Check Client ID and Client Secret are configured
+          4. Test sign-in using Supabase dashboard "Test" button
+        </steps>
+      </test>
+
+      <test ac="AC2" type="manual">
+        <description>Social Login Buttons on Login Page</description>
+        <steps>
+          1. Navigate to /login
+          2. Verify "Sign in with Google" button exists below email/password form
+          3. Verify "Sign in with GitHub" button exists below email/password form
+          4. Check styling: outline variant, Google/GitHub icons, Professional Blue theme
+          5. Click buttons to verify OAuth flow initiates (redirects to provider)
+        </steps>
+      </test>
+
+      <test ac="AC2" type="manual">
+        <description>Social Login Buttons on Register Page</description>
+        <steps>
+          1. Navigate to /register
+          2. Verify "Sign in with Google" button exists above email/password form
+          3. Verify "Sign in with GitHub" button exists above email/password form
+          4. Check consistent styling with login page
+        </steps>
+      </test>
+
+      <test ac="AC3" type="manual">
+        <description>OAuth Callback Handling - Google (New User)</description>
+        <steps>
+          1. Navigate to /login
+          2. Click "Sign in with Google"
+          3. Complete Google OAuth consent screen
+          4. Verify redirect to /dashboard (not /login)
+          5. Check Supabase dashboard: User created with tier: FREE
+          6. Verify user_metadata contains provider: 'google'
+        </steps>
+      </test>
+
+      <test ac="AC3" type="manual">
+        <description>OAuth Callback Handling - GitHub (New User)</description>
+        <steps>
+          1. Navigate to /register
+          2. Click "Sign in with GitHub"
+          3. Complete GitHub OAuth consent screen
+          4. Verify redirect to /dashboard
+          5. Check Supabase dashboard: User created with tier: FREE
+          6. Verify user_metadata contains provider: 'github'
+        </steps>
+      </test>
+
+      <test ac="AC3" type="manual">
+        <description>OAuth Callback Error Handling</description>
+        <steps>
+          1. Start Google OAuth flow
+          2. Deny consent (cancel on Google screen)
+          3. Verify redirect to /login with error message
+          4. Check error message: "Login cancelled. Please try again."
+        </steps>
+      </test>
+
+      <test ac="AC4" type="manual">
+        <description>User Metadata Population</description>
+        <steps>
+          1. Sign in with Google OAuth (new user)
+          2. Open Supabase dashboard → Authentication → Users
+          3. Select created user
+          4. Check raw_user_meta_data field contains: provider, full_name, avatar_url
+          5. Repeat for GitHub OAuth
+        </steps>
+      </test>
+
+      <test type="manual">
+        <description>Existing User Sign-In (Social Login)</description>
+        <steps>
+          1. Create user via Google OAuth
+          2. Sign out
+          3. Sign in again with Google OAuth
+          4. Verify redirect to /dashboard without creating duplicate user
+          5. Check Supabase dashboard: only ONE user record exists
+        </steps>
+      </test>
+
+      <test type="manual">
+        <description>Production Environment OAuth</description>
+        <steps>
+          1. Deploy to Vercel (production)
+          2. Update OAuth redirect URIs to production domain in Google Cloud Console
+          3. Update OAuth redirect URIs in GitHub Developer Settings
+          4. Test both Google and GitHub OAuth on production URL
+          5. Verify successful redirects to production /dashboard
+        </steps>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

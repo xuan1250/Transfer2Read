@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
 
 // Validation schema
 const loginSchema = z.object({
@@ -20,11 +21,33 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
+
+  // Check for OAuth errors from callback
+  useEffect(() => {
+    const oauthError = searchParams.get('error');
+    const oauthMessage = searchParams.get('message');
+
+    if (oauthError) {
+      // Map OAuth error codes to user-friendly messages
+      let friendlyMessage = oauthMessage || 'Authentication failed. Please try again.';
+
+      if (oauthError === 'access_denied') {
+        friendlyMessage = 'Login cancelled. Please try again.';
+      } else if (oauthError === 'invalid_code' || oauthError === 'missing_code') {
+        friendlyMessage = 'Unable to authenticate. Please check your provider settings or try again.';
+      } else if (oauthError === 'server_error') {
+        friendlyMessage = 'Something went wrong. Please try again or use email/password.';
+      }
+
+      setError(friendlyMessage);
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -84,6 +107,19 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
+
+            {/* Social Login Buttons */}
+            <SocialLoginButtons />
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+              </div>
+            </div>
 
             {/* Email Field */}
             <div className="space-y-2">
@@ -147,5 +183,17 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">Loading...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

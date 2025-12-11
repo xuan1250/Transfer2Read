@@ -41,7 +41,41 @@ Before you begin, ensure you have the following installed:
    - Enable **Email/Password** provider (toggle ON)
    - Email confirmation is enabled by default
 
-3. **Create Storage Buckets:**
+3. **Configure Social Authentication (Optional):**
+
+   **Google OAuth:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create new project or select existing one
+   - Navigate to **APIs & Services → Credentials**
+   - Click **Create Credentials → OAuth 2.0 Client ID**
+   - Configure OAuth consent screen if prompted
+   - Application type: **Web application**
+   - Add Authorized redirect URI: `https://your-project.supabase.co/auth/v1/callback`
+   - Copy **Client ID** and **Client Secret**
+   - In Supabase dashboard: **Authentication → Providers → Google**
+     - Toggle **Enable Google provider** to ON
+     - Paste **Client ID** and **Client Secret**
+     - Click **Save**
+
+   **GitHub OAuth:**
+   - Go to [GitHub Developer Settings](https://github.com/settings/developers)
+   - Click **New OAuth App**
+   - Application name: `Transfer2Read` (or your app name)
+   - Homepage URL: `http://localhost:3000` (dev) or your production URL
+   - Authorization callback URL: `https://your-project.supabase.co/auth/v1/callback`
+   - Click **Register application**
+   - Copy **Client ID**, then generate and copy **Client Secret**
+   - In Supabase dashboard: **Authentication → Providers → GitHub**
+     - Toggle **Enable GitHub provider** to ON
+     - Paste **Client ID** and **Client Secret**
+     - Click **Save**
+
+   **Important Notes:**
+   - OAuth redirect URI must match your Supabase project URL exactly
+   - For production deployment, add production URL to authorized redirect URIs
+   - Test OAuth flows after configuration using the Supabase Auth UI test feature
+
+4. **Create Storage Buckets:**
    - Navigate to **Storage** section
    - Create bucket: `uploads` (set to **Private**)
    - Create bucket: `downloads` (set to **Private**)
@@ -53,6 +87,9 @@ Before you begin, ensure you have the following installed:
      - **Project URL** (`SUPABASE_URL`)
      - **anon/public key** (`SUPABASE_ANON_KEY`) - safe for frontend
      - **service_role key** (`SUPABASE_SERVICE_KEY`) - **KEEP SECRET**, backend only
+
+**Note:** OAuth redirect URI format: `https://[PROJECT_REF].supabase.co/auth/v1/callback`
+Find your PROJECT_REF in Supabase Settings → API → Project URL
 
 ### 2. Environment Configuration
 
