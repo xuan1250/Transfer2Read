@@ -30,7 +30,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           cd backend
-          pytest --cov=app --cov-report=term-missing
+          PYTHONPATH=. pytest --cov=app --cov-report=term-missing
         env:
           # Mock environment variables for testing
           SUPABASE_URL: https://test.supabase.co

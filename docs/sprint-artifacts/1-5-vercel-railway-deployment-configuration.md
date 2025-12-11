@@ -27,35 +27,35 @@ So that **the application is production-ready with managed Supabase services.**
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Production Supabase Project (AC: #3)
-  - [ ] 1.1: Create new Supabase project for production environment
-  - [ ] 1.2: Configure storage buckets (`uploads`, `downloads`) with RLS policies
-  - [ ] 1.3: Enable Email/Password authentication provider
-  - [ ] 1.4: Document production credentials in secure location (not in Git)
+- [x] Task 1: Create Production Supabase Project (AC: #3)
+  - [x] 1.1: Create new Supabase project for production environment
+  - [x] 1.2: Configure storage buckets (`uploads`, `downloads`) with RLS policies
+  - [x] 1.3: Enable Email/Password authentication provider
+  - [x] 1.4: Document production credentials in secure location (not in Git)
   - [x] 1.5: Update backend `.env.example` with production credential placeholders
 
-- [ ] Task 2: Set up Vercel Frontend Deployment (AC: #1)
-  - [ ] 2.1: Connect GitHub repository to Vercel account
-  - [ ] 2.2: Configure project settings:
+- [x] Task 2: Set up Vercel Frontend Deployment (AC: #1)
+  - [x] 2.1: Connect GitHub repository to Vercel account
+  - [x] 2.2: Configure project settings:
     - Root directory: `frontend/`
     - Framework preset: Next.js
     - Build command: `npm run build`
     - Output directory: `.next`
-  - [ ] 2.3: Set environment variables for production:
+  - [x] 2.3: Set environment variables for production:
     - `NEXT_PUBLIC_SUPABASE_URL`: Production Supabase URL
     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Production anon key
     - `NEXT_PUBLIC_API_URL`: Railway backend URL (TBD in Task 3)
-  - [ ] 2.4: Configure preview deployments for pull requests
-  - [ ] 2.5: Verify deployment: Visit Vercel URL and confirm frontend loads
+  - [x] 2.4: Configure preview deployments for pull requests
+  - [x] 2.5: Verify deployment: Visit Vercel URL and confirm frontend loads
 
-- [ ] Task 3: Set up Railway Backend Services (AC: #2, #6)
-  - [ ] 3.1: Create new Railway project
-  - [ ] 3.2: Add Redis service (managed Redis by Railway)
-  - [ ] 3.3: Deploy Backend API service:
+- [x] Task 3: Set up Railway Backend Services (AC: #2, #6)
+  - [x] 3.1: Create new Railway project
+  - [x] 3.2: Add Redis service (managed Redis by Railway)
+  - [x] 3.3: Deploy Backend API service:
     - Root directory: `backend/`
     - Dockerfile build
     - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-  - [ ] 3.4: Set API service environment variables:
+  - [x] 3.4: Set API service environment variables:
     - `SUPABASE_URL`: Production Supabase URL
     - `SUPABASE_SERVICE_KEY`: Production service role key
     - `OPENAI_API_KEY`: OpenAI API key
@@ -63,11 +63,11 @@ So that **the application is production-ready with managed Supabase services.**
     - `REDIS_URL`: Railway Redis internal URL (auto-provided)
     - `CELERY_BROKER_URL`: Same as REDIS_URL
     - `CELERY_RESULT_BACKEND`: Same as REDIS_URL
-  - [ ] 3.5: Deploy Worker service:
+  - [x] 3.5: Deploy Worker service:
     - Same root directory and Dockerfile as API
     - Start command: `celery -A app.worker worker --loglevel=info`
     - Same environment variables as API service
-  - [ ] 3.6: Note Railway API public URL and update Vercel's `NEXT_PUBLIC_API_URL`
+  - [x] 3.6: Note Railway API public URL and update Vercel's `NEXT_PUBLIC_API_URL`
 
 - [x] Task 4: Configure CORS for Production (AC: #4)
   - [x] 4.1: Update `backend/app/main.py` CORS middleware
@@ -75,13 +75,13 @@ So that **the application is production-ready with managed Supabase services.**
   - [x] 4.3: Ensure credentials are allowed for cookie-based auth
   - [x] 4.4: Commit CORS changes and redeploy backend to Railway
 
-- [ ] Task 5: Verify Production Deployment (AC: #5)
-  - [ ] 5.1: Test backend health endpoint: `GET https://transfer-api.railway.app/api/health`
-  - [ ] 5.2: Verify response includes Supabase and Redis connection status
-  - [ ] 5.3: Visit frontend URL: `https://transfer2read.vercel.app`
-  - [ ] 5.4: Verify frontend loads correctly with Professional Blue theme
-  - [ ] 5.5: Test frontend-backend connectivity (check browser console for 200 OK)
-  - [ ] 5.6: Verify Celery worker is running (check Railway logs)
+- [x] Task 5: Verify Production Deployment (AC: #5)
+  - [x] 5.1: Test backend health endpoint: `GET https://transfer-api.railway.app/api/health`
+  - [x] 5.2: Verify response includes Supabase and Redis connection status
+  - [x] 5.3: Visit frontend URL: `https://transfer2read.vercel.app`
+  - [x] 5.4: Verify frontend loads correctly with Professional Blue theme
+  - [x] 5.5: Test frontend-backend connectivity (check browser console for 200 OK)
+  - [x] 5.6: Verify Celery worker is running (check Railway logs)
 
 - [x] Task 6: Set up CI/CD with GitHub Actions (AC: #7)
   - [x] 6.1: Create `.github/workflows/ci.yml` workflow file
@@ -97,7 +97,7 @@ So that **the application is production-ready with managed Supabase services.**
   - [x] 6.5: Configure deployment step (on push to main):
     - Vercel auto-deploys via GitHub integration
     - Railway auto-deploys via GitHub integration (verify in Railway settings)
-  - [ ] 6.6: Test workflow: Create PR and verify tests run successfully
+  - [x] 6.6: Test workflow: Create PR and verify tests run successfully
 
 - [x] Task 7: Create Deployment Documentation (AC: ALL)
   - [x] 7.1: Update README.md with deployment section
