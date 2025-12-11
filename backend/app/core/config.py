@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     # Supabase Configuration
     SUPABASE_URL: str
     SUPABASE_SERVICE_KEY: str  # Use service_role key for backend (bypasses RLS)
+    SUPABASE_JWT_SECRET: str   # JWT secret for validating access tokens
 
     # AI API Keys (placeholders for future stories)
     OPENAI_API_KEY: Optional[str] = None

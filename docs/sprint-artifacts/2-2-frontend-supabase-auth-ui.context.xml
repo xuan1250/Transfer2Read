@@ -1,0 +1,259 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>Frontend Supabase Auth UI</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-2-frontend-supabase-auth-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to sign up and log in using Supabase-powered authentication</iWant>
+    <soThat>I can securely access my account</soThat>
+    <tasks>
+- [ ] Task 1: Set up Supabase client and auth hooks (AC: #3)
+  - [ ] 1.1: Verify @supabase/supabase-js@2.46.1 and @supabase/auth-helpers-nextjs installed
+  - [ ] 1.2: Create frontend/src/lib/supabase/client.ts with browser client
+  - [ ] 1.3: Create frontend/src/lib/supabase/server.ts for server-side auth
+  - [ ] 1.4: Create frontend/src/hooks/useUser.ts custom hook
+  - [ ] 1.5: Test hook by rendering in simple test component
+
+- [ ] Task 2: Create authentication pages with shadcn/ui (AC: #1, #2, #4)
+  - [ ] 2.1: Install required shadcn/ui components: button, card, input, label
+  - [ ] 2.2: Create /app/login/page.tsx with Professional Blue styling
+  - [ ] 2.3: Create /app/register/page.tsx with similar layout
+  - [ ] 2.4: Create frontend/src/components/auth/PasswordStrengthIndicator.tsx
+
+- [ ] Task 3: Implement login form logic (AC: #1)
+  - [ ] 3.1: Add React Hook Form to /app/login/page.tsx with Zod validation
+  - [ ] 3.2: Implement onSubmit handler calling supabase.auth.signInWithPassword()
+  - [ ] 3.3: Error message handling for various auth failures
+  - [ ] 3.4: Add loading state during sign-in
+
+- [ ] Task 4: Implement registration form logic (AC: #2)
+  - [ ] 4.1: Add React Hook Form to /app/register/page.tsx with password validation
+  - [ ] 4.2: Integrate PasswordStrengthIndicator component
+  - [ ] 4.3: Implement onSubmit handler calling supabase.auth.signUp()
+  - [ ] 4.4: Error handling for duplicate users and weak passwords
+
+- [ ] Task 5: Implement auth state management and route protection (AC: #3)
+  - [ ] 5.1: Create frontend/src/components/auth/AuthGuard.tsx HOC using useUser()
+  - [ ] 5.2: Create /app/dashboard/page.tsx placeholder wrapped with AuthGuard
+  - [ ] 5.3: Implement sign-out functionality calling supabase.auth.signOut()
+  - [ ] 5.4: Test protected route redirect behavior
+
+- [ ] Task 6: Apply Professional Blue theme styling (AC: #4)
+  - [ ] 6.1: Verify tailwind.config.ts has Professional Blue theme colors
+  - [ ] 6.2: Style login/register pages with centered Card layout
+  - [ ] 6.3: Add responsive design for mobile and desktop
+
+- [ ] Task 7: Manual testing and integration verification (AC: #1, #2, #3)
+  - [ ] 7.1: Test new user registration flow
+  - [ ] 7.2: Test email confirmation (if available)
+  - [ ] 7.3: Test login flow with confirmed user
+  - [ ] 7.4: Test error scenarios (invalid email, wrong password, weak password)
+  - [ ] 7.5: Test sign-out flow
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Login Page** (/login) created with:
+   - Email and Password input fields (shadcn/ui components)
+   - "Sign In" button triggers supabase.auth.signInWithPassword()
+   - Error handling: Display auth errors ("Invalid credentials", "Email not confirmed")
+   - "Forgot Password?" link (UI only for now)
+
+2. **Registration Page** (/register) created with:
+   - Email and Password fields with validation (Zod + React Hook Form)
+   - Password strength indicator
+   - "Sign Up" button triggers supabase.auth.signUp()
+   - Success message: "Check your email to confirm your account"
+
+3. **Auth State Management:**
+   - useUser hook created using @supabase/auth-helpers-nextjs
+   - Protected routes redirect to /login if not authenticated
+   - Successful login redirects to /dashboard
+
+4. **Styling:** Professional Blue theme applied (shadcn/ui Card, Input, Button)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Supabase Client Setup</section>
+        <snippet>Supabase Auth with JWT tokens, managed sessions, and secure cookie handling. Frontend uses createClientComponentClient() for browser-side auth actions, createServerComponentClient() for server-side session checks.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>Authentication via Supabase Auth with JWT tokens. Row Level Security (RLS) policies in PostgreSQL ensure users only access their own data. API Security includes JWT validation, rate limiting, and CORS configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Frontend Auth Actions</section>
+        <snippet>Sign Up: supabase.auth.signUp({ email, password }). Sign In: supabase.auth.signInWithPassword({ email, password }). Sign Out: supabase.auth.signOut(). Get User: supabase.auth.getUser() for useUser hook.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Data Models and Contracts</section>
+        <snippet>TypeScript Types: SubscriptionTier = 'FREE' | 'PRO' | 'PREMIUM'. UserProfile { id, email, tier, createdAt, provider }. User metadata stored in auth.users.raw_user_meta_data with tier defaulting to FREE.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Transfer2Read Epics</title>
+        <section>Story 2.2: Frontend Supabase Auth UI</section>
+        <snippet>User story: As a User, I want to sign up and log in using Supabase-powered authentication, so that I can securely access my account. Prerequisites: Story 1.3, Story 2.1. Technical notes: Use createClientComponentClient() for auth actions, email confirmation required by Supabase default.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-1-supabase-authentication-setup.md</path>
+        <title>Story 2.1: Supabase Authentication Setup</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Supabase Auth configured: Email/Password enabled, email confirmation required (magic link), JWT tokens 1-hour access/7-day refresh. User metadata: tier defaults to FREE via database trigger. Backend auth middleware ready at POST /auth/test-protected. CORS configured for frontend.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/lib/supabase.ts</path>
+        <kind>service</kind>
+        <symbol>createClient, createServerClient, createRouteClient</symbol>
+        <lines>1-86</lines>
+        <reason>Existing Supabase client initialization for browser, server, and API route handlers. REUSE these functions - DO NOT recreate. createClient() is for client components, createServerClient() for server components.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/auth.py</path>
+        <kind>middleware</kind>
+        <symbol>get_current_user</symbol>
+        <lines>18-84</lines>
+        <reason>Backend JWT validation middleware. Can be used to test frontend auth flow - create user via frontend, get JWT, call backend protected endpoint to verify integration works.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/auth.py</path>
+        <kind>schema</kind>
+        <symbol>SubscriptionTier, AuthenticatedUser</symbol>
+        <lines>1-28</lines>
+        <reason>Backend Pydantic schemas for auth. Frontend TypeScript types should match this structure: SubscriptionTier enum (FREE, PRO, PREMIUM), user object with user_id, email, tier.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui</path>
+        <kind>component directory</kind>
+        <symbol>shadcn/ui components</symbol>
+        <lines>N/A</lines>
+        <reason>shadcn/ui component library already initialized. Use npx shadcn-ui@latest add [component] to install button, card, input, label components for auth pages.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="@supabase/supabase-js" version="^2.86.0" />
+        <package name="@supabase/auth-helpers-nextjs" version="^0.15.0" />
+        <package name="@supabase/ssr" version="^0.8.0" />
+        <package name="next" version="^15.5.7" />
+        <package name="react" version="^19.2.1" />
+        <package name="react-dom" version="^19.2.1" />
+        <package name="@radix-ui/react-slot" version="^1.2.4" />
+        <package name="class-variance-authority" version="^0.7.1" />
+        <package name="clsx" version="^2.1.1" />
+        <package name="tailwind-merge" version="^3.4.0" />
+        <package name="tailwindcss-animate" version="^1.0.7" />
+        <package name="lucide-react" version="^0.555.0" />
+        <note>Need to install: react-hook-form@^7.x, zod@^3.x, @hookform/resolvers@^3.x</note>
+      </frontend>
+      <backend>
+        <package name="fastapi" version="0.122.0" />
+        <package name="supabase" version="2.24.0" />
+        <package name="python-jose[cryptography]" version="3.3.0" />
+        <note>Backend dependencies stable, no changes needed for this story</note>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use existing Supabase client at frontend/src/lib/supabase.ts - DO NOT recreate. Import createClient() for client components.</constraint>
+    <constraint>Email confirmation is REQUIRED by Supabase. After signup, users MUST click confirmation link in email before logging in.</constraint>
+    <constraint>JWT tokens stored in cookies automatically by @supabase/auth-helpers-nextjs. Session persists across page refreshes.</constraint>
+    <constraint>Professional Blue theme colors MUST be used: Primary #2563eb, Accent #0ea5e9, Success #10b981, Error #ef4444.</constraint>
+    <constraint>Use shadcn/ui components for all UI elements. Install via npx shadcn-ui@latest add [component-name].</constraint>
+    <constraint>All forms MUST use React Hook Form with Zod validation. No uncontrolled inputs.</constraint>
+    <constraint>Password validation: minimum 8 characters, 1 uppercase letter, 1 number required for registration.</constraint>
+    <constraint>Error messages must be user-friendly: map "Invalid login credentials" to "Email or password is incorrect".</constraint>
+    <constraint>Loading states: disable submit buttons and show spinner during async operations.</constraint>
+    <constraint>Protected routes: use AuthGuard HOC to wrap pages. If user === null, redirect to /login using Next.js redirect().</constraint>
+    <constraint>Environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be in frontend/.env.local (already configured from Story 1.3).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>createClient</name>
+      <kind>function</kind>
+      <signature>createClient(): SupabaseClient</signature>
+      <path>frontend/src/lib/supabase.ts</path>
+      <usage>Use for client components (pages with 'use client'). Returns Supabase client for auth.signInWithPassword(), auth.signUp(), auth.signOut(), auth.getUser().</usage>
+    </interface>
+    <interface>
+      <name>supabase.auth.signInWithPassword</name>
+      <kind>Supabase method</kind>
+      <signature>supabase.auth.signInWithPassword({ email: string, password: string }): Promise&lt;AuthResponse&gt;</signature>
+      <path>@supabase/supabase-js</path>
+      <usage>Login method. Returns { data: { user, session }, error }. Check error for failures (invalid credentials, unconfirmed email).</usage>
+    </interface>
+    <interface>
+      <name>supabase.auth.signUp</name>
+      <kind>Supabase method</kind>
+      <signature>supabase.auth.signUp({ email: string, password: string }): Promise&lt;AuthResponse&gt;</signature>
+      <path>@supabase/supabase-js</path>
+      <usage>Registration method. Triggers confirmation email. User cannot login until email is confirmed.</usage>
+    </interface>
+    <interface>
+      <name>supabase.auth.signOut</name>
+      <kind>Supabase method</kind>
+      <signature>supabase.auth.signOut(): Promise&lt;{error: AuthError | null}&gt;</signature>
+      <path>@supabase/supabase-js</path>
+      <usage>Sign out current user. Clears session from cookies.</usage>
+    </interface>
+    <interface>
+      <name>supabase.auth.onAuthStateChange</name>
+      <kind>Supabase method</kind>
+      <signature>supabase.auth.onAuthStateChange(callback: (event, session) =&gt; void): { data: { subscription } }</signature>
+      <path>@supabase/supabase-js</path>
+      <usage>Listen to auth state changes. Use in useUser hook with useEffect to detect login/logout/session changes.</usage>
+    </interface>
+    <interface>
+      <name>UserProfile</name>
+      <kind>TypeScript type</kind>
+      <signature>interface UserProfile { id: string; email: string; tier: SubscriptionTier; createdAt: string; provider?: 'email' | 'google' | 'github'; }</signature>
+      <path>frontend/src/types/auth.ts</path>
+      <usage>Create this type definition to match backend AuthenticatedUser schema. Use for useUser hook return type.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Frontend testing uses Vitest + React Testing Library. Component tests should test user interactions, not implementation details. Mock Supabase client using vi.mock(). Test form validation, error handling, loading states, and redirects. Integration tests verify full auth flows (signup, login, protected routes).</standards>
+    <locations>
+frontend/src/components/**/*.test.tsx (colocated with components)
+frontend/src/app/**/*.test.tsx (colocated with pages)
+frontend/src/__tests__/** (integration tests)
+    </locations>
+    <ideas>
+AC1: Test login form validation (invalid email format, empty password)
+AC1: Test successful login redirects to /dashboard
+AC1: Test error message display for invalid credentials
+AC1: Test error message display for unconfirmed email
+AC2: Test registration form password strength validation
+AC2: Test successful registration shows "Check your email" message
+AC2: Test duplicate email error handling
+AC3: Test useUser hook returns null when not authenticated
+AC3: Test useUser hook returns user object when authenticated
+AC3: Test AuthGuard redirects to /login when user is null
+AC3: Test sign-out clears session and redirects to /login
+AC4: Test Professional Blue theme colors applied to buttons and inputs
+    </ideas>
+  </tests>
+</story-context>

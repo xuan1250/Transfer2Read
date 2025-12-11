@@ -45,3 +45,7 @@ app.include_router(health_router, prefix="/api", tags=["health"])
 # Register test AI routes
 from app.api.v1.test_ai import router as test_ai_router
 app.include_router(test_ai_router, prefix="/api/v1", tags=["test-ai"])
+
+# Register auth routes
+from app.api.v1.auth import router as auth_router
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="2-1-supabase-authentication-setup" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Supabase Authentication Setup</title>
+    <status>done</status>
+    <generatedAt>2025-12-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-1-supabase-authentication-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to configure Supabase Auth for the backend and frontend</iWant>
+    <soThat>users can register, log in, and maintain secure sessions</soThat>
+    <tasks>
+      <task id="1">Configure Supabase Auth Providers (Email/Password, templates)</task>
+      <task id="2">Extend User Metadata (tier enum trigger)</task>
+      <task id="3">Create conversion_jobs Table with RLS</task>
+      <task id="4">Create Backend Auth Middleware (JWT validation)</task>
+      <task id="5">Create Test Protected Endpoint</task>
+      <task id="6">Write Unit Tests</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Email/Password authentication active in Supabase dashboard with email templates</criterion>
+    <criterion id="2">User metadata extended with tier (FREE/PRO/PREMIUM) via trigger</criterion>
+    <criterion id="3">RLS policies on conversion_jobs table: auth.uid() = user_id</criterion>
+    <criterion id="4">Backend auth middleware validates Supabase JWT, extracts user_id</criterion>
+    <criterion id="5">POST /auth/test-protected endpoint returns user_id from JWT</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>Authentication via Supabase Auth with JWT tokens. Backend validates Supabase JWT on protected endpoints. RLS policies for data isolation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>Use Supabase for authentication, database, and file storage. Built-in Auth with email/password, social logins, and JWT management.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Tech Spec</title>
+        <section>Detailed Design - Auth Middleware</section>
+        <snippet>get_current_user() dependency validates Supabase JWT, returns AuthenticatedUser with user_id, email, tier.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics</title>
+        <section>Story 2.1: Supabase Authentication Setup</section>
+        <snippet>Configure Supabase Auth providers, extend user metadata with tier, create RLS policies, build backend JWT middleware.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD</title>
+        <section>Security NFR12-NFR15</section>
+        <snippet>Passwords hashed using bcrypt (Supabase). Session tokens expire after configurable period. OAuth 2.0 for social auth.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>backend/app/core/supabase.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client, verify_supabase_connection</symbol>
+        <lines>11-55</lines>
+        <reason>Existing Supabase admin client - use for JWT validation via service role key</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>config</kind>
+        <symbol>Settings</symbol>
+        <lines>12-42</lines>
+        <reason>Add SUPABASE_JWT_SECRET for JWT validation. Existing settings pattern to follow.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/main.py</path>
+        <kind>entrypoint</kind>
+        <symbol>app</symbol>
+        <lines>1-48</lines>
+        <reason>Register new auth router here. Follow existing router registration pattern (lines 42-47).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/__init__.py</path>
+        <kind>schemas</kind>
+        <symbol>__init__</symbol>
+        <reason>Add auth.py schema imports here after creating AuthenticatedUser, SubscriptionTier</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="fastapi" version="0.122.0">Web framework</package>
+        <package name="supabase" version="2.24.0">Supabase Python client (existing)</package>
+        <package name="pydantic" version=">=2.11.7">Schema validation (existing)</package>
+        <package name="python-jose[cryptography]" version="NEW">JWT decoding - ADD TO requirements.txt</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Use Supabase Auth (ADR-002) - no custom password storage</constraint>
+    <constraint type="architecture">JWT tokens issued by Supabase, validated by backend using JWT secret</constraint>
+    <constraint type="security">RLS policies must use auth.uid() for user isolation (NFR-18)</constraint>
+    <constraint type="pattern">Business logic in services/, NOT in API routes (Architecture naming conventions)</constraint>
+    <constraint type="pattern">Use Pydantic schemas for request/response validation</constraint>
+    <constraint type="naming">Python: snake_case for variables/functions, PascalCase for classes</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>get_current_user</name>
+      <kind>FastAPI Dependency</kind>
+      <signature>async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(HTTPBearer())) -> AuthenticatedUser</signature>
+      <path>backend/app/core/auth.py (NEW)</path>
+    </interface>
+    <interface>
+      <name>POST /auth/test-protected</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /auth/test-protected -> {"user_id": str, "email": str, "tier": str}</signature>
+      <path>backend/app/api/v1/auth.py (NEW)</path>
+    </interface>
+    <interface>
+      <name>AuthenticatedUser</name>
+      <kind>Pydantic Model</kind>
+      <signature>class AuthenticatedUser(BaseModel): user_id: str; email: str; tier: SubscriptionTier</signature>
+      <path>backend/app/schemas/auth.py (NEW)</path>
+    </interface>
+    <interface>
+      <name>SubscriptionTier</name>
+      <kind>Enum</kind>
+      <signature>class SubscriptionTier(str, Enum): FREE = "FREE"; PRO = "PRO"; PREMIUM = "PREMIUM"</signature>
+      <path>backend/app/schemas/auth.py (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend: Pytest 8.x with pytest-asyncio. Test files in backend/tests/. Pattern: test_*.py.
+      Use FastAPI TestClient for sync tests, httpx.AsyncClient for async.
+      Mock external services (Supabase) - don't hit real APIs in unit tests.
+      Coverage target: 80% minimum.
+    </standards>
+    <locations>
+      <location>backend/tests/unit/</location>
+      <location>backend/tests/integration/</location>
+    </locations>
+    <ideas>
+      <idea ac="4">test_get_current_user_valid_token - Mock valid JWT, verify user extraction</idea>
+      <idea ac="4">test_get_current_user_invalid_token - Mock invalid JWT, verify 401</idea>
+      <idea ac="4">test_get_current_user_expired_token - Mock expired JWT, verify 401</idea>
+      <idea ac="4">test_get_current_user_no_token - No header, verify 401</idea>
+      <idea ac="5">test_protected_endpoint_success - Valid token returns user data</idea>
+      <idea ac="5">test_protected_endpoint_unauthorized - No token returns 401</idea>
+    </ideas>
+  </tests>
+</story-context>
