@@ -1,6 +1,6 @@
 # Story 1.5: Vercel + Railway Deployment Configuration
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
