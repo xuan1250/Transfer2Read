@@ -3,7 +3,7 @@
     <epicId>2</epicId>
     <storyId>3</storyId>
     <title>Social Authentication (Google & GitHub)</title>
-    <status>drafted</status>
+    <status>done</status>
     <generatedAt>2025-12-11</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/sprint-artifacts/2-3-social-authentication-google-github.md</sourceStoryPath>
@@ -14,53 +14,53 @@
     <iWant>to log in using my Google or GitHub account via Supabase</iWant>
     <soThat>I don't have to remember another password</soThat>
     <tasks>
-- Task 1: Configure Google OAuth in Supabase (AC: #1)
-  - 1.1: Create Google Cloud project at console.cloud.google.com
-  - 1.2: Enable "Google+ API" for the project
-  - 1.3: Create OAuth 2.0 Client ID (Web application)
-  - 1.4: In Supabase dashboard configure Google provider
-  - 1.5: Test Google OAuth in Supabase
+- [x] Task 1: Configure Google OAuth in Supabase (AC: #1)
+  - [x] 1.1: Create Google Cloud project at console.cloud.google.com
+  - [x] 1.2: Enable "Google+ API" for the project
+  - [x] 1.3: Create OAuth 2.0 Client ID (Web application)
+  - [x] 1.4: In Supabase dashboard configure Google provider
+  - [x] 1.5: Test Google OAuth in Supabase
 
-- Task 2: Configure GitHub OAuth in Supabase (AC: #1)
-  - 2.1: Create GitHub OAuth app at github.com/settings/developers
-  - 2.2: Set Authorization callback URL
-  - 2.3: Note Client ID and Client Secret
-  - 2.4: In Supabase dashboard configure GitHub provider
-  - 2.5: Test GitHub OAuth in Supabase
+- [x] Task 2: Configure GitHub OAuth in Supabase (AC: #1)
+  - [x] 2.1: Create GitHub OAuth app at github.com/settings/developers
+  - [x] 2.2: Set Authorization callback URL
+  - [x] 2.3: Note Client ID and Client Secret
+  - [x] 2.4: In Supabase dashboard configure GitHub provider
+  - [x] 2.5: Test GitHub OAuth in Supabase
 
-- Task 3: Create OAuth callback route (AC: #3)
-  - 3.1: Create frontend/src/app/auth/callback/route.ts
-  - 3.2: Handle error cases
-  - 3.3: Test callback route
+- [x] Task 3: Create OAuth callback route (AC: #3)
+  - [x] 3.1: Create frontend/src/app/auth/callback/route.ts
+  - [x] 3.2: Handle error cases
+  - [x] 3.3: Test callback route
 
-- Task 4: Add social login buttons to login page (AC: #2)
-  - 4.1: Create frontend/src/components/auth/SocialLoginButtons.tsx
-  - 4.2: Implement click handlers
-  - 4.3: Add loading state
-  - 4.4: Import and render in login page
+- [x] Task 4: Add social login buttons to login page (AC: #2)
+  - [x] 4.1: Create frontend/src/components/auth/SocialLoginButtons.tsx
+  - [x] 4.2: Implement click handlers
+  - [x] 4.3: Add loading state
+  - [x] 4.4: Import and render in login page
 
-- Task 5: Add social login buttons to register page (AC: #2)
-  - 5.1: Import and render SocialLoginButtons
-  - 5.2: Position appropriately
-  - 5.3: Ensure consistent styling
+- [x] Task 5: Add social login buttons to register page (AC: #2)
+  - [x] 5.1: Import and render SocialLoginButtons
+  - [x] 5.2: Position appropriately
+  - [x] 5.3: Ensure consistent styling
 
-- Task 6: Test OAuth flows end-to-end (AC: #3, #4)
-  - 6.1: Test Google OAuth
-  - 6.2: Test GitHub OAuth
-  - 6.3: Test subsequent login
-  - 6.4: Verify user metadata
+- [x] Task 6: Test OAuth flows end-to-end (AC: #3, #4)
+  - [x] 6.1: Test Google OAuth
+  - [x] 6.2: Test GitHub OAuth
+  - [x] 6.3: Test subsequent login
+  - [x] 6.4: Verify user metadata
 
-- Task 7: Handle edge cases and errors (AC: #3)
-  - 7.1: Test OAuth cancellation
-  - 7.2: Test invalid OAuth configuration
-  - 7.3: Add error handling to callback
-  - 7.4: Test production URLs
+- [x] Task 7: Handle edge cases and errors (AC: #3)
+  - [x] 7.1: Test OAuth cancellation
+  - [x] 7.2: Test invalid OAuth configuration
+  - [x] 7.3: Add error handling to callback
+  - [x] 7.4: Test production URLs
 
-- Task 8: Update documentation and build (AC: #1, #2, #3, #4)
-  - 8.1: Document OAuth setup steps
-  - 8.2: Run TypeScript build
-  - 8.3: Verify no build errors
-  - 8.4: Run ESLint
+- [x] Task 8: Update documentation and build (AC: #1, #2, #3, #4)
+  - [x] 8.1: Document OAuth setup steps
+  - [x] 8.2: Run TypeScript build
+  - [x] 8.3: Verify no build errors
+  - [x] 8.4: Run ESLint
     </tasks>
   </story>
 

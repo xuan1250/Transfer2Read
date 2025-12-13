@@ -1,0 +1,270 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>Supabase Storage Service Implementation</title>
+    <status>done</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-1-supabase-storage-service-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to implement file upload/download using Supabase Storage</iWant>
+    <soThat>users can securely manage PDFs and EPUBs with built-in authentication.</soThat>
+    <tasks>
+- [ ] Task 1: Configure Supabase Storage Buckets (AC: #1)
+- [ ] Task 2: Create RLS Policies for Storage Buckets (AC: #2)
+- [ ] Task 3: Implement SupabaseStorageService Class (AC: #3)
+- [ ] Task 4: Implement File Naming Strategy (AC: #4)
+- [ ] Task 5: Write Unit Tests (AC: #5)
+- [ ] Task 6: Configure Lifecycle Policy for Auto-Deletion (AC: #6)
+- [ ] Task 7: Integration and Documentation (All ACs)
+- [ ] Task 8: Testing and Validation (All ACs)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Supabase Storage Buckets Configured:**
+   - `uploads` bucket created in Supabase project (private, RLS enabled)
+   - `downloads` bucket created in Supabase project (private, RLS enabled)
+   - Both buckets configured with private visibility (not publicly accessible)
+   - File upload size limits configured: 50MB for FREE tier, unlimited for PRO/PREMIUM (enforced at API level)
+
+2. **Row Level Security (RLS) Policies Created:**
+   - **uploads bucket RLS policy:**
+     - Users can INSERT files to folder `{user_id}/*` (authenticated users only)
+     - Users can SELECT (read) files from folder `{user_id}/*` (own files only)
+     - Policy name: `users_upload_own_files`
+   - **downloads bucket RLS policy:**
+     - Users can SELECT (read) files from folder `{user_id}/*` (own files only)
+     - Policy name: `users_download_own_files`
+   - Test RLS policies: Verify user A cannot access user B's files
+
+3. **Backend Storage Service Implementation:**
+   - File created: `backend/app/services/storage/supabase_storage.py`
+   - Class: `SupabaseStorageService` with methods:
+     - `upload_file(bucket: str, path: str, file_data: bytes, content_type: str) -> str`
+     - `generate_signed_url(bucket: str, path: str, expires_in: int = 3600) -> str`
+     - `delete_file(bucket: str, path: str) -> bool`
+     - `list_files(bucket: str, prefix: str) -> list[dict]`
+   - Error handling: Raise custom exceptions (`StorageUploadError`, `StorageDeleteError`)
+
+4. **File Naming Strategy:**
+   - Path structure: `{user_id}/{job_id}/{filename}`
+   - Prevents filename collisions across users and jobs
+   - Filenames sanitized (remove special characters, spaces)
+
+5. **Unit Tests:**
+   - File: `backend/tests/unit/services/test_supabase_storage.py`
+   - Mock Supabase Storage client using `pytest` fixtures
+   - Coverage target: 90%+ for storage service
+
+6. **Lifecycle Policy (Auto-Deletion after 30 days):**
+   - Configure Supabase Storage lifecycle policy or SQL trigger
+   - Files older than 30 days automatically deleted from both buckets
+   - Document configuration steps in README or deployment guide
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Supabase as Unified Backend Platform</title>
+        <section>ADR-002: Supabase as Unified Backend Platform</section>
+        <snippet>Decision: Use Supabase for authentication, database, and file storage instead of self-managed PostgreSQL + S3. Rationale: Single platform reduces integration complexity. Built-in Auth with JWT management. Row Level Security enforces data isolation. Managed infrastructure with automatic backups.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Security Architecture</title>
+        <section>Security Architecture - File Security</section>
+        <snippet>Uploads and downloads are private Supabase Storage objects. Access via signed URLs with configurable expiration (default 1 hour). Automatic file cleanup via Supabase Storage lifecycle policies (30 days). Input validation: Magic-byte checking for file uploads (ensure real PDF). File size limits enforced (configurable, default 50MB).</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Non-Functional Requirements</title>
+        <section>NFR10, NFR14 - Security Requirements</section>
+        <snippet>NFR10: All uploaded PDF files are encrypted at rest using AES-256 (Supabase default). NFR14: Uploaded PDF files are automatically deleted from server storage after 30 days.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Functional Requirements</title>
+        <section>FR8-FR15 - PDF Upload and Management</section>
+        <snippet>FR8-9: Users can upload PDF files via drag-and-drop or file browser. FR10-11: Free tier 50MB limit, Pro/Premium unlimited. FR12: System validates uploaded files are valid PDFs. FR13-15: Users can view conversion history, re-download EPUBs, and delete files.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3: PDF Upload &amp; File Management</title>
+        <section>Story 3.1 - Supabase Storage Service Implementation</section>
+        <snippet>Backend Storage Service with methods: upload_file, generate_signed_url, delete_file, list_files. File naming strategy: {user_id}/{job_id}/{filename} to prevent collisions. RLS Policies: Users can only upload/read files in folder {user_id}/*. Lifecycle Policy: Auto-delete after 30 days.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/core/supabase.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client</symbol>
+        <lines>11-28</lines>
+        <reason>Existing Supabase client initialization pattern. Storage service will use this same client via create_client() with service_role key for admin operations.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>configuration</kind>
+        <symbol>Settings</symbol>
+        <lines>12-43</lines>
+        <reason>Contains SUPABASE_URL and SUPABASE_SERVICE_KEY configuration. Storage service will use settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY from this configuration class.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/auth.py</path>
+        <kind>middleware</kind>
+        <symbol>get_current_user</symbol>
+        <lines>18-83</lines>
+        <reason>Authentication middleware that extracts user_id from JWT. Storage operations will need user_id for RLS path enforcement: {user_id}/{job_id}/{filename}. Shows how to get authenticated user in API endpoints.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/tests/conftest.py</path>
+        <kind>test</kind>
+        <symbol>client</symbol>
+        <lines>11-23</lines>
+        <reason>Existing async test client fixture pattern. Storage service tests will follow this pattern using pytest fixtures for mocking Supabase Storage client.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/auth.py</path>
+        <kind>schema</kind>
+        <symbol>SubscriptionTier</symbol>
+        <lines>N/A</lines>
+        <reason>Subscription tier enum (FREE, PRO, PREMIUM) used for enforcing file size limits. FREE tier: 50MB max, PRO/PREMIUM: unlimited. Storage service will check tier before upload.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="supabase" version="2.24.0">Supabase Python client for storage operations (storage.from_().upload(), create_signed_url(), remove(), list())</package>
+        <package name="fastapi" version="0.122.0">Web framework for API endpoints that will use storage service</package>
+        <package name="pydantic" version="2.11.7+">Schema validation for storage service inputs and outputs</package>
+        <package name="pytest" version="8.3.0">Testing framework for unit tests</package>
+        <package name="pytest-asyncio" version="0.21.2">Async test support for pytest</package>
+        <package name="httpx" version="0.27.0">HTTP client for testing API endpoints</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Follow Service Pattern: Business logic MUST exist in backend/app/services/, NOT in API routes. Routes should only handle request parsing and response formatting.</constraint>
+    <constraint type="naming">Use snake_case for Python variables, functions, file names. PascalCase for Classes. File tests/unit/services/test_supabase_storage.py follows test_*.py pattern.</constraint>
+    <constraint type="error-handling">Use custom exceptions inheriting from base Exception. Define StorageUploadError, StorageDeleteError for specific failure modes. Provide clear error messages with context (bucket name, path).</constraint>
+    <constraint type="security">Use service_role key for admin operations (bypasses RLS). Never expose service_role key to frontend. Validate user_id is UUID format before constructing storage paths. Sanitize filenames to prevent path traversal attacks.</constraint>
+    <constraint type="testing">Coverage target: 90%+ for storage service. Mock Supabase Storage client in all tests. Use pytest fixtures from conftest.py. Test all error paths (network failures, invalid inputs).</constraint>
+    <constraint type="documentation">Add detailed docstrings to all service methods with parameter descriptions, return value explanations, and usage examples. Follow existing pattern from backend/app/core/supabase.py.</constraint>
+    <constraint type="dependencies">All dependencies already in requirements.txt (supabase==2.24.0, pytest==8.3.0). No new dependencies needed for this story.</constraint>
+    <constraint type="code-style">Run mypy for type checking. Run ruff for linting. All checks must pass before marking story complete.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>SupabaseStorageService</name>
+      <kind>Python class</kind>
+      <signature>
+class SupabaseStorageService:
+    def __init__(self, supabase_client: Client)
+    def upload_file(self, bucket: str, path: str, file_data: bytes, content_type: str = "application/pdf") -> str
+    def generate_signed_url(self, bucket: str, path: str, expires_in: int = 3600) -> str
+    def delete_file(self, bucket: str, path: str) -> bool
+    def list_files(self, bucket: str, prefix: str = "") -> list[dict]
+      </signature>
+      <path>backend/app/services/storage/supabase_storage.py</path>
+    </interface>
+    <interface>
+      <name>Storage Utility Functions</name>
+      <kind>Python module functions</kind>
+      <signature>
+def sanitize_filename(filename: str) -> str
+def generate_storage_path(user_id: str, job_id: str, filename: str) -> str
+      </signature>
+      <path>backend/app/services/storage/utils.py</path>
+    </interface>
+    <interface>
+      <name>Custom Storage Exceptions</name>
+      <kind>Python exception classes</kind>
+      <signature>
+class StorageUploadError(Exception)
+class StorageDeleteError(Exception)
+      </signature>
+      <path>backend/app/services/storage/supabase_storage.py</path>
+    </interface>
+    <interface>
+      <name>Supabase Storage RLS Policies</name>
+      <kind>SQL policies</kind>
+      <signature>
+-- INSERT policy for uploads bucket
+CREATE POLICY "users_upload_own_files_insert" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'uploads' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- SELECT policy for uploads bucket
+CREATE POLICY "users_upload_own_files_select" ON storage.objects
+FOR SELECT TO authenticated
+USING (bucket_id = 'uploads' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- SELECT policy for downloads bucket
+CREATE POLICY "users_download_own_files_select" ON storage.objects
+FOR SELECT TO authenticated
+USING (bucket_id = 'downloads' AND auth.uid()::text = (storage.foldername(name))[1]);
+      </signature>
+      <path>Supabase Dashboard → SQL Editor</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Backend testing uses Pytest 8.3.0 with FastAPI TestClient and pytest-asyncio for async tests.
+Test organization: tests/unit/ for fast isolated tests, tests/integration/ for API + DB tests.
+Mock external services using app.dependency_overrides or pytest fixtures.
+Coverage target: 80% minimum overall, 90%+ for storage service (run pytest --cov=app --cov-report=html).
+Use pytest fixtures from conftest.py: test_client, test_db, authenticated_user.
+Async tests use @pytest.mark.asyncio decorator.
+Follow existing test patterns from tests/integration/test_health.py and tests/unit/test_auth.py.
+    </standards>
+    <locations>
+backend/tests/unit/services/test_supabase_storage.py - Unit tests for storage service
+backend/tests/unit/services/test_storage_utils.py - Unit tests for utility functions
+backend/tests/conftest.py - Shared fixtures (mock_supabase_client, storage_service)
+    </locations>
+    <ideas>
+      <test ac="AC1" id="test_bucket_configuration">
+Manual test: Verify buckets created in Supabase dashboard (uploads, downloads). Check private visibility. Attempt direct URL access → should fail (403 Forbidden).
+      </test>
+      <test ac="AC2" id="test_rls_policies">
+Integration test: Create two test users. User A uploads file to uploads/{userA_id}/test.pdf. User B attempts supabase.storage.from_('uploads').list(f'{userA_id}/') → RLS blocks, returns empty or 403. User A lists own folder → succeeds.
+      </test>
+      <test ac="AC3" id="test_upload_file_success">
+Unit test: Mock supabase.storage.from_().upload() to return success. Call storage_service.upload_file('uploads', 'user/job/file.pdf', b'data', 'application/pdf'). Assert signed URL returned. Verify upload called with correct params.
+      </test>
+      <test ac="AC3" id="test_upload_file_invalid_bucket">
+Unit test: Mock supabase.storage.from_().upload() to raise exception. Call storage_service.upload_file('invalid', ...). Assert StorageUploadError raised with clear message.
+      </test>
+      <test ac="AC3" id="test_generate_signed_url">
+Unit test: Mock create_signed_url() to return {'signedURL': 'https://...'}. Call storage_service.generate_signed_url('uploads', 'path', 3600). Assert URL string returned with correct expiry.
+      </test>
+      <test ac="AC3" id="test_delete_file_success">
+Unit test: Mock remove() to succeed. Call storage_service.delete_file('uploads', 'path'). Assert True returned.
+      </test>
+      <test ac="AC3" id="test_delete_file_not_found">
+Unit test: Mock remove() to raise exception. Call storage_service.delete_file('uploads', 'nonexistent'). Assert False returned (graceful handling, no exception).
+      </test>
+      <test ac="AC3" id="test_list_files">
+Unit test: Mock list() to return [{'name': 'file1.pdf', 'size': 1024}]. Call storage_service.list_files('uploads', 'user123/'). Assert list returned with correct prefix filter applied.
+      </test>
+      <test ac="AC4" id="test_sanitize_filename">
+Unit test: Assert sanitize_filename('My Document (1).pdf') == 'My_Document_1.pdf'. Assert sanitize_filename('test&lt;&gt;file.pdf') removes special chars. Assert long names truncated to 255 chars with extension preserved.
+      </test>
+      <test ac="AC4" id="test_generate_storage_path">
+Unit test: Assert generate_storage_path('550e8400-e29b-41d4-a716-446655440000', 'a1b2c3d4-...', 'doc.pdf') == '550e8400-e29b-41d4-a716-446655440000/a1b2c3d4-.../doc.pdf'. Assert ValueError raised for invalid UUIDs.
+      </test>
+      <test ac="AC5" id="test_coverage_target">
+Run pytest --cov=app/services/storage --cov-report=html. Verify 90%+ coverage. Review HTML report to identify untested branches.
+      </test>
+      <test ac="AC6" id="test_lifecycle_policy">
+Manual test: Upload file with metadata created_at = 31 days ago (if possible via API). Wait or trigger cleanup script. Verify file deleted. Document SQL script or Supabase dashboard config in backend/README.md.
+      </test>
+    </ideas>
+  </tests>
+</story-context>

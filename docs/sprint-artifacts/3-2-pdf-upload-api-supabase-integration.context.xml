@@ -1,0 +1,509 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>2</storyId>
+    <title>PDF Upload API with Supabase Integration</title>
+    <status>done</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <completedAt>2025-12-12</completedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-2-pdf-upload-api-supabase-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to create an API endpoint for PDF uploads to Supabase Storage</iWant>
+    <soThat>authenticated users can securely upload files</soThat>
+    <tasks>
+      <task id="1" status="completed">
+        <title>Create conversion_jobs Table in Supabase</title>
+        <subtasks>
+          <subtask id="1.1">Define table schema in Supabase SQL Editor</subtask>
+          <subtask id="1.2">Enable Row Level Security (RLS) on conversion_jobs table</subtask>
+          <subtask id="1.3">Create RLS policy for INSERT (users_insert_own_jobs)</subtask>
+          <subtask id="1.4">Create RLS policy for SELECT (users_select_own_jobs)</subtask>
+          <subtask id="1.5">Create RLS policy for UPDATE (users_update_own_jobs)</subtask>
+          <subtask id="1.6">Verify RLS policies with test queries</subtask>
+        </subtasks>
+      </task>
+      <task id="2" status="completed">
+        <title>Implement JWT Authentication Middleware</title>
+        <subtasks>
+          <subtask id="2.1">Create authentication dependency in backend/app/api/dependencies.py</subtask>
+          <subtask id="2.2">Handle authentication errors (401 responses)</subtask>
+          <subtask id="2.3">Write unit tests for authentication dependency</subtask>
+        </subtasks>
+      </task>
+      <task id="3" status="completed">
+        <title>Implement File Validation Service</title>
+        <subtasks>
+          <subtask id="3.1">Install python-magic library</subtask>
+          <subtask id="3.2">Create FileValidationService in backend/app/services/validation/file_validator.py</subtask>
+          <subtask id="3.3">Create method to validate file size by tier</subtask>
+          <subtask id="3.4">Create custom exceptions (ValidationError, InvalidFileTypeError, FileTooLargeError)</subtask>
+          <subtask id="3.5">Write unit tests for FileValidationService</subtask>
+        </subtasks>
+      </task>
+      <task id="4" status="completed">
+        <title>Create Upload API Endpoint</title>
+        <subtasks>
+          <subtask id="4.1">Create upload endpoint in backend/app/api/v1/upload.py</subtask>
+          <subtask id="4.2">Implement request handling (read file, get size, filename)</subtask>
+          <subtask id="4.3">Validate file (PDF type and size by tier)</subtask>
+          <subtask id="4.4">Generate job_id and upload to Supabase Storage</subtask>
+          <subtask id="4.5">Create database record in conversion_jobs</subtask>
+          <subtask id="4.6">Return 202 Accepted response with job_id</subtask>
+        </subtasks>
+      </task>
+      <task id="5" status="completed">
+        <title>Implement Error Handling</title>
+        <subtasks>
+          <subtask id="5.1">Create global exception handler in backend/app/main.py</subtask>
+          <subtask id="5.2">Ensure all errors return JSON with detail and code fields</subtask>
+          <subtask id="5.3">Log errors for debugging with structured logging</subtask>
+        </subtasks>
+      </task>
+      <task id="6" status="completed">
+        <title>Write Integration Tests</title>
+        <subtasks>
+          <subtask id="6.1">Create integration test file: backend/tests/integration/test_api_upload.py</subtask>
+          <subtask id="6.2">Set up test fixtures (test_client, authenticated_user, test_pdf_file)</subtask>
+          <subtask id="6.3">Test successful upload</subtask>
+          <subtask id="6.4">Test invalid file type rejection</subtask>
+          <subtask id="6.5">Test file size limits (FREE vs PRO tier)</subtask>
+          <subtask id="6.6">Test authentication failure scenarios</subtask>
+          <subtask id="6.7">Test RLS policy enforcement (cross-user isolation)</subtask>
+        </subtasks>
+      </task>
+      <task id="7" status="completed">
+        <title>Documentation and API Specification</title>
+        <subtasks>
+          <subtask id="7.1">Update OpenAPI schema with endpoint documentation</subtask>
+          <subtask id="7.2">Update backend/README.md with Upload API section</subtask>
+          <subtask id="7.3">Create API testing guide with cURL examples</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <title>POST /api/v1/upload Endpoint Created</title>
+      <description>Endpoint accepts multipart/form-data with PDF file, requires authentication via Supabase JWT token, extracts user_id from authenticated JWT, returns JSON response with job_id and status</description>
+    </criterion>
+    <criterion id="AC2">
+      <title>Authentication Required</title>
+      <description>Endpoint protected by Supabase JWT verification middleware. Invalid or missing JWT returns 401 Unauthorized. JWT extracted from Authorization header: Bearer &lt;token&gt;. User ID extracted from validated JWT claims</description>
+    </criterion>
+    <criterion id="AC3">
+      <title>Input Validation - File Type</title>
+      <description>File MUST be PDF (verified by magic bytes, not just extension). Use python-magic library for MIME type detection. Reject non-PDF files with 400 Bad Request error</description>
+    </criterion>
+    <criterion id="AC4">
+      <title>Input Validation - File Size by Tier</title>
+      <description>FREE tier users: Maximum 50MB file size (FR10). PRO/PREMIUM tier users: Unlimited file size (FR11). Fetch user tier from Supabase user metadata. File exceeding tier limit returns 413 Payload Too Large</description>
+    </criterion>
+    <criterion id="AC5">
+      <title>Upload to Supabase Storage</title>
+      <description>Generate unique job_id (UUID) for this conversion job. Upload file to uploads/{user_id}/{job_id}/input.pdf using SupabaseStorageService. Handle upload errors with appropriate HTTP status codes. Return signed URL for uploaded file</description>
+    </criterion>
+    <criterion id="AC6">
+      <title>Database Record Creation</title>
+      <description>Insert new record into conversion_jobs table (Supabase PostgreSQL) with id, user_id, status: UPLOADED, input_path, created_at. Verify RLS policy allows user to insert their own jobs. Return job_id in response for job tracking</description>
+    </criterion>
+    <criterion id="AC7">
+      <title>Response Format</title>
+      <description>Success (202 Accepted) returns JSON with job_id, status: UPLOADED, input_file, created_at. Frontend can use job_id to poll conversion status</description>
+    </criterion>
+    <criterion id="AC8">
+      <title>Error Handling</title>
+      <description>400 Bad Request: Invalid file type, missing file, malformed request. 401 Unauthorized: Missing or invalid JWT token. 413 Payload Too Large: File exceeds tier limit. 500 Internal Server Error: Storage upload failure, database error. All errors return JSON with detail and code fields</description>
+    </criterion>
+    <criterion id="AC9">
+      <title>Integration Tests</title>
+      <description>Test successful upload for authenticated user. Test rejection of non-PDF file. Test rejection of oversized file for FREE tier. Test acceptance of large file for PRO tier. Test authentication failure (no token). Test RLS policy enforcement (user can only see their own jobs)</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc id="doc1">
+        <path>docs/architecture.md</path>
+        <title>Architecture Specification</title>
+        <section>API Contracts</section>
+        <snippet>POST /api/v1/convert endpoint accepts multipart/form-data with PDF file, returns 202 Accepted with job_id and status QUEUED</snippet>
+      </doc>
+      <doc id="doc2">
+        <path>docs/architecture.md</path>
+        <title>Architecture Specification</title>
+        <section>Security Architecture - Input Validation</section>
+        <snippet>Magic-byte checking for file uploads (ensure real PDF). File size limits enforced (configurable, default 50MB). Strict Pydantic models for JSON payloads</snippet>
+      </doc>
+      <doc id="doc3">
+        <path>docs/architecture.md</path>
+        <title>Architecture Specification</title>
+        <section>Security Architecture - Authentication</section>
+        <snippet>Supabase Auth with JWT tokens. Backend validates Supabase JWT tokens on protected endpoints. Row Level Security (RLS) policies in Supabase PostgreSQL ensure users only access their own data</snippet>
+      </doc>
+      <doc id="doc4">
+        <path>docs/architecture.md</path>
+        <title>Architecture Specification</title>
+        <section>Security Architecture - File Security</section>
+        <snippet>Uploads and downloads are private Supabase Storage objects. Access via signed URLs with configurable expiration (default 1 hour). Automatic file cleanup via Supabase Storage lifecycle policies (30 days)</snippet>
+      </doc>
+      <doc id="doc5">
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Story 3.2: PDF Upload API with Supabase Integration</section>
+        <snippet>Create API endpoint for PDF uploads to Supabase Storage. Authentication via Supabase JWT. Input validation for file type (magic bytes) and size by tier (FREE: 50MB, PRO/PREMIUM: Unlimited). Upload to uploads/{user_id}/{job_id}/input.pdf. Store metadata in conversion_jobs table</snippet>
+      </doc>
+      <doc id="doc6">
+        <path>docs/sprint-artifacts/3-1-supabase-storage-service-implementation.md</path>
+        <title>Story 3.1: Supabase Storage Service Implementation</title>
+        <section>Dev Notes - Learnings</section>
+        <snippet>SupabaseStorageService available at backend/app/services/storage/supabase_storage.py with upload_file(), generate_signed_url(), delete_file() methods. Path generation via generate_storage_path(user_id, job_id, filename). File naming pattern: {user_id}/{job_id}/{filename}. 100% test coverage achieved with 29 tests</snippet>
+      </doc>
+      <doc id="doc7">
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR10-FR12: PDF Upload Requirements</section>
+        <snippet>FR10: Users can upload PDF files up to 50MB in Free tier. FR11: Users can upload PDF files with no size limit in Pro/Premium tiers. FR12: System validates uploaded files are valid PDFs before processing</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact id="code1">
+        <path>backend/app/services/storage/supabase_storage.py</path>
+        <kind>service</kind>
+        <symbol>SupabaseStorageService</symbol>
+        <lines>entire-file</lines>
+        <reason>Complete storage service implementation from Story 3.1. Provides upload_file(), generate_signed_url(), delete_file() methods needed for PDF upload</reason>
+      </artifact>
+      <artifact id="code2">
+        <path>backend/app/services/storage/utils.py</path>
+        <kind>utility</kind>
+        <symbol>generate_storage_path, sanitize_filename</symbol>
+        <lines>entire-file</lines>
+        <reason>Path generation and filename sanitization utilities. generate_storage_path() creates {user_id}/{job_id}/{filename} structure. sanitize_filename() cleans user input</reason>
+      </artifact>
+      <artifact id="code3">
+        <path>backend/app/core/auth.py</path>
+        <kind>middleware</kind>
+        <symbol>get_current_user</symbol>
+        <lines>entire-file</lines>
+        <reason>JWT authentication dependency. Validates Supabase JWT tokens, extracts user_id, email, tier from token claims. Returns AuthenticatedUser object or raises HTTPException(401)</reason>
+      </artifact>
+      <artifact id="code4">
+        <path>backend/app/schemas/auth.py</path>
+        <kind>schema</kind>
+        <symbol>AuthenticatedUser, SubscriptionTier</symbol>
+        <lines>entire-file</lines>
+        <reason>Pydantic models for authentication. AuthenticatedUser contains user_id, email, tier. SubscriptionTier enum defines FREE, PRO, PREMIUM values</reason>
+      </artifact>
+      <artifact id="code5">
+        <path>backend/app/core/config.py</path>
+        <kind>configuration</kind>
+        <symbol>Settings</symbol>
+        <lines>entire-file</lines>
+        <reason>Application configuration. Loads SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_JWT_SECRET from environment variables</reason>
+      </artifact>
+      <artifact id="code6">
+        <path>backend/app/core/supabase.py</path>
+        <kind>client</kind>
+        <symbol>get_supabase_client</symbol>
+        <lines>entire-file</lines>
+        <reason>Supabase client factory. Returns configured client with service role key for database operations (conversion_jobs table inserts)</reason>
+      </artifact>
+      <artifact id="code7">
+        <path>backend/app/main.py</path>
+        <kind>application</kind>
+        <symbol>app</symbol>
+        <lines>entire-file</lines>
+        <reason>FastAPI application entry point. Shows router registration pattern and CORS configuration. Need to add upload router and exception handlers here</reason>
+      </artifact>
+      <artifact id="code8">
+        <path>backend/app/api/v1/test_ai.py</path>
+        <kind>controller</kind>
+        <symbol>test_ai endpoint</symbol>
+        <lines>entire-file</lines>
+        <reason>Example API endpoint showing request/response pattern, Pydantic models, status codes, and error handling. Use as template for upload endpoint</reason>
+      </artifact>
+      <artifact id="code9">
+        <path>backend/tests/unit/test_auth.py</path>
+        <kind>test</kind>
+        <symbol>test_get_current_user_*</symbol>
+        <lines>entire-file</lines>
+        <reason>Unit tests for JWT authentication. Shows mocking patterns for JWT validation, test fixtures, and error scenarios</reason>
+      </artifact>
+      <artifact id="code10">
+        <path>backend/tests/unit/services/test_supabase_storage.py</path>
+        <kind>test</kind>
+        <symbol>TestSupabaseStorageService</symbol>
+        <lines>entire-file</lines>
+        <reason>29 comprehensive tests for storage service. 100% coverage model for testing upload, download, delete operations with mocks</reason>
+      </artifact>
+      <artifact id="code11">
+        <path>backend/tests/conftest.py</path>
+        <kind>test-fixture</kind>
+        <symbol>client, app</symbol>
+        <lines>entire-file</lines>
+        <reason>Pytest fixtures for AsyncClient and FastAPI app. Required for integration testing of upload endpoint</reason>
+      </artifact>
+      <artifact id="code12">
+        <path>backend/tests/integration/test_health.py</path>
+        <kind>test</kind>
+        <symbol>test_health_check</symbol>
+        <lines>entire-file</lines>
+        <reason>Example integration test showing async HTTP testing pattern with AsyncClient fixture</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="fastapi" version="0.122.0">Web framework for API endpoint</package>
+        <package name="pydantic" version="2.11.7+">Data validation for request/response models</package>
+        <package name="supabase" version="2.24.0">Supabase client for database and storage operations</package>
+        <package name="python-jose[cryptography]" version="3.3.0">JWT token validation</package>
+        <package name="python-magic" version="0.4.27">MIME type detection for PDF validation (NEEDS TO BE ADDED)</package>
+        <package name="pytest" version="8.3.0">Testing framework</package>
+        <package name="pytest-asyncio" version="0.21.2">Async test support</package>
+        <package name="httpx" version="0.27.0">HTTP client for integration tests</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="c1">
+      <category>Architecture Pattern</category>
+      <rule>Follow RESTful API conventions. Use FastAPI routers in backend/app/api/v1/ directory. Return 202 Accepted for async job creation (conversion happens later via Celery)</rule>
+    </constraint>
+    <constraint id="c2">
+      <category>Authentication</category>
+      <rule>MUST use Supabase JWT token validation via get_current_user() dependency. Extract user_id and tier from authenticated token. Never implement custom auth logic - rely on Supabase</rule>
+    </constraint>
+    <constraint id="c3">
+      <category>File Validation</category>
+      <rule>MUST verify file type using magic bytes (python-magic library), NOT file extension. File validation must check: 1) MIME type is application/pdf 2) File size within tier limits (FREE: 50MB, PRO/PREMIUM: unlimited)</rule>
+    </constraint>
+    <constraint id="c4">
+      <category>Storage Pattern</category>
+      <rule>MUST use SupabaseStorageService from Story 3.1. Do not reimplement storage logic. Use generate_storage_path(user_id, job_id, filename) for path generation. Always upload with fixed filename "input.pdf" (not original filename)</rule>
+    </constraint>
+    <constraint id="c5">
+      <category>Database Security</category>
+      <rule>MUST implement Row Level Security (RLS) policies on conversion_jobs table. RLS policies: INSERT/SELECT/UPDATE allowed where auth.uid() = user_id. Backend trusts RLS - no manual user_id filtering needed</rule>
+    </constraint>
+    <constraint id="c6">
+      <category>Error Handling</category>
+      <rule>All errors MUST return JSON with detail and code fields. Use HTTPException with appropriate status codes: 400 (bad request), 401 (unauthorized), 413 (payload too large), 500 (internal error)</rule>
+    </constraint>
+    <constraint id="c7">
+      <category>Testing Standard</category>
+      <rule>Aim for 100% test coverage following Story 3.1 model (29 tests). Write unit tests for validation service. Write integration tests for upload endpoint covering all error paths. Mock Supabase Storage and database for isolation</rule>
+    </constraint>
+    <constraint id="c8">
+      <category>Type Safety</category>
+      <rule>Use strict type hints throughout. Define Pydantic models for request/response validation. FastAPI automatically validates file upload parameters</rule>
+    </constraint>
+    <constraint id="c9">
+      <category>Dependency Injection</category>
+      <rule>Use FastAPI dependency injection pattern: get_current_user() for auth, get_storage_service() for storage, get_supabase_client() for database. Improves testability</rule>
+    </constraint>
+    <constraint id="c10">
+      <category>Documentation</category>
+      <rule>Add docstrings to endpoint with parameter descriptions. Update backend/README.md with Upload API section. Include cURL examples for manual testing. Document all error codes</rule>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface id="i1">
+      <name>POST /api/v1/upload</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: multipart/form-data
+          - file: PDF file (required)
+          - Authorization header: Bearer &lt;JWT_TOKEN&gt; (required)
+
+        Response 202 Accepted:
+        {
+          "job_id": "uuid-string",
+          "status": "UPLOADED",
+          "input_file": "document.pdf",
+          "created_at": "2025-12-12T10:30:00Z"
+        }
+
+        Error Responses:
+        - 400: {"detail": "Invalid file type. Only PDF files are allowed.", "code": "INVALID_FILE_TYPE"}
+        - 401: {"detail": "Invalid or missing authorization token", "code": "UNAUTHORIZED"}
+        - 413: {"detail": "File exceeds tier limit (50MB for FREE tier)", "code": "FILE_TOO_LARGE"}
+        - 500: {"detail": "Internal server error", "code": "INTERNAL_ERROR"}
+      </signature>
+      <path>backend/app/api/v1/upload.py</path>
+    </interface>
+
+    <interface id="i2">
+      <name>SupabaseStorageService.upload_file</name>
+      <kind>Service method</kind>
+      <signature>
+        def upload_file(
+            self,
+            bucket: str,
+            path: str,
+            file_data: bytes,
+            content_type: str = "application/octet-stream"
+        ) -> str:
+            """Upload file to Supabase Storage.
+
+            Returns: Signed URL for uploaded file
+            Raises: StorageUploadError on failure
+            """
+      </signature>
+      <path>backend/app/services/storage/supabase_storage.py</path>
+    </interface>
+
+    <interface id="i3">
+      <name>get_current_user</name>
+      <kind>FastAPI dependency</kind>
+      <signature>
+        async def get_current_user(
+            authorization: str = Header(...)
+        ) -> AuthenticatedUser:
+            """Validate Supabase JWT and extract user info.
+
+            Returns: AuthenticatedUser(user_id, email, tier)
+            Raises: HTTPException(401) if invalid token
+            """
+      </signature>
+      <path>backend/app/core/auth.py</path>
+    </interface>
+
+    <interface id="i4">
+      <name>conversion_jobs table</name>
+      <kind>Database schema</kind>
+      <signature>
+        CREATE TABLE conversion_jobs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+            status TEXT NOT NULL DEFAULT 'UPLOADED',
+            input_path TEXT NOT NULL,
+            output_path TEXT,
+            quality_report JSONB,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            completed_at TIMESTAMPTZ
+        );
+
+        -- Indexes
+        CREATE INDEX idx_conversion_jobs_user_id ON conversion_jobs(user_id);
+        CREATE INDEX idx_conversion_jobs_status ON conversion_jobs(status);
+
+        -- RLS Policies
+        CREATE POLICY users_insert_own_jobs ON conversion_jobs
+          FOR INSERT TO authenticated
+          WITH CHECK (auth.uid() = user_id);
+
+        CREATE POLICY users_select_own_jobs ON conversion_jobs
+          FOR SELECT TO authenticated
+          USING (auth.uid() = user_id);
+
+        CREATE POLICY users_update_own_jobs ON conversion_jobs
+          FOR UPDATE TO authenticated
+          USING (auth.uid() = user_id);
+      </signature>
+      <path>Supabase SQL Editor</path>
+    </interface>
+
+    <interface id="i5">
+      <name>FileValidationService</name>
+      <kind>Service class</kind>
+      <signature>
+        class FileValidationService:
+            def validate_pdf(self, file_data: bytes) -> bool:
+                """Validate file is PDF using magic bytes.
+                Raises: InvalidFileTypeError if not PDF
+                """
+
+            def validate_file_size(self, file_size: int, user_tier: str) -> bool:
+                """Validate file size within tier limits.
+                Raises: FileTooLargeError if exceeds limit
+                """
+
+        # Custom Exceptions
+        class ValidationError(Exception): pass
+        class InvalidFileTypeError(ValidationError): pass
+        class FileTooLargeError(ValidationError): pass
+      </signature>
+      <path>backend/app/services/validation/file_validator.py (to be created)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing follows the 100% coverage model established in Story 3.1 (29 tests). Use pytest with async support (pytest-asyncio). Unit tests mock external dependencies (Supabase Storage, database, JWT validation). Integration tests use AsyncClient from httpx with real FastAPI app but mocked Supabase services. All tests must be isolated and idempotent. Test fixtures defined in conftest.py for reusability. Use descriptive test names following pattern: test_{component}_{scenario}_{expected_result}.
+    </standards>
+    <locations>
+      <location>backend/tests/unit/services/test_file_validator.py - Unit tests for FileValidationService</location>
+      <location>backend/tests/unit/test_auth.py - Authentication dependency tests (existing, may need extensions)</location>
+      <location>backend/tests/integration/test_api_upload.py - Integration tests for upload endpoint</location>
+    </locations>
+    <ideas>
+      <test id="t1" ac_ref="AC3">
+        <description>Unit: test_validate_pdf_with_valid_pdf - Pass real PDF bytes to FileValidationService.validate_pdf(), expect True</description>
+      </test>
+      <test id="t2" ac_ref="AC3">
+        <description>Unit: test_validate_pdf_with_jpeg_file - Pass JPEG bytes (renamed to .pdf), expect InvalidFileTypeError raised</description>
+      </test>
+      <test id="t3" ac_ref="AC3">
+        <description>Unit: test_validate_pdf_with_text_file - Pass plain text bytes, expect InvalidFileTypeError raised</description>
+      </test>
+      <test id="t4" ac_ref="AC4">
+        <description>Unit: test_validate_file_size_free_tier_within_limit - 40MB file for FREE tier, expect True</description>
+      </test>
+      <test id="t5" ac_ref="AC4">
+        <description>Unit: test_validate_file_size_free_tier_exceeds_limit - 60MB file for FREE tier, expect FileTooLargeError</description>
+      </test>
+      <test id="t6" ac_ref="AC4">
+        <description>Unit: test_validate_file_size_free_tier_exactly_50mb - Exactly 52,428,800 bytes for FREE tier, expect True (inclusive limit)</description>
+      </test>
+      <test id="t7" ac_ref="AC4">
+        <description>Unit: test_validate_file_size_pro_tier_large_file - 100MB file for PRO tier, expect True (unlimited)</description>
+      </test>
+      <test id="t8" ac_ref="AC1,AC2,AC5,AC6,AC7">
+        <description>Integration: test_upload_pdf_success_authenticated_user - Authenticated user uploads valid 5MB PDF, expect 202 with job_id, verify file uploaded to storage, verify database record created</description>
+      </test>
+      <test id="t9" ac_ref="AC3">
+        <description>Integration: test_upload_invalid_file_type - Upload JPEG file, expect 400 with code INVALID_FILE_TYPE</description>
+      </test>
+      <test id="t10" ac_ref="AC4">
+        <description>Integration: test_upload_oversized_file_free_tier - FREE tier user uploads 60MB PDF, expect 413 with code FILE_TOO_LARGE</description>
+      </test>
+      <test id="t11" ac_ref="AC4">
+        <description>Integration: test_upload_large_file_pro_tier - PRO tier user uploads 60MB PDF, expect 202 success</description>
+      </test>
+      <test id="t12" ac_ref="AC2">
+        <description>Integration: test_upload_without_auth_token - Upload PDF without Authorization header, expect 401 UNAUTHORIZED</description>
+      </test>
+      <test id="t13" ac_ref="AC2">
+        <description>Integration: test_upload_with_invalid_token - Upload PDF with malformed JWT, expect 401 UNAUTHORIZED</description>
+      </test>
+      <test id="t14" ac_ref="AC2">
+        <description>Integration: test_upload_with_expired_token - Upload PDF with expired JWT, expect 401 UNAUTHORIZED</description>
+      </test>
+      <test id="t15" ac_ref="AC9">
+        <description>Integration: test_rls_policy_enforcement - User A uploads file, User B queries conversion_jobs table, expect User B sees 0 records (RLS isolation)</description>
+      </test>
+      <test id="t16" ac_ref="AC8">
+        <description>Integration: test_upload_empty_file - Upload 0-byte file, expect 400 Bad Request</description>
+      </test>
+      <test id="t17" ac_ref="AC8">
+        <description>Integration: test_upload_missing_file_parameter - POST request without file in form-data, expect 422 Validation Error</description>
+      </test>
+      <test id="t18" ac_ref="AC5">
+        <description>Integration: test_storage_upload_failure - Mock storage service to raise StorageUploadError, expect 500 with code STORAGE_ERROR</description>
+      </test>
+      <test id="t19" ac_ref="AC6">
+        <description>Integration: test_database_insert_failure - Mock database client to fail insert, expect 500 with code DATABASE_ERROR</description>
+      </test>
+      <test id="t20" ac_ref="AC7">
+        <description>Integration: test_response_format_contains_all_fields - Successful upload returns JSON with job_id, status, input_file, created_at fields</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>
+

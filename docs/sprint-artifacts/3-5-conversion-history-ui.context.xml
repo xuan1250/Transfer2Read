@@ -1,0 +1,287 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Conversion History UI</title>
+    <status>done</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-5-conversion-history-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to view a list of my past conversions</iWant>
+    <soThat>I can download them again or manage my files</soThat>
+    <tasks>
+      - Task 1: Create History Page Route and Authentication (AC: #1)
+      - Task 2: Implement Table View with shadcn/ui (AC: #2)
+      - Task 3: Implement Download Action (AC: #3)
+      - Task 4: Implement Delete Action with Confirmation (AC: #4)
+      - Task 5: Implement Empty State (AC: #5)
+      - Task 6: Implement Loading Skeletons (AC: #6)
+      - Task 7: Implement Real-time Polling for Processing Jobs (AC: #7)
+      - Task 8: Implement Mobile Responsive Design (AC: #8)
+      - Task 9: Implement Error Handling (AC: #9)
+      - Task 10: (Optional) Quality Report Preview Popover (AC: #10)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. History Page Created (`/history`) - Route with authentication check, redirects if not authenticated
+    2. Table View of Past Jobs - shadcn/ui Table with Filename, Date, Status, Actions columns
+    3. Download Action - Button for COMPLETED jobs, fetches signed URL, triggers download
+    4. Delete Action with Confirmation Dialog - AlertDialog, optimistic update, rollback on error
+    5. Empty State Design - Displayed when no jobs, includes upload CTA
+    6. Loading Skeletons - Shimmer UI while fetching jobs
+    7. Real-time Status Updates (Polling) - Poll PROCESSING jobs every 5 seconds
+    8. Mobile Responsive Design - Desktop table, mobile card layout
+    9. Error Handling - Toast notifications, retry buttons, 401 redirect
+    10. Quality Report Preview (Optional) - Popover with quality metrics for COMPLETED jobs
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR13-FR15: File Management</section>
+        <snippet>FR13: Users can view their conversion history. FR14: Users can re-download previously converted EPUB files. FR15: Users can delete files from their conversion history.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Decision - Supabase Integration</title>
+        <section>FR Category Mapping - Conversion Process</section>
+        <snippet>Backend api/jobs: Async task dispatch, progress polling via API. Redis (Queue), Supabase PG (Status). GET /api/v1/jobs - List jobs with pagination. GET /api/v1/jobs/{id}/download - Download EPUB.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design - Conversion History Flow</title>
+        <section>Section 6.3: Tertiary Journey - Conversion History</section>
+        <snippet>User Goal: Access previously converted files. Flow: Navigate to History page → See past conversions (filename, date, quality score) → Click Download or Re-convert with different settings. Professional Blue theme with shadcn/ui components.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic 3 - Story 3.4 Context</title>
+        <section>Story 3.4: Conversion History Backend with Supabase</section>
+        <snippet>Backend provides GET /api/v1/jobs with pagination (limit=20, offset=0). Response: { jobs: [...], total: 50, limit: 20, offset: 0 }. Download endpoint returns { download_url: "...", expires_at: "..." }. Delete endpoint returns 204 No Content. RLS enforcement for multi-tenancy.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>REST API</kind>
+        <symbol>list_jobs, get_job, delete_job, download_job</symbol>
+        <lines>39-467</lines>
+        <reason>Backend API endpoints that Story 3.5 will consume. Provides pagination, job details, download URLs, and soft delete.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/job.py</path>
+        <kind>Schema Definition</kind>
+        <symbol>JobSummary, JobListResponse, DownloadUrlResponse, QualityReport</symbol>
+        <lines>37-167</lines>
+        <reason>Pydantic models defining API response structure for frontend TypeScript types.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/layout/TopBar.tsx</path>
+        <kind>React Component</kind>
+        <symbol>TopBar</symbol>
+        <lines>19-125</lines>
+        <reason>Existing navigation component with /history link already implemented (line 46-48). Story adds /history route.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/supabase/client.ts</path>
+        <kind>Utility</kind>
+        <symbol>createClient</symbol>
+        <lines>All</lines>
+        <reason>Supabase client initialization pattern for frontend authentication and API calls.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/alert-dialog.tsx</path>
+        <kind>shadcn/ui Component</kind>
+        <symbol>AlertDialog</symbol>
+        <lines>All</lines>
+        <reason>Delete confirmation dialog component (AC #4) - already installed.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/badge.tsx</path>
+        <kind>shadcn/ui Component</kind>
+        <symbol>Badge</symbol>
+        <lines>All</lines>
+        <reason>Status badge component for job status display (AC #2) - already installed.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package>next</package>
+        <version>^15.5.7</version>
+        <usage>App Router for /history page route</usage>
+      </frontend>
+      <frontend>
+        <package>@supabase/supabase-js</package>
+        <version>^2.86.0</version>
+        <usage>Authentication - JWT token extraction for API calls</usage>
+      </frontend>
+      <frontend>
+        <package>axios</package>
+        <version>^1.13.2</version>
+        <usage>HTTP client for backend API requests (GET /api/v1/jobs, DELETE /api/v1/jobs/{id})</usage>
+      </frontend>
+      <frontend>
+        <package>lucide-react</package>
+        <version>^0.555.0</version>
+        <usage>Icons for download, delete, upload actions</usage>
+      </frontend>
+      <frontend>
+        <package>@radix-ui/react-alert-dialog</package>
+        <version>^1.1.15</version>
+        <usage>Delete confirmation dialog (shadcn/ui)</usage>
+      </frontend>
+      <frontend>
+        <package>date-fns</package>
+        <version>NOT INSTALLED - needs npm install date-fns</version>
+        <usage>Date formatting for created_at timestamps (AC #2)</usage>
+      </frontend>
+      <backend>
+        <package>FastAPI</package>
+        <version>0.122.0</version>
+        <usage>Backend API framework providing job endpoints</usage>
+      </backend>
+      <backend>
+        <package>supabase-py</package>
+        <version>2.24.0</version>
+        <usage>Backend Supabase client for database and storage operations</usage>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - **Authentication Pattern:** All API requests MUST include Authorization: Bearer &lt;JWT&gt; header extracted from Supabase session
+    - **Supabase RLS Enforcement:** Backend trusts Row Level Security policies - frontend doesn't need to manually filter jobs by user_id
+    - **Error Format:** Backend returns consistent structure: { "detail": "...", "code": "ERROR_CODE" }. Parse detail field for user-friendly messages.
+    - **Soft Delete Pattern:** Backend uses soft delete with deleted_at column. Deleted jobs automatically excluded from GET /api/v1/jobs response.
+    - **File Cleanup:** DELETE endpoint returns 204 immediately, file cleanup happens in background via Celery. Frontend assumes deletion success on 204.
+    - **Pagination:** API supports limit (default 20, max 100) and offset parameters. Track current offset in state, increment by limit on "Load More".
+    - **Status Values:** UPLOADED, PROCESSING, COMPLETED, FAILED (all caps). Map to badge colors in frontend.
+    - **Download URL Expiry:** Signed URLs expire after 1 hour. Fetch on-demand when user clicks Download button - don't cache URLs.
+    - **Component Architecture:** Use shadcn/ui components (already installed: Table, AlertDialog, Toast, Skeleton, Badge, Card). Install missing: Popover (optional for AC #10).
+    - **Professional Blue Theme:** Primary #2563eb, Success #10b981, Error #ef4444 (from UX Spec Section 4.1)
+    - **Mobile Responsive:** Desktop table view (&gt;768px), mobile card layout (&lt;768px) with Tailwind breakpoints
+    - **Real-time Updates:** Polling for PROCESSING jobs every 5 seconds using useEffect + setInterval. Stop polling when status changes to COMPLETED or FAILED.
+    - **Testing:** Unit tests with Vitest + React Testing Library. Mock API responses, test empty state, status badges, delete confirmation flow.
+  </constraints>
+
+  <interfaces>
+    <api>
+      <endpoint>GET /api/v1/jobs</endpoint>
+      <kind>REST</kind>
+      <signature>GET /api/v1/jobs?limit=20&amp;offset=0&amp;status=COMPLETED</signature>
+      <path>backend/app/api/v1/jobs.py:39-139</path>
+      <request>
+        Query params: limit (int, 1-100, default 20), offset (int, ≥0, default 0), status (optional: UPLOADED|PROCESSING|COMPLETED|FAILED)
+        Headers: Authorization: Bearer &lt;supabase_jwt&gt;
+      </request>
+      <response>
+        200 OK: { "jobs": [JobSummary], "total": int, "limit": int, "offset": int }
+        401 Unauthorized: Missing/invalid JWT
+        500 Internal Server Error: Database error
+      </response>
+    </api>
+    <api>
+      <endpoint>GET /api/v1/jobs/{job_id}</endpoint>
+      <kind>REST</kind>
+      <signature>GET /api/v1/jobs/{uuid}</signature>
+      <path>backend/app/api/v1/jobs.py:142-237</path>
+      <request>
+        Path params: job_id (UUID)
+        Headers: Authorization: Bearer &lt;supabase_jwt&gt;
+      </request>
+      <response>
+        200 OK: JobDetail (includes quality_report JSONB)
+        404 Not Found: Job not found or user doesn't own job
+        500 Internal Server Error: Database error
+      </response>
+    </api>
+    <api>
+      <endpoint>DELETE /api/v1/jobs/{job_id}</endpoint>
+      <kind>REST</kind>
+      <signature>DELETE /api/v1/jobs/{uuid}</signature>
+      <path>backend/app/api/v1/jobs.py:240-360</path>
+      <request>
+        Path params: job_id (UUID)
+        Headers: Authorization: Bearer &lt;supabase_jwt&gt;
+      </request>
+      <response>
+        204 No Content: Success (file cleanup scheduled async)
+        404 Not Found: Job not found or user doesn't own job
+        500 Internal Server Error: Database error
+      </response>
+    </api>
+    <api>
+      <endpoint>GET /api/v1/jobs/{job_id}/download</endpoint>
+      <kind>REST</kind>
+      <signature>GET /api/v1/jobs/{uuid}/download</signature>
+      <path>backend/app/api/v1/jobs.py:363-467</path>
+      <request>
+        Path params: job_id (UUID)
+        Headers: Authorization: Bearer &lt;supabase_jwt&gt;
+      </request>
+      <response>
+        200 OK: { "download_url": string (signed URL), "expires_at": datetime (ISO 8601) }
+        404 Not Found: Job not COMPLETED or output file missing
+        500 Internal Server Error: Storage error
+      </response>
+    </api>
+    <type>
+      <name>JobSummary</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface JobSummary { id: string; status: string; input_file: string; created_at: string; completed_at?: string; quality_report?: QualityReport; }</signature>
+      <path>frontend/src/types/job.ts (TO BE CREATED)</path>
+    </type>
+    <type>
+      <name>QualityReport</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface QualityReport { overall_confidence?: number; tables?: { count: number; avg_confidence?: number }; images?: { count: number }; equations?: { count: number; avg_confidence?: number }; }</signature>
+      <path>frontend/src/types/job.ts (TO BE CREATED)</path>
+    </type>
+  </interfaces>
+  <tests>
+    <standards>
+      Frontend testing uses Vitest 4.0.15 + React Testing Library 16.3.0 + @testing-library/jest-dom. Component tests should focus on user interactions, not implementation details. Mock API calls using vi.mock() or custom fetch mocks. Use custom render() helper with providers for Supabase Auth context. Test coverage target: 70% minimum. Run tests with "npm run test" (watch mode) or "npm test:coverage" for coverage report.
+    </standards>
+    <locations>
+      - frontend/src/test/ - Test utilities and mocks
+      - frontend/src/app/history/page.test.tsx - History page integration tests
+      - frontend/src/components/business/*.test.tsx - Business component tests (colocated)
+    </locations>
+    <ideas>
+      <test id="AC1">
+        Test authentication redirect: Navigate to /history as unauthenticated user → Verify redirect to /login. Mock useUser hook to return null user.
+      </test>
+      <test id="AC2">
+        Test table view rendering: Mock API response with 3 jobs (UPLOADED, PROCESSING, COMPLETED) → Verify table displays 3 rows with correct status badges, filenames, dates.
+      </test>
+      <test id="AC3">
+        Test download action: Click download button on COMPLETED job → Verify fetch called with correct job_id → Verify download URL opened in new window/tab.
+      </test>
+      <test id="AC4">
+        Test delete confirmation: Click delete button → Verify AlertDialog appears → Click "Cancel" → Dialog closes, job remains → Click delete again, confirm "Delete" → Verify API DELETE called → Job removed from UI.
+      </test>
+      <test id="AC5">
+        Test empty state: Mock API response with empty jobs array → Verify empty state component renders with "No conversions yet" message and "Upload PDF" CTA button.
+      </test>
+      <test id="AC6">
+        Test loading skeletons: Render history page with delayed API response → Verify skeleton table displays with 5 shimmer rows → After data loads, skeleton hidden and real table shown.
+      </test>
+      <test id="AC7">
+        Test real-time polling: Render with 1 PROCESSING job → Verify polling starts (GET /api/v1/jobs/{id} called every 5s) → Mock status change to COMPLETED → Verify polling stops and UI updates.
+      </test>
+      <test id="AC8">
+        Test mobile responsive: Render at 400px width → Verify table hidden, card layout visible → Render at 1024px → Verify table visible, cards hidden.
+      </test>
+      <test id="AC9">
+        Test error handling: Mock API failure (500 error) → Verify error toast displays with "Failed to load history. Retry?" message → Click retry button → Verify API called again.
+      </test>
+    </ideas>
+  </tests>
+</story-context>

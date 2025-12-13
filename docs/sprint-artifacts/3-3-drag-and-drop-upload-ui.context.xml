@@ -1,0 +1,219 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Drag-and-Drop Upload UI</title>
+    <status>done</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-3-drag-and-drop-upload-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to drag and drop a PDF file onto the upload area</iWant>
+    <soThat>I can easily start the conversion process</soThat>
+    <tasks>
+      - Task 1: Create UploadZone Component Structure (AC: #1)
+      - Task 2: Implement Drag-and-Drop Event Handlers (AC: #2)
+      - Task 3: Implement Click-to-Browse (AC: #3)
+      - Task 4: Client-Side File Validation (AC: #4)
+      - Task 5: Upload Progress Indicator (AC: #5)
+      - Task 6: Upload API Integration (AC: #10)
+      - Task 7: Error Handling (AC: #6)
+      - Task 8: Success Handling and Redirect (AC: #7)
+      - Task 9: Responsive Design (AC: #8)
+      - Task 10: Accessibility Implementation (AC: #9)
+      - Task 11: Integration Testing (All ACs)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. UploadZone Component Created - React component with shadcn/ui primitives accepting drag-drop or file dialog
+    2. Drag-and-Drop States - Default, Drag Enter (blue), Drag Leave, Uploading (progress), Success, Error
+    3. File Selection Methods - Both drag-drop and click-to-browse trigger same upload handler
+    4. Client-Side Validation - PDF type check, tier-based size limits (50MB FREE, 500MB PRO/PREMIUM)
+    5. Upload Progress Indicator - Progress bar with percentage display during upload
+    6. Error Handling - Network, 401, 400, 413, 500 errors with user-friendly messages
+    7. Successful Upload Flow - Display success message, redirect to /jobs/{job_id} after 1s
+    8. Responsive Design - Desktop (600x400), Tablet (500x350), Mobile (full-width, 300px min)
+    9. Accessibility - Keyboard navigation, ARIA labels, screen reader support
+    10. Integration with Backend - POST /api/v1/upload with JWT token, multipart/form-data
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Transfer2Read PRD - File Upload Requirements</title>
+        <section>PDF File Upload & Management (FR8-FR12)</section>
+        <snippet>Users can upload PDF files via drag-and-drop interface (FR8) or file browser selection (FR9). Free tier allows up to 50MB (FR10), Pro/Premium unlimited (FR11). System validates uploaded files are valid PDFs before processing (FR12).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture - API Contracts</title>
+        <section>POST /api/v1/convert</section>
+        <snippet>Request: multipart/form-data (file: PDF). Response: 202 Accepted with {"job_id": "uuid-string", "status": "QUEUED"}. Backend validates JWT token, checks file size based on user tier.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design - UploadZone Component</title>
+        <section>Section 7.1 Component Library - Upload Interface</section>
+        <snippet>UploadZone component with drag-drop area, hover states. Professional Blue theme (#2563eb border on drag). Visual feedback: Default (light gray), Drag Enter (blue border, light blue background #EFF6FF), Progress bar during upload.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design - Visual States</title>
+        <section>Section 4.5 Application to Transfer2Read</section>
+        <snippet>Upload Interface - Background: White with subtle gray border. Drag-active state: Light blue background (#dbeafe), blue border (#2563eb). Primary CTA: Blue button - "Upload PDF".</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic 3 - Story 3.2 Context</title>
+        <section>Story 3.2: PDF Upload API with Supabase Integration</section>
+        <snippet>POST /api/v1/upload endpoint with JWT authentication, file type validation (magic bytes), size validation by tier (FREE: 50MB, PRO/PREMIUM: unlimited). Returns {"job_id": "uuid", "status": "UPLOADED"}. Error codes: 400 (invalid file), 413 (too large), 401 (unauthorized).</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/api/v1/upload.py</path>
+        <kind>api-endpoint</kind>
+        <symbol>upload_pdf</symbol>
+        <lines>38-163</lines>
+        <reason>Backend upload endpoint already exists. POST /upload accepts multipart/form-data, validates PDF (magic bytes), checks tier limits (50MB FREE, 500MB PRO/PREMIUM), returns 202 with job_id. Frontend will call this API.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/tierUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getTierBenefits</symbol>
+        <lines>27-74</lines>
+        <reason>Tier benefits utility with maxFileSize constants: FREE tier 50MB, PRO/PREMIUM unlimited. Use for client-side validation before upload.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types/auth.ts</path>
+        <kind>type-definition</kind>
+        <symbol>SubscriptionTier, UserProfile, TierBenefits</symbol>
+        <lines>1-61</lines>
+        <reason>Type definitions for user tier, profile, and benefits. SubscriptionTier enum: 'FREE' | 'PRO' | 'PREMIUM'. UserProfile has tier field.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/card.tsx</path>
+        <kind>component</kind>
+        <symbol>Card</symbol>
+        <lines>1-77</lines>
+        <reason>shadcn/ui Card component for UploadZone container. Use Card as base for upload area with visual states.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>1-58</lines>
+        <reason>shadcn/ui Button component with Professional Blue theme variants. Use for "Upload PDF" action button.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/supabase/client.ts</path>
+        <kind>service</kind>
+        <symbol>createClient</symbol>
+        <lines>N/A</lines>
+        <reason>Supabase client factory used in pages like register/login. Import via '@/lib/supabase/client' for auth token retrieval (getSession).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <existing>
+          - @supabase/supabase-js: 2.86.0 (Supabase client for auth token retrieval)
+          - @supabase/auth-helpers-nextjs: 0.15.0 (useUser hook for current user)
+          - react-hook-form: 7.68.0 (form management)
+          - zod: 4.1.13 (validation schema)
+          - lucide-react: 0.555.0 (icons: Upload, CheckCircle, XCircle, Loader2)
+          - shadcn/ui components: Card, Button, Input, Label (already installed)
+        </existing>
+        <to_install>
+          - axios (HTTP client for file upload with progress tracking)
+          - shadcn/ui Progress component (npx shadcn@latest add progress)
+          - shadcn/ui Alert component (npx shadcn@latest add alert)
+        </to_install>
+      </frontend>
+      <backend>
+        <existing>
+          - FastAPI 0.122.0 (upload endpoint at /api/v1/upload)
+          - Supabase Python Client (storage and database)
+          - python-magic (file type validation via magic bytes)
+        </existing>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - **Component Pattern:** Create in frontend/src/components/business/UploadZone.tsx (domain-specific component, not in ui/)
+    - **Naming Convention:** camelCase for variables/functions, PascalCase for components
+    - **State Management:** Use React useState hooks, no external state library needed
+    - **API Client:** Create uploadPDF function in frontend/src/lib/api-client.ts (if doesn't exist, create it)
+    - **Error Handling:** Use try-catch with axios error handling, display user-friendly messages via Alert component
+    - **Styling:** Tailwind CSS classes only, Professional Blue theme colors (#2563eb primary, #EFF6FF light blue bg)
+    - **Accessibility:** WCAG 2.1 AA compliance - keyboard navigation (Tab/Enter/Space), ARIA labels, screen reader support
+    - **File Input Pattern:** Hidden input with ref, triggered by zone click or drag-drop
+    - **Validation Order:** Client-side validation FIRST (type, size), then backend validation (authoritative)
+    - **Progress Updates:** Update state every 100ms minimum during upload (axios onUploadProgress)
+    - **Auth Pattern:** Get JWT token via supabase.auth.getSession().data.session.access_token
+    - **Tier Access:** Use getTierBenefits() from tierUtils to get maxFileSize for validation
+    - **NO External Libraries:** Do NOT install react-dropzone - implement drag-drop natively with HTML5 API
+  </constraints>
+  <interfaces>
+    <api>
+      <endpoint>POST http://localhost:8000/api/v1/upload</endpoint>
+      <auth>Bearer token from Supabase session (Authorization header)</auth>
+      <request>
+        - Content-Type: multipart/form-data
+        - Body: file field with PDF binary data
+      </request>
+      <response_success>
+        - Status: 202 Accepted
+        - Body: {"job_id": "uuid", "status": "UPLOADED", "input_file": "filename.pdf", "created_at": "ISO-8601"}
+      </response_success>
+      <response_errors>
+        - 400 Bad Request: {"detail": "...", "code": "INVALID_FILE_TYPE"} - Not a PDF
+        - 413 Payload Too Large: {"detail": "...", "code": "FILE_TOO_LARGE"} - Exceeds tier limit
+        - 401 Unauthorized: Missing or invalid JWT token
+        - 500 Internal Server Error: {"detail": "...", "code": "STORAGE_ERROR" | "DATABASE_ERROR"}
+      </response_errors>
+    </api>
+    <component_props>
+      <UploadZone>
+        - onUploadSuccess: (jobId: string) => void (callback for successful upload)
+        - maxSizeMB?: number (optional override, defaults to user tier limit)
+        - className?: string (optional Tailwind classes)
+      </UploadZone>
+    </component_props>
+    <user_context>
+      - useUser() hook from @supabase/auth-helpers-nextjs provides current user
+      - user.user_metadata.tier contains SubscriptionTier ('FREE' | 'PRO' | 'PREMIUM')
+    </user_context>
+  </interfaces>
+  <tests>
+    <standards>
+      Frontend testing with Vitest (per architecture.md Section Testing Patterns). Use React Testing Library for component tests. Test user interactions, not implementation details. Mock API calls using vi.mock() or MSW. Coverage target: 70% minimum.
+    </standards>
+    <locations>
+      - Component tests: frontend/src/components/business/UploadZone.test.tsx (colocated with component)
+      - Integration tests: frontend/__tests__/upload-flow.test.tsx (if multi-component flow testing needed)
+    </locations>
+    <ideas>
+      - Test drag-enter highlights upload zone (blue border, light blue background)
+      - Test drag-leave returns to default state
+      - Test file drop triggers upload handler
+      - Test click-to-browse opens file dialog
+      - Test PDF file type validation (accept PDF, reject JPEG)
+      - Test file size validation (FREE tier: reject 60MB, accept 10MB; PRO tier: accept all)
+      - Test upload progress bar updates during file transmission
+      - Test successful upload shows success message and redirects to /jobs/{job_id}
+      - Test 401 error redirects to /login
+      - Test 413 error shows "File exceeds tier limit" message
+      - Test network error shows "Upload failed" message
+      - Test keyboard navigation (Tab focus, Enter opens dialog)
+      - Test screen reader announces upload instructions and errors (aria-live)
+      - Test error auto-dismiss after 5 seconds
+      - Mock axios for upload API, mock Supabase getSession for auth
+    </ideas>
+  </tests>
+</story-context>

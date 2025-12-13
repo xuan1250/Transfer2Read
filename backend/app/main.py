@@ -49,3 +49,53 @@ app.include_router(test_ai_router, prefix="/api/v1", tags=["test-ai"])
 # Register auth routes
 from app.api.v1.auth import router as auth_router
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
+
+# Register users routes
+from app.api.v1.users import router as users_router
+app.include_router(users_router, prefix="/api/v1", tags=["users"])
+
+# Register upload routes
+from app.api.v1.upload import router as upload_router
+app.include_router(upload_router, prefix="/api/v1", tags=["upload"])
+
+# Register jobs routes
+from app.api.v1.jobs import router as jobs_router
+app.include_router(jobs_router, prefix="/api/v1", tags=["jobs"])
+
+
+# Global Exception Handlers
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from app.services.validation import (
+    InvalidFileTypeError,
+    FileTooLargeError,
+    ValidationError
+)
+from app.services.storage.supabase_storage import StorageUploadError
+
+
+@app.exception_handler(InvalidFileTypeError)
+async def invalid_file_type_handler(request: Request, exc: InvalidFileTypeError):
+    """Handle invalid file type errors (non-PDF files)"""
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc), "code": "INVALID_FILE_TYPE"}
+    )
+
+
+@app.exception_handler(FileTooLargeError)
+async def file_too_large_handler(request: Request, exc: FileTooLargeError):
+    """Handle file size limit errors"""
+    return JSONResponse(
+        status_code=413,
+        content={"detail": str(exc), "code": "FILE_TOO_LARGE"}
+    )
+
+
+@app.exception_handler(StorageUploadError)
+async def storage_upload_error_handler(request: Request, exc: StorageUploadError):
+    """Handle Supabase Storage upload errors"""
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "code": "STORAGE_ERROR"}
+    )

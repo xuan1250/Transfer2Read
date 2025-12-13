@@ -1,0 +1,593 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>1</storyId>
+    <title>Conversion Pipeline Orchestrator</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-1-conversion-pipeline-orchestrator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to implement the main conversion workflow using Celery</iWant>
+    <soThat>the multi-step conversion process is managed reliably</soThat>
+    <tasks>
+- Task 1: Setup Celery Workflow Structure (AC: #1, #8)
+  - 1.1: Create backend/app/tasks/__init__.py for task registration
+  - 1.2: Create backend/app/tasks/conversion_pipeline.py with main orchestrator task
+  - 1.3: Define task signatures for 5 stages: analyze, extract, structure, generate, qa
+  - 1.4: Implement Celery Canvas chain: chain(analyze.s(job_id), extract.s(), ...)
+  - 1.5: Register tasks in backend/app/worker.py with proper task names
+  - 1.6: Configure Celery app in backend/app/core/celery_app.py if not exists
+  - 1.7: Set Celery queue name: conversion_queue
+  - 1.8: Test task registration: celery -A app.worker inspect registered
+
+- Task 2: Implement Database State Updates (AC: #2)
+  - 2.1: Create helper function update_job_status(job_id, status, progress, stage_metadata)
+  - 2.2: Add stage_metadata JSONB column to conversion_jobs table (Supabase migration)
+  - 2.3: Update status at start of each pipeline stage: ANALYZING, EXTRACTING, STRUCTURING, GENERATING
+  - 2.4: Update progress percentage: 25%, 50%, 75%, 90%, 100%
+  - 2.5: Store stage start time in stage_metadata.stage_started_at
+  - 2.6: Test database updates with sample job execution
+
+- Task 3: Implement Error Handling and Retry Logic (AC: #3)
+  - 3.1: Configure Celery task with retry settings: autoretry_for, max_retries=3, retry_backoff=True
+  - 3.2: Define transient error types: OpenAIError, AnthropicError, NetworkError
+  - 3.3: Define permanent error types: InvalidPDFError, CorruptedFileError, UnsupportedFormatError
+  - 3.4: Implement error handling in each task with try/except blocks
+  - 3.5: Log errors to backend/logs/celery_errors.log with job_id and stack trace
+  - 3.6: Store user-facing error message in conversion_jobs.error_message
+  - 3.7: Set task timeout: soft_time_limit=900, time_limit=1200 (15/20 minutes)
+  - 3.8: Test retry logic with mock API failures
+
+- Task 4: Implement Cancellation Support (AC: #4)
+  - 4.1: Add check_cancellation(job_id) helper function
+  - 4.2: Call check_cancellation at start of each pipeline stage
+  - 4.3: If deleted_at IS NOT NULL: Raise TaskCancelled exception
+  - 4.4: Handle TaskCancelled exception: Update status to CANCELLED, cleanup temp files
+  - 4.5: Implement Celery task revoke: task.revoke(terminate=True, signal='SIGTERM')
+  - 4.6: Graceful termination: Allow current AI call to finish before exit
+  - 4.7: Test cancellation: Delete job during PROCESSING, verify cleanup
+
+- Task 5: Connect Pipeline to Upload Endpoint (AC: #5)
+  - 5.1: Modify POST /api/v1/upload endpoint (from Story 3.2)
+  - 5.2: After PDF upload to Supabase Storage: Dispatch conversion_pipeline.delay(job_id)
+  - 5.3: Return 202 Accepted with { "job_id": "...", "status": "UPLOADED" }
+  - 5.4: Add error handling: If Celery dispatch fails, return 500 with error message
+  - 5.5: Test end-to-end: Upload PDF → Pipeline starts → Status updates in DB
+
+- Task 6: Implement Monitoring and Progress Tracking (AC: #6)
+  - 6.1: Modify GET /api/v1/jobs/{job_id} endpoint (from Story 3.4)
+  - 6.2: Include progress and stage_metadata in API response
+  - 6.3: Implement Redis caching for job status (TTL: 5 minutes)
+  - 6.4: Cache key format: job_status:{job_id}
+  - 6.5: Invalidate cache on status update
+  - 6.6: Test polling: Frontend fetches job status every 5 seconds, verify updates
+
+- Task 7: Configure Celery Worker (AC: #7)
+  - 7.1: Update backend/app/worker.py with worker configuration
+  - 7.2: Set concurrency: CELERY_CONCURRENCY=4 (env var)
+  - 7.3: Set queue name: conversion_queue
+  - 7.4: Configure result backend: CELERY_RESULT_BACKEND=redis://...
+  - 7.5: Set visibility timeout: 25 minutes (1500 seconds)
+  - 7.6: Add worker health check endpoint: GET /api/v1/worker/health
+  - 7.7: Test worker: Start worker with celery -A app.worker worker --loglevel=info
+
+- Task 8: Integrate with Existing Services (AC: #9)
+  - 8.1: Import Supabase Storage service: from app.services.storage.supabase_storage import storage
+  - 8.2: Use storage.download_file() to read input PDF
+  - 8.3: Use storage.upload_file() to save output EPUB
+  - 8.4: Create temp directory: /tmp/{job_id}/ for intermediate files
+  - 8.5: Cleanup temp files after pipeline completion (success or failure)
+  - 8.6: Load API keys from app.core.config: settings.OPENAI_API_KEY, settings.ANTHROPIC_API_KEY
+  - 8.7: Test integration: Upload PDF → Download → Process → Upload EPUB
+
+- Task 9: Performance Optimization and Testing (AC: #10)
+  - 9.1: Implement parallel page processing (4 pages concurrently)
+  - 9.2: Add AI model selection logic: GPT-4o for complex, Claude Haiku for simple
+  - 9.3: Implement layout analysis caching for repeated structures
+  - 9.4: Add stage timing logs: Log duration for each stage
+  - 9.5: Test with 300-page PDF: Measure total processing time (target: &lt;2 minutes)
+  - 9.6: Identify bottlenecks and optimize slow stages
+  - 9.7: Load test: Run 10 concurrent conversions, verify worker handles load
+
+- Task 10: Integration Testing (AC: All)
+  - 10.1: Create test PDF fixture: 10-page sample with tables, images
+  - 10.2: Write integration test: Upload → Pipeline → Verify EPUB output
+  - 10.3: Test error scenarios: Invalid PDF, Corrupt file, API timeout
+  - 10.4: Test cancellation: Delete job during processing, verify cleanup
+  - 10.5: Test monitoring: Poll job status, verify progress updates
+  - 10.6: Verify EPUB output: Valid EPUB 3.0 spec, correct structure
+  - 10.7: Run full test suite: pytest tests/integration/test_conversion_pipeline.py
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Celery Workflow Structure Defined:**
+   - Celery workflow (chain or chord) orchestrates 4 main stages: analyze_layout, extract_content, identify_structure, generate_epub
+   - Each task receives job_id as primary parameter
+   - Tasks chained using Celery Canvas: chain(analyze_layout.s(job_id), extract_content.s(), ...)
+   - Final task: calculate_quality_score runs after EPUB generation
+
+2. **State Updates to Database:**
+   - Each pipeline stage updates conversion_jobs table with current status: ANALYZING, EXTRACTING, STRUCTURING, GENERATING, COMPLETED
+   - Progress percentage updated at each stage: 25%, 50%, 75%, 90%, 100%
+   - Stage metadata stored in conversion_jobs.stage_metadata (JSONB)
+
+3. **Error Handling and Retry Logic:**
+   - Transient Failures: Celery auto-retry (Max 3 attempts with exponential backoff)
+   - Permanent Failures: Task fails immediately, database updated with status='FAILED'
+   - Task Timeout: Hard timeout 20 minutes, soft timeout 15 minutes
+   - Error Logging: All errors logged to backend/logs/celery_errors.log
+
+4. **Cancellation Support:**
+   - User can cancel job via DELETE /api/v1/jobs/{job_id}
+   - Backend checks conversion_jobs.deleted_at field before each stage
+   - Graceful termination with cleanup of temporary files
+
+5. **Pipeline Orchestration Entry Point:**
+   - POST /api/v1/upload triggers pipeline after successful file upload
+   - Returns 202 Accepted with job_id and status
+   - Pipeline runs asynchronously
+
+6. **Monitoring and Progress Tracking:**
+   - Frontend polls GET /api/v1/jobs/{job_id} every 5 seconds
+   - Redis caching for job status (TTL: 5 minutes)
+
+7. **Worker Configuration:**
+   - Celery worker configured in backend/app/worker.py
+   - Concurrency: 4 workers, Queue: conversion_queue
+   - Result backend: Redis
+
+8. **Task Registration:**
+   - All pipeline tasks registered in backend/app/worker.py
+   - Tasks: analyze_layout, extract_content, identify_structure, generate_epub, calculate_quality_score
+
+9. **Integration with Existing Services:**
+   - Supabase Storage Integration for file operations
+   - Database integration using app.db.session
+   - Configuration loaded from app.core.config
+
+10. **Performance Target:**
+    - Target: 300-page technical PDF in &lt;2 minutes
+    - Optimization strategies: Parallel page processing, AI model selection, caching
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Tech Spec Epic 4 - Primary technical reference -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4 (AI-Powered Conversion Engine)</title>
+        <section>Pipeline Architecture</section>
+        <snippet>
+          Celery Canvas (Chain pattern) for sequential task orchestration. Stages: Analyze → Extract → Structure → Generate → QA.
+          Uses LangChain with GPT-4o (primary) and Claude 3 Haiku (fallback) for AI processing.
+          Each task updates conversion_jobs table with status and progress.
+        </snippet>
+      </doc>
+
+      <!-- Architecture - System design and patterns -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - API-First Intelligence</title>
+        <section>PDF Conversion Pipeline (Async)</section>
+        <snippet>
+          API receives upload → Saves to Supabase Storage → Creates DB record (PENDING) → Pushes ID to Redis Queue.
+          Worker pops ID → Downloads PDF → Runs Pipeline → Uploads EPUB → Updates DB (COMPLETED).
+          Client polls GET /jobs/{id} for progress. Uses Celery 5.5.3 with Redis 8.4.0 message broker.
+        </snippet>
+      </doc>
+
+      <!-- Architecture - AI Models specification -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - API-First Intelligence</title>
+        <section>AI Model Specification</section>
+        <snippet>
+          Primary: GPT-4o (multimodal, 2-5s per page, ~$2.50/1M input tokens).
+          Fallback: Claude 3 Haiku (fast, 1-3s per page, ~$0.25/1M input tokens).
+          Orchestration via LangChain 0.3.x with retry logic and exponential backoff. Supports automatic fallback on API failure.
+        </snippet>
+      </doc>
+
+      <!-- PRD - Functional requirements -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Conversion Process &amp; Feedback (FR30-FR35)</section>
+        <snippet>
+          FR30: One-action conversion initiation. FR31: Real-time progress display. FR32: Quality indicators during conversion.
+          FR35: 300-page technical book in &lt;2 minutes. System detects complex elements, preserves tables/images/equations with 95%+ fidelity.
+        </snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing Celery configuration -->
+      <file>
+        <path>backend/app/core/celery_app.py</path>
+        <kind>configuration</kind>
+        <symbol>celery_app</symbol>
+        <lines>11-42</lines>
+        <reason>
+          Existing Celery app initialization with Redis broker/backend.
+          Already configured with JSON serialization, task tracking, 15-minute timeout.
+          MUST register new pipeline tasks in this config (include=['app.tasks.conversion_pipeline']).
+        </reason>
+      </file>
+
+      <!-- Existing worker entrypoint -->
+      <file>
+        <path>backend/app/worker.py</path>
+        <kind>worker</kind>
+        <symbol>celery_app</symbol>
+        <lines>8-54</lines>
+        <reason>
+          Worker entrypoint that imports celery_app and logs startup info.
+          Currently imports from app.tasks.ai_tasks. MUST add import for new pipeline tasks.
+          Logs LangChain/OpenAI/Anthropic availability - important for debugging AI integration.
+        </reason>
+      </file>
+
+      <!-- Supabase Storage Service - File operations -->
+      <file>
+        <path>backend/app/services/storage/supabase_storage.py</path>
+        <kind>service</kind>
+        <symbol>SupabaseStorageService</symbol>
+        <lines>20-196</lines>
+        <reason>
+          Core storage service for upload/download/delete operations.
+          MUST use for pipeline: download_file() for input PDF, upload_file() for output EPUB.
+          Provides generate_signed_url() for secure file access (1-hour expiry).
+        </reason>
+      </file>
+
+      <!-- Job Service - Business logic for job management -->
+      <file>
+        <path>backend/app/services/job_service.py</path>
+        <kind>service</kind>
+        <symbol>JobService</symbol>
+        <lines>18-266</lines>
+        <reason>
+          Service pattern implementation for job operations: list, get, delete, download URL generation.
+          Pipeline MUST update job status via Supabase client (no helper function yet - AC#2 requires creating update_job_status helper).
+          Demonstrates pattern: All business logic in services/, not in API routes.
+        </reason>
+      </file>
+
+      <!-- Upload API - Entry point for conversion -->
+      <file>
+        <path>backend/app/api/v1/upload.py</path>
+        <kind>controller</kind>
+        <symbol>upload_pdf</symbol>
+        <lines>69-163</lines>
+        <reason>
+          Current upload endpoint creates job with status='UPLOADED' and returns 202 Accepted.
+          AC#5 requires MODIFICATION: After upload, dispatch conversion_pipeline.delay(job_id) to trigger async processing.
+          Already handles file validation, storage upload, DB record creation - perfect integration point.
+        </reason>
+      </file>
+
+      <!-- Jobs API - Status polling endpoint -->
+      <file>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>controller</kind>
+        <symbol>get_job</symbol>
+        <lines>164-237</lines>
+        <reason>
+          Endpoint for polling job status (GET /jobs/{job_id}). Frontend polls every 5 seconds.
+          AC#6 requires MODIFICATION: Include 'progress' and 'stage_metadata' in response.
+          Currently returns JobDetail schema - need to ensure schema includes new fields.
+        </reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <!-- Core framework -->
+      <python>
+        <package name="fastapi" version="0.122.0" />
+        <package name="uvicorn[standard]" version="0.30.0" />
+        <package name="pydantic" version=">=2.11.7,&lt;3.0.0" />
+      </python>
+
+      <!-- Task queue -->
+      <python>
+        <package name="celery" version="5.5.3" />
+        <package name="redis" version="5.0.1" />
+      </python>
+
+      <!-- AI/ML libraries -->
+      <python>
+        <package name="langchain" version="~=0.3.0" />
+        <package name="langchain-openai" version="~=0.2.0" />
+        <package name="langchain-anthropic" version="~=0.3.0" />
+      </python>
+
+      <!-- PDF/EPUB processing -->
+      <python>
+        <package name="pymupdf" version="1.24.10" />
+        <package name="ebooklib" />
+      </python>
+
+      <!-- Database & Storage -->
+      <python>
+        <package name="supabase" version="2.24.0" />
+        <package name="sqlalchemy" version="2.0.36" />
+        <package name="asyncpg" version="0.29.0" />
+      </python>
+
+      <!-- Testing -->
+      <python>
+        <package name="pytest" version="8.3.0" />
+        <package name="pytest-asyncio" version="0.21.2" />
+        <package name="httpx" version="0.27.0" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Architecture patterns -->
+    <constraint type="architecture">
+      <rule>Service Pattern: All business logic MUST exist in backend/app/services/, NOT in API routes</rule>
+      <rule>Routes handle only request parsing and response formatting</rule>
+      <source>docs/architecture.md - Code Organization</source>
+    </constraint>
+
+    <constraint type="celery">
+      <rule>Task timeout: soft_time_limit=900s (15 min), time_limit=1200s (20 min)</rule>
+      <rule>Result expiration: 3600s (1 hour)</rule>
+      <rule>Serialization: JSON only (task_serializer='json', accept_content=['json'])</rule>
+      <source>backend/app/core/celery_app.py:19-42</source>
+    </constraint>
+
+    <constraint type="error-handling">
+      <rule>Use custom exceptions inheriting from HTTPException</rule>
+      <rule>Global exception handler converts to standard JSON: {"detail": "...", "code": "ERROR_CODE"}</rule>
+      <rule>Log errors with structured logging (structlog) including request_id</rule>
+      <source>docs/architecture.md - Error Handling</source>
+    </constraint>
+
+    <constraint type="testing">
+      <rule>Coverage target: 80% minimum for backend</rule>
+      <rule>Test DB: Use separate test DB with transaction rollback after each test</rule>
+      <rule>Fixtures in conftest.py: test_client, test_db, authenticated_user</rule>
+      <rule>Mock external services (Supabase, Celery) using app.dependency_overrides</rule>
+      <source>docs/architecture.md - Testing Patterns</source>
+    </constraint>
+
+    <constraint type="database">
+      <rule>Row Level Security (RLS) automatically enforces user ownership</rule>
+      <rule>All user queries automatically filtered by auth.uid()</rule>
+      <rule>Use atomic updates with transactions to prevent race conditions</rule>
+      <source>docs/architecture.md - Security Architecture</source>
+    </constraint>
+
+    <constraint type="performance">
+      <rule>Target: 300-page PDF in &lt;2 minutes (FR35)</rule>
+      <rule>Optimization: Parallel page processing (4 pages concurrently)</rule>
+      <rule>AI model selection: GPT-4o for complex, Claude Haiku for simple</rule>
+      <rule>Redis caching for job status (TTL: 5 minutes) to reduce DB load</rule>
+      <source>docs/prd.md - Success Criteria, docs/sprint-artifacts/tech-spec-epic-4.md</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Celery task signature for pipeline orchestrator -->
+    <interface>
+      <name>conversion_pipeline</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='conversion_pipeline', bind=True, autoretry_for=(Exception,), max_retries=3, retry_backoff=True)
+        def conversion_pipeline(self, job_id: str) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Main orchestrator task that chains 5 stages: analyze, extract, structure, generate, qa</description>
+    </interface>
+
+    <!-- Individual pipeline stage tasks -->
+    <interface>
+      <name>analyze_layout</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='analyze_layout', bind=True)
+        def analyze_layout(self, job_id: str) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Placeholder task for Story 4.2. Updates status to ANALYZING, progress=25%</description>
+    </interface>
+
+    <interface>
+      <name>extract_content</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='extract_content', bind=True)
+        def extract_content(self, previous_result: dict) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Placeholder task for Story 4.2. Updates status to EXTRACTING, progress=50%</description>
+    </interface>
+
+    <interface>
+      <name>identify_structure</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='identify_structure', bind=True)
+        def identify_structure(self, previous_result: dict) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Placeholder task for Story 4.3. Updates status to STRUCTURING, progress=75%</description>
+    </interface>
+
+    <interface>
+      <name>generate_epub</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='generate_epub', bind=True)
+        def generate_epub(self, previous_result: dict) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Placeholder task for Story 4.4. Updates status to GENERATING, progress=90%</description>
+    </interface>
+
+    <interface>
+      <name>calculate_quality_score</name>
+      <kind>Celery Task</kind>
+      <signature>
+        @celery_app.task(name='calculate_quality_score', bind=True)
+        def calculate_quality_score(self, previous_result: dict) -> dict
+      </signature>
+      <path>backend/app/tasks/conversion_pipeline.py (to be created)</path>
+      <description>Placeholder task for Story 4.5. Updates status to COMPLETED, progress=100%</description>
+    </interface>
+
+    <!-- Job status update helper function -->
+    <interface>
+      <name>update_job_status</name>
+      <kind>Helper Function</kind>
+      <signature>
+        def update_job_status(job_id: str, status: str, progress: int, stage_metadata: dict) -> None
+      </signature>
+      <path>backend/app/services/job_service.py (to be added)</path>
+      <description>Helper to update conversion_jobs table atomically. Used by all pipeline tasks to track progress.</description>
+    </interface>
+
+    <!-- Cancellation check helper -->
+    <interface>
+      <name>check_cancellation</name>
+      <kind>Helper Function</kind>
+      <signature>
+        def check_cancellation(job_id: str) -> bool
+      </signature>
+      <path>backend/app/services/job_service.py (to be added)</path>
+      <description>Checks if job.deleted_at IS NOT NULL. Raises TaskCancelled exception if true. Called at start of each stage.</description>
+    </interface>
+
+    <!-- Supabase Storage - File download -->
+    <interface>
+      <name>SupabaseStorageService.download_file</name>
+      <kind>Method</kind>
+      <signature>
+        def download_file(self, bucket: str, path: str) -> bytes
+      </signature>
+      <path>backend/app/services/storage/supabase_storage.py (to be added)</path>
+      <description>Download file from Supabase Storage. Pipeline uses this to fetch input PDF before processing.</description>
+    </interface>
+
+    <!-- API endpoint modifications -->
+    <interface>
+      <name>POST /api/v1/upload</name>
+      <kind>REST endpoint</kind>
+      <signature>Multipart/form-data (file: PDF) → 202 Accepted {job_id, status}</signature>
+      <path>backend/app/api/v1/upload.py:69-163</path>
+      <description>MODIFY to dispatch conversion_pipeline.delay(job_id) after creating DB record. Entry point for async pipeline.</description>
+    </interface>
+
+    <interface>
+      <name>GET /api/v1/jobs/{job_id}</name>
+      <kind>REST endpoint</kind>
+      <signature>GET → 200 OK {id, status, progress, stage_metadata, ...}</signature>
+      <path>backend/app/api/v1/jobs.py:164-237</path>
+      <description>MODIFY to include 'progress' (int) and 'stage_metadata' (JSONB) fields. Frontend polls every 5 seconds.</description>
+    </interface>
+
+    <interface>
+      <name>DELETE /api/v1/jobs/{job_id}</name>
+      <kind>REST endpoint</kind>
+      <signature>DELETE → 204 No Content</signature>
+      <path>backend/app/api/v1/jobs.py:270-360</path>
+      <description>MUST check this endpoint for cancellation. Pipeline tasks check deleted_at field before each stage.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend testing follows pytest conventions with FastAPI TestClient for API tests.
+      Test organization: tests/unit/ for isolated logic tests, tests/integration/ for API+DB tests, tests/fixtures/ for test data.
+      Key patterns: Use conftest.py for shared fixtures (test_client, test_db, authenticated_user), app.dependency_overrides to mock external services (Supabase, Celery).
+      Coverage target: 80% minimum (run: pytest --cov=app --cov-report=html).
+      Async tests use pytest-asyncio with @pytest.mark.asyncio decorator.
+    </standards>
+
+    <locations>
+      - backend/tests/unit/ - Fast, isolated unit tests for services and models
+      - backend/tests/integration/ - API endpoint tests with database
+      - backend/tests/conftest.py - Shared fixtures and test configuration
+      - backend/tests/fixtures/ - Test data (sample PDFs, JSON responses)
+    </locations>
+
+    <ideas>
+      <!-- Unit tests for pipeline orchestration -->
+      <test ac="1,8" priority="high">
+        Test Celery workflow structure: Verify chain() correctly links 5 tasks (analyze → extract → structure → generate → qa).
+        Mock each task and verify they're called in sequence with correct parameters.
+        File: backend/tests/unit/test_conversion_pipeline.py
+      </test>
+
+      <!-- Unit tests for status updates -->
+      <test ac="2" priority="high">
+        Test update_job_status() helper: Verify it updates conversion_jobs table with status, progress, stage_metadata.
+        Mock Supabase client and assert correct SQL/API calls.
+        File: backend/tests/unit/services/test_job_service.py
+      </test>
+
+      <!-- Unit tests for error handling -->
+      <test ac="3" priority="high">
+        Test retry logic: Mock transient errors (OpenAIError, AnthropicError), verify task retries 3 times with exponential backoff.
+        Test permanent errors: Mock InvalidPDFError, verify task fails immediately without retry.
+        Test timeout: Verify soft_time_limit=900, time_limit=1200 configuration.
+        File: backend/tests/unit/test_conversion_pipeline.py
+      </test>
+
+      <!-- Unit tests for cancellation -->
+      <test ac="4" priority="medium">
+        Test check_cancellation(): Mock deleted_at field, verify TaskCancelled exception raised.
+        Test cleanup: Verify temp files deleted when cancellation occurs.
+        File: backend/tests/unit/services/test_job_service.py
+      </test>
+
+      <!-- Integration test: Upload → Pipeline dispatch -->
+      <test ac="5" priority="high">
+        Test POST /upload endpoint modification: Upload PDF, verify conversion_pipeline.delay() called with job_id.
+        Verify 202 Accepted response with correct job_id and status='UPLOADED'.
+        File: backend/tests/integration/test_api_upload.py
+      </test>
+
+      <!-- Integration test: Status polling -->
+      <test ac="6" priority="high">
+        Test GET /jobs/{job_id} endpoint: Verify response includes 'progress' and 'stage_metadata' fields.
+        Test Redis caching: Verify cache hit/miss behavior, TTL=5 minutes.
+        File: backend/tests/integration/test_api_jobs.py
+      </test>
+
+      <!-- Integration test: Full pipeline -->
+      <test ac="all" priority="high">
+        End-to-end test: Upload 10-page sample PDF → Verify pipeline runs → Verify EPUB output exists in downloads bucket.
+        Mock AI API calls to save costs. Verify each stage updates status correctly.
+        File: backend/tests/integration/test_conversion_pipeline.py
+      </test>
+
+      <!-- Integration test: Error scenarios -->
+      <test ac="3" priority="medium">
+        Test invalid PDF: Upload corrupted file, verify status='FAILED' and error_message stored.
+        Test API timeout: Mock OpenAI timeout, verify fallback to Claude or retry logic.
+        File: backend/tests/integration/test_conversion_pipeline.py
+      </test>
+
+      <!-- Integration test: Cancellation -->
+      <test ac="4" priority="medium">
+        Test cancellation: Start conversion → DELETE /jobs/{job_id} during PROCESSING → Verify status='CANCELLED' and cleanup.
+        File: backend/tests/integration/test_conversion_pipeline.py
+      </test>
+
+      <!-- Performance test -->
+      <test ac="10" priority="low">
+        Test with 300-page PDF: Measure total processing time (target: &lt;2 minutes).
+        Profile each stage to identify bottlenecks. Note: Use real AI APIs or high-quality mocks.
+        File: backend/tests/integration/test_conversion_pipeline.py::test_performance
+      </test>
+    </ideas>
+  </tests>
+</story-context>

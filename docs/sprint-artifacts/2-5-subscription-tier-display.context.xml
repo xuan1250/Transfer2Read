@@ -1,0 +1,206 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>Subscription Tier Display</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-5-subscription-tier-display.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to see my current subscription tier</iWant>
+    <soThat>I know what features and limits apply to me</soThat>
+    <tasks>
+      - Task 1: Verify Backend User Metadata Structure (AC: #1)
+        - 1.1: Confirm raw_user_meta_data.tier field exists in Supabase auth.users
+        - 1.2: Verify default tier assignment for new users
+        - 1.3: Create helper function to fetch user tier (frontend/src/lib/supabase/getUserTier.ts)
+
+      - Task 2: Update TopBar with Tier Badge (AC: #2)
+        - 2.1: Modify frontend/src/components/layout/TopBar.tsx
+        - 2.2: Create or update TierBadge component
+        - 2.3: Handle loading and error states
+        - 2.4: Responsive design
+
+      - Task 3: Enhance Settings Page Tier Section (AC: #3)
+        - 3.1: Expand existing Subscription Tier section in settings/page.tsx
+        - 3.2: Add tier benefits summary
+        - 3.3: Add current usage display (placeholder for Epic 6)
+        - 3.4: Add tier comparison table (optional enhancement)
+
+      - Task 4: Add Upgrade/Manage Subscription CTA (AC: #4)
+        - 4.1: Add "Upgrade to Pro" button for FREE tier users
+        - 4.2: Link to Pricing page
+        - 4.3: Conditional CTA for PRO/PREMIUM users
+
+      - Task 5: Create Pricing Page (AC: #4)
+        - 5.1: Create frontend/src/app/pricing/page.tsx
+        - 5.2: Define pricing tiers (placeholder values)
+        - 5.3: Add feature comparison checkmarks
+        - 5.4: Add "Get Started" / "Upgrade Now" buttons
+
+      - Task 6: Update Type Definitions (All ACs)
+        - 6.1: Ensure SubscriptionTier type exists
+        - 6.2: Update UserProfile interface to include tier
+        - 6.3: Create TierBenefits type for benefits display
+
+      - Task 7: Testing and Validation (All ACs)
+        - 7.1: Test tier display in TopBar
+        - 7.2: Test Settings page tier section
+        - 7.3: Test Pricing page
+        - 7.4: Test navigation and CTAs
+        - 7.5: Run TypeScript build
+        - 7.6: Run ESLint
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Backend User Model Tier Field:
+       - User model includes tier enum in raw_user_meta_data (FREE, PRO, PREMIUM)
+       - Default tier is FREE for new users
+       - Tier stored in Supabase auth.users.raw_user_meta_data.tier
+
+    2. Frontend TopBar Tier Display:
+       - TopBar displays current tier badge next to user email/avatar
+       - Tier badge styled with Professional Blue theme colors:
+         * FREE: Gray badge (bg-gray-200 text-gray-800)
+         * PRO: Blue badge (bg-blue-100 text-blue-800)
+         * PREMIUM: Gold badge (bg-amber-100 text-amber-800)
+
+    3. Settings Page Detailed Tier Information:
+       - Settings page displays detailed tier information in dedicated section
+       - Shows current tier with benefits summary
+       - Displays usage limits for current tier (conversions/month, file size limits)
+
+    4. Upgrade CTA for Free Users:
+       - "Upgrade" button visible for Free tier users
+       - Button links to placeholder pricing page (/pricing)
+       - Pro/Premium users see "Manage Subscription" button instead
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Data Models and Contracts">
+        Supabase user metadata stored in auth.users.raw_user_meta_data: { "tier": "FREE" | "PRO" | "PREMIUM", "created_at": ISO timestamp }. TypeScript types: SubscriptionTier = 'FREE' | 'PRO' | 'PREMIUM'; UserProfile interface includes tier field.
+      </doc>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Acceptance Criteria">
+        AC6: Users can see current subscription tier - tier badge visible in TopBar. AC7: Users see upgrade path - Free tier users see "Upgrade" button in settings.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture Specification" section="Decision Summary - Professional Blue Theme">
+        Professional Blue theme colors: Primary #2563eb (Blue-600), Secondary #64748b (Slate-600), Success #10b981 (Green-500), Warning #f59e0b (Amber-500), Error #ef4444 (Red-500). Tier badge styling uses these colors.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture Specification" section="Supabase Setup">
+        Supabase Auth configured with user_metadata fields. Access tier via user.user_metadata.tier. Default tier is FREE for new signups.
+      </doc>
+      <doc path="docs/ux-design-specification.md" title="UX Design Specification" section="Color System - Professional Blue">
+        Tier badge colors: FREE (Gray bg-gray-200 text-gray-800), PRO (Blue bg-blue-100 text-blue-800), PREMIUM (Gold bg-amber-100 text-amber-800). Badge styling: rounded-full, px-3 py-1, text-xs font-medium.
+      </doc>
+      <doc path="docs/ux-design-specification.md" title="UX Design Specification" section="Component Library">
+        TopBar component displays brand + user actions. Badge component from shadcn/ui for tier display. Card component for Settings page sections.
+      </doc>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Functional Requirements">
+        FR6: Users can see their current subscription tier (Free, Pro, Premium). FR7: Users can upgrade or change their subscription tier.
+      </doc>
+      <doc path="docs/epics.md" title="Epic and Story Breakdown" section="Epic 2 Story 2.5">
+        Story 2.5: Subscription Tier Display. Backend user model includes tier enum. Frontend TopBar displays tier badge. Settings page shows detailed tier info. Upgrade button for Free users links to /pricing.
+      </doc>
+    </docs>
+    <code>
+      <file path="frontend/src/components/layout/TopBar.tsx" kind="component" symbol="TopBar" lines="16-114" reason="Component that needs modification to display tier badge next to user email in dropdown menu">
+        TopBar displays user email in dropdown (line 51). Need to add tier badge display next to email. Uses useUser hook which provides user.user_metadata.tier. Dropdown already has DropdownMenuLabel showing email.
+      </file>
+      <file path="frontend/src/app/settings/page.tsx" kind="page" symbol="SettingsPage" lines="14-183" reason="Settings page already displays tier badge and has upgrade button. May need enhancement for detailed tier benefits list">
+        Settings page already implements: getTierBadgeClass (lines 27-38) with correct colors, getTierBenefits (lines 41-52), tier badge display (lines 117-124), upgrade button for FREE tier (lines 132-143). May need to add detailed benefits list and usage placeholder.
+      </file>
+      <file path="frontend/src/components/ui/badge.tsx" kind="component" symbol="Badge" lines="1-37" reason="shadcn/ui Badge component available for tier badge display">
+        Badge component with variants (default, secondary, destructive, outline). Currently Settings page uses custom className instead of variants. Can be used for tier badges.
+      </file>
+      <file path="frontend/src/hooks/useUser.ts" kind="hook" symbol="useUser" lines="29-77" reason="Hook that provides user data including tier from user.user_metadata">
+        Returns User object from Supabase. Access tier via user.user_metadata.tier. User type from @supabase/supabase-js includes user_metadata and app_metadata fields.
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="next" version="^15.5.7" reason="Next.js framework for React app" />
+        <package name="react" version="^19.2.1" reason="React library" />
+        <package name="@supabase/supabase-js" version="^2.86.0" reason="Supabase client for auth and user_metadata access" />
+        <package name="@supabase/auth-helpers-nextjs" version="^0.15.0" reason="Next.js auth helpers" />
+        <package name="@radix-ui/react-dropdown-menu" version="^2.1.16" reason="Dropdown menu component (already in TopBar)" />
+        <package name="@radix-ui/react-label" version="^2.1.8" reason="Label component for forms" />
+        <package name="class-variance-authority" version="^0.7.1" reason="CVA for component variants (Badge)" />
+        <package name="lucide-react" version="^0.555.0" reason="Icon library for UI elements" />
+        <package name="tailwind-merge" version="^3.4.0" reason="Utility for merging Tailwind classes" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architectural" source="Architecture ADR-002">
+      Use Supabase for user metadata storage. Tier stored in auth.users.raw_user_meta_data.tier. Access via user.user_metadata.tier in frontend (Supabase JS automatically maps raw_user_meta_data to user_metadata).
+    </constraint>
+    <constraint type="design" source="UX Design Specification Section 4.1">
+      Professional Blue theme must be used. Tier badge colors: FREE (Gray bg-gray-200 text-gray-800), PRO (Blue bg-blue-100 text-blue-800), PREMIUM (Gold bg-amber-100 text-amber-800). Badge styling: rounded-full, px-3 py-1, text-xs font-medium.
+    </constraint>
+    <constraint type="pattern" source="Existing Settings Page">
+      Settings page already implements tier badge display with correct getTierBadgeClass function. Reuse this pattern for TopBar tier badge. Avoid duplicating tier badge logic - consider extracting to shared component or utility.
+    </constraint>
+    <constraint type="coding-standard" source="Dev Notes">
+      No backend changes required for this story (display only). Tier field already exists in Supabase user_metadata from Story 2.1. Usage tracking implemented in Epic 6, not this story.
+    </constraint>
+    <constraint type="ui-requirement" source="Story AC #2">
+      TopBar tier badge must be responsive: hide badge text on mobile (<768px), show icon or abbreviation only. Ensure badge doesn't break TopBar layout on small screens.
+    </constraint>
+    <constraint type="accessibility" source="UX Design Section 8.3">
+      Tier badges must have sufficient color contrast (4.5:1 minimum). Keyboard navigation must work for all interactive elements. Screen readers must announce tier information clearly (e.g., "Current tier: Free plan").
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="SubscriptionTier" kind="TypeScript enum/type" signature="type SubscriptionTier = 'FREE' | 'PRO' | 'PREMIUM'" path="frontend/src/app/settings/page.tsx:12">
+      Already defined in Settings page. Should be extracted to shared types file (frontend/src/types/auth.ts) for reuse in TopBar and other components.
+    </interface>
+    <interface name="Supabase User Object" kind="API response" signature="User { email: string, user_metadata: { tier: SubscriptionTier, ... }, app_metadata: { provider: string, ... }, created_at: string }" path="@supabase/supabase-js">
+      User object from Supabase Auth. Access tier via user.user_metadata.tier. Default tier is 'FREE' if not set. user_metadata is editable by user (via admin), app_metadata is system-managed.
+    </interface>
+    <interface name="useUser Hook" kind="React Hook" signature="useUser() => { user: User | null, loading: boolean, signOut: () => Promise<void> }" path="frontend/src/hooks/useUser.ts:29">
+      Custom hook for auth state. Returns Supabase User object which includes user_metadata.tier. Loading state indicates auth check in progress. Used by both TopBar and Settings page.
+    </interface>
+    <interface name="Badge Component" kind="React Component" signature="Badge({ className, variant, ...props }: BadgeProps) => JSX.Element" path="frontend/src/components/ui/badge.tsx:30">
+      shadcn/ui Badge component with variants (default, secondary, destructive, outline). Accepts className prop for custom styling. Settings page currently uses custom className instead of predefined variants.
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Frontend testing uses Vitest + React Testing Library. Component tests verify user interactions and rendering. Integration tests check auth state and tier display. Manual testing validates UI appearance, responsive behavior, and navigation flows. TypeScript build (npm run build) and ESLint (npm run lint) must pass before completion.
+    </standards>
+    <locations>
+      <location>frontend/src/components/layout/TopBar.test.tsx (create for TopBar tier badge tests)</location>
+      <location>frontend/src/app/settings/page.test.tsx (create for Settings page enhancement tests)</location>
+      <location>frontend/src/components/settings/TierBadge.test.tsx (if TierBadge component created)</location>
+      <location>frontend/src/app/pricing/page.test.tsx (create for Pricing page tests)</location>
+    </locations>
+    <ideas>
+      <test id="AC1-manual" ac="1" type="manual">
+        Verify Supabase user_metadata.tier field: Check existing user in Supabase dashboard has tier field. Create test user via registration, confirm tier defaults to 'FREE'. Manually update tier to 'PRO'/'PREMIUM' via Supabase SQL and verify UI reflects change after refresh.
+      </test>
+      <test id="AC2-component" ac="2" type="component">
+        TopBar tier badge display: Mock useUser hook to return user with tier='FREE', verify gray "Free" badge appears next to email. Mock tier='PRO', verify blue "Pro" badge. Mock tier='PREMIUM', verify gold "Premium" badge. Verify badge colors match spec (bg-gray-200, bg-blue-100, bg-amber-100). Test responsive: verify badge text hidden on mobile viewport (<768px).
+      </test>
+      <test id="AC3-integration" ac="3" type="integration">
+        Settings page tier section: Navigate to /settings while logged in as FREE user. Verify tier badge displays "FREE" with gray styling. Verify benefits text shows "5 conversions per month". Verify usage placeholder shows "0 / 5 conversions". Change user tier to PRO in Supabase, refresh page, verify badge updates to "PRO" with blue styling.
+      </test>
+      <test id="AC4-navigation" ac="4" type="manual">
+        Upgrade CTA flow: Login as FREE user, navigate to /settings. Verify "Upgrade to Pro" button visible. Click button, verify redirect to /pricing page. On pricing page, verify 3 tiers displayed (FREE $0, PRO $9, PREMIUM $29). Verify "Get Started" button for FREE tier links to /register. Change user to PRO tier, return to /settings, verify "Manage Subscription" button shows instead of "Upgrade".
+      </test>
+      <test id="type-definitions" ac="6" type="unit">
+        TypeScript type definitions: Verify SubscriptionTier type exported from frontend/src/types/auth.ts. Verify UserProfile interface includes tier field. Verify TierBenefits type exists with correct shape (conversionsPerMonth, maxFileSize, support, features). Run TypeScript compiler, verify no type errors.
+      </test>
+      <test id="build-lint" ac="7" type="validation">
+        Build and lint validation: Run 'npm run build' in frontend directory, verify successful build with no TypeScript errors. Run 'npm run lint', verify no ESLint warnings or errors. Verify all new components follow existing code style (Prettier formatting, naming conventions).
+      </test>
+    </ideas>
+  </tests>
+</story-context>

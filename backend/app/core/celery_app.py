@@ -12,7 +12,7 @@ celery_app = Celery(
     "transfer2read",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=['app.tasks.ai_tasks']
+    include=['app.tasks.ai_tasks', 'app.tasks.conversion_pipeline']
 )
 
 # Configure Celery settings
@@ -29,9 +29,9 @@ celery_app.conf.update(
     # Task tracking
     task_track_started=True,
     
-    # Timeouts (15 minutes max per job for LLM API calls)
-    task_time_limit=900,  # 15 minutes hard limit
-    task_soft_time_limit=840,  # 14 minutes warning
+    # Timeouts (20 minutes max per job for LLM API calls)
+    task_time_limit=1200,  # 20 minutes hard limit
+    task_soft_time_limit=900,  # 15 minutes warning
     
     # Retry configuration
     task_acks_late=True,

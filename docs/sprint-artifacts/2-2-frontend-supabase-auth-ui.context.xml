@@ -3,7 +3,7 @@
     <epicId>2</epicId>
     <storyId>2.2</storyId>
     <title>Frontend Supabase Auth UI</title>
-    <status>ready-for-dev</status>
+    <status>done</status>
     <generatedAt>2025-12-11</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/sprint-artifacts/2-2-frontend-supabase-auth-ui.md</sourceStoryPath>
@@ -14,48 +14,48 @@
     <iWant>to sign up and log in using Supabase-powered authentication</iWant>
     <soThat>I can securely access my account</soThat>
     <tasks>
-- [ ] Task 1: Set up Supabase client and auth hooks (AC: #3)
-  - [ ] 1.1: Verify @supabase/supabase-js@2.46.1 and @supabase/auth-helpers-nextjs installed
-  - [ ] 1.2: Create frontend/src/lib/supabase/client.ts with browser client
-  - [ ] 1.3: Create frontend/src/lib/supabase/server.ts for server-side auth
-  - [ ] 1.4: Create frontend/src/hooks/useUser.ts custom hook
-  - [ ] 1.5: Test hook by rendering in simple test component
+- [x] Task 1: Set up Supabase client and auth hooks (AC: #3)
+  - [x] 1.1: Verify @supabase/supabase-js@2.46.1 and @supabase/auth-helpers-nextjs installed
+  - [x] 1.2: Create frontend/src/lib/supabase/client.ts with browser client
+  - [x] 1.3: Create frontend/src/lib/supabase/server.ts for server-side auth
+  - [x] 1.4: Create frontend/src/hooks/useUser.ts custom hook
+  - [x] 1.5: Test hook by rendering in simple test component
 
-- [ ] Task 2: Create authentication pages with shadcn/ui (AC: #1, #2, #4)
-  - [ ] 2.1: Install required shadcn/ui components: button, card, input, label
-  - [ ] 2.2: Create /app/login/page.tsx with Professional Blue styling
-  - [ ] 2.3: Create /app/register/page.tsx with similar layout
-  - [ ] 2.4: Create frontend/src/components/auth/PasswordStrengthIndicator.tsx
+- [x] Task 2: Create authentication pages with shadcn/ui (AC: #1, #2, #4)
+  - [x] 2.1: Install required shadcn/ui components: button, card, input, label
+  - [x] 2.2: Create /app/login/page.tsx with Professional Blue styling
+  - [x] 2.3: Create /app/register/page.tsx with similar layout
+  - [x] 2.4: Create frontend/src/components/auth/PasswordStrengthIndicator.tsx
 
-- [ ] Task 3: Implement login form logic (AC: #1)
-  - [ ] 3.1: Add React Hook Form to /app/login/page.tsx with Zod validation
-  - [ ] 3.2: Implement onSubmit handler calling supabase.auth.signInWithPassword()
-  - [ ] 3.3: Error message handling for various auth failures
-  - [ ] 3.4: Add loading state during sign-in
+- [x] Task 3: Implement login form logic (AC: #1)
+  - [x] 3.1: Add React Hook Form to /app/login/page.tsx with Zod validation
+  - [x] 3.2: Implement onSubmit handler calling supabase.auth.signInWithPassword()
+  - [x] 3.3: Error message handling for various auth failures
+  - [x] 3.4: Add loading state during sign-in
 
-- [ ] Task 4: Implement registration form logic (AC: #2)
-  - [ ] 4.1: Add React Hook Form to /app/register/page.tsx with password validation
-  - [ ] 4.2: Integrate PasswordStrengthIndicator component
-  - [ ] 4.3: Implement onSubmit handler calling supabase.auth.signUp()
-  - [ ] 4.4: Error handling for duplicate users and weak passwords
+- [x] Task 4: Implement registration form logic (AC: #2)
+  - [x] 4.1: Add React Hook Form to /app/register/page.tsx with password validation
+  - [x] 4.2: Integrate PasswordStrengthIndicator component
+  - [x] 4.3: Implement onSubmit handler calling supabase.auth.signUp()
+  - [x] 4.4: Error handling for duplicate users and weak passwords
 
-- [ ] Task 5: Implement auth state management and route protection (AC: #3)
-  - [ ] 5.1: Create frontend/src/components/auth/AuthGuard.tsx HOC using useUser()
-  - [ ] 5.2: Create /app/dashboard/page.tsx placeholder wrapped with AuthGuard
-  - [ ] 5.3: Implement sign-out functionality calling supabase.auth.signOut()
-  - [ ] 5.4: Test protected route redirect behavior
+- [x] Task 5: Implement auth state management and route protection (AC: #3)
+  - [x] 5.1: Create frontend/src/components/auth/AuthGuard.tsx HOC using useUser()
+  - [x] 5.2: Create /app/dashboard/page.tsx placeholder wrapped with AuthGuard
+  - [x] 5.3: Implement sign-out functionality calling supabase.auth.signOut()
+  - [x] 5.4: Test protected route redirect behavior
 
-- [ ] Task 6: Apply Professional Blue theme styling (AC: #4)
-  - [ ] 6.1: Verify tailwind.config.ts has Professional Blue theme colors
-  - [ ] 6.2: Style login/register pages with centered Card layout
-  - [ ] 6.3: Add responsive design for mobile and desktop
+- [x] Task 6: Apply Professional Blue theme styling (AC: #4)
+  - [x] 6.1: Verify tailwind.config.ts has Professional Blue theme colors
+  - [x] 6.2: Style login/register pages with centered Card layout
+  - [x] 6.3: Add responsive design for mobile and desktop
 
-- [ ] Task 7: Manual testing and integration verification (AC: #1, #2, #3)
-  - [ ] 7.1: Test new user registration flow
-  - [ ] 7.2: Test email confirmation (if available)
-  - [ ] 7.3: Test login flow with confirmed user
-  - [ ] 7.4: Test error scenarios (invalid email, wrong password, weak password)
-  - [ ] 7.5: Test sign-out flow
+- [x] Task 7: Manual testing and integration verification (AC: #1, #2, #3)
+  - [x] 7.1: Test new user registration flow
+  - [x] 7.2: Test email confirmation (if available)
+  - [x] 7.3: Test login flow with confirmed user
+  - [x] 7.4: Test error scenarios (invalid email, wrong password, weak password)
+  - [x] 7.5: Test sign-out flow
     </tasks>
   </story>
 

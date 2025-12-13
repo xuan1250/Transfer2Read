@@ -1,0 +1,343 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>4</storyId>
+    <title>Conversion History Backend with Supabase</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dominhxuan/Desktop/Transfer2Read/docs/sprint-artifacts/3-4-conversion-history-backend-supabase.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to track conversion jobs in Supabase PostgreSQL</iWant>
+    <soThat>users can view history and re-download files securely</soThat>
+    <tasks>
+      - Task 1: Create Supabase conversion_jobs Table (AC: #1)
+        - 1.1: Write SQL migration script or execute in Supabase SQL Editor
+        - 1.2: Define table schema with all columns (id, user_id, status, input_path, output_path, quality_report, created_at, completed_at)
+        - 1.3: Add foreign key constraint: user_id REFERENCES auth.users(id) ON DELETE CASCADE
+        - 1.4: Create index on user_id for faster queries
+        - 1.5: Create index on created_at for sorting
+        - 1.6: Verify table exists in Supabase Dashboard Table Editor
+
+      - Task 2: Configure Row Level Security (RLS) Policies (AC: #2)
+        - 2.1: Enable RLS on conversion_jobs table
+        - 2.2: Create SELECT policy for users to view own jobs
+        - 2.3: Create INSERT policy for users to insert own jobs
+        - 2.4: Create UPDATE policy for users to update own jobs
+        - 2.5: Create DELETE policy for users to delete own jobs
+        - 2.6: Test RLS policies with SQL queries using different user JWTs
+
+      - Task 3: Initialize Supabase Python Client in Backend (AC: #7)
+        - 3.1: Create backend/app/core/supabase.py if not exists
+        - 3.2: Import supabase-py
+        - 3.3: Load environment variables: SUPABASE_URL, SUPABASE_SERVICE_KEY
+        - 3.4: Initialize client
+        - 3.5: Export client for use in API routes
+        - 3.6: Add health check query to verify connection
+
+      - Task 4: Implement GET /api/v1/jobs Endpoint (AC: #3)
+        - 4.1: Create route in backend/app/api/v1/jobs.py
+        - 4.2: Add authentication dependency to extract user_id from JWT
+        - 4.3: Parse query parameters: limit, offset, status
+        - 4.4: Query Supabase with pagination and filtering
+        - 4.5: Format response with jobs array, total count, pagination metadata
+        - 4.6: Handle errors (401, 500)
+
+      - Task 5: Implement GET /api/v1/jobs/{job_id} Endpoint (AC: #4)
+        - 5.1: Create route in backend/app/api/v1/jobs.py
+        - 5.2: Extract job_id from path parameter
+        - 5.3: Query Supabase for specific job
+        - 5.4: RLS automatically enforces user_id check
+        - 5.5: Return 404 if job not found or user doesn't own job
+        - 5.6: Return 200 with full job details including quality_report
+
+      - Task 6: Implement DELETE /api/v1/jobs/{job_id} Endpoint (AC: #5)
+        - 6.1: Create DELETE route in backend/app/api/v1/jobs.py
+        - 6.2: Add deleted_at column to conversion_jobs table (optional for soft delete)
+        - 6.3: Soft delete: Update deleted_at = now() for job (preferred)
+        - 6.4: Update RLS SELECT policy to exclude deleted jobs
+        - 6.5: Schedule Supabase Storage file cleanup (Celery task or immediate)
+        - 6.6: Delete files from uploads and downloads buckets
+        - 6.7: Return 204 No Content on success
+
+      - Task 7: Implement GET /api/v1/jobs/{job_id}/download Endpoint (AC: #6)
+        - 7.1: Create download route in backend/app/api/v1/jobs.py
+        - 7.2: Query job details to get output_path and status
+        - 7.3: Verify status == COMPLETED (return 404 if not ready)
+        - 7.4: Generate Supabase Storage signed URL with 1-hour expiry
+        - 7.5: Return 302 redirect to signed URL OR 200 with JSON containing URL
+        - 7.6: Handle errors (401, 404, 500)
+
+      - Task 8: Write Unit Tests for API Endpoints (AC: #8)
+        - 8.1: Set up pytest fixtures for mocked Supabase client
+        - 8.2: Test GET /api/v1/jobs - success case with pagination
+        - 8.3: Test GET /api/v1/jobs/{id} - success case
+        - 8.4: Test GET /api/v1/jobs/{id} - 404 for non-existent job
+        - 8.5: Test DELETE /api/v1/jobs/{id} - success case
+        - 8.6: Test GET /api/v1/jobs/{id}/download - success case (completed job)
+        - 8.7: Test GET /api/v1/jobs/{id}/download - 404 for incomplete job
+        - 8.8: Test all endpoints with missing/invalid JWT - expect 401
+        - 8.9: Run pytest with coverage
+
+      - Task 9: Integration Tests with RLS (AC: #9)
+        - 9.1: Set up test Supabase project or use Docker for local Supabase
+        - 9.2: Create test users (Alice, Bob) using Supabase Auth
+        - 9.3: Test Alice creates job → Alice can read → Bob cannot read (404 via RLS)
+        - 9.4: Test Alice lists jobs → Only sees own jobs
+        - 9.5: Test Alice deletes job → Job removed from Alice's view
+        - 9.6: Test Bob attempts to delete Alice's job → Blocked by RLS (404)
+
+      - Task 10: Error Handling and Structured Logging (AC: #10)
+        - 10.1: Add structured logging to all endpoints
+        - 10.2: Log request start with endpoint, user_id, method
+        - 10.3: Log request completion with duration_ms, status_code
+        - 10.4: Catch Supabase client exceptions and convert to HTTP errors
+        - 10.5: Never log sensitive data
+        - 10.6: Test error logging by triggering database failures
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Supabase conversion_jobs table created with schema (id, user_id, status, input_path, output_path, quality_report, created_at, completed_at)
+    AC2: Row Level Security (RLS) policies applied for SELECT, INSERT, UPDATE, DELETE operations
+    AC3: GET /api/v1/jobs endpoint with pagination and filtering
+    AC4: GET /api/v1/jobs/{job_id} endpoint returns full job details
+    AC5: DELETE /api/v1/jobs/{job_id} endpoint with soft delete and file cleanup
+    AC6: GET /api/v1/jobs/{job_id}/download endpoint returns signed URL for completed jobs
+    AC7: Supabase Python client integration for database queries
+    AC8: Unit tests for API endpoints with 80% code coverage
+    AC9: Integration tests with RLS to verify multi-tenancy
+    AC10: Error handling and structured logging for all endpoints
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD Documentation -->
+      <doc path="docs/prd.md" title="Product Requirements Document" section="FR13-FR15">
+        FR13: View conversion history - Users can see list of past conversions
+        FR14: Re-download EPUBs - Users can download previously converted files
+        FR15: Delete conversion history - Users can remove old conversion records
+      </doc>
+
+      <!-- Architecture Documentation -->
+      <doc path="docs/architecture.md" title="System Architecture" section="Supabase Integration">
+        Supabase provides unified platform for auth, PostgreSQL database, and file storage.
+        Backend uses supabase-py==2.24.0 for database queries.
+        Row Level Security (RLS) provides automatic multi-tenancy enforcement.
+      </doc>
+
+      <doc path="docs/architecture.md" title="System Architecture" section="API Contracts">
+        RESTful endpoints following OpenAPI 3.0 conventions.
+        JWT-based authentication using Supabase Auth tokens.
+        Pagination pattern: limit/offset parameters for list endpoints.
+      </doc>
+
+      <!-- Epic 3 Documentation -->
+      <doc path="docs/epics.md" title="Epic 3 - PDF Upload & File Management" section="Story 3.4">
+        Supabase conversion_jobs table with RLS policies for user isolation.
+        API endpoints: GET /jobs (list), GET /jobs/{id} (details), DELETE /jobs/{id}, GET /jobs/{id}/download.
+        Signed URLs for secure file downloads with 1-hour expiry.
+      </doc>
+
+      <!-- Previous Story Context -->
+      <doc path="docs/sprint-artifacts/3-3-drag-and-drop-upload-ui.md" title="Story 3.3 - Upload UI" section="Dev Notes">
+        Upload API endpoint POST /api/v1/upload already creates conversion_jobs records.
+        Frontend uses Authorization: Bearer header with Supabase JWT tokens.
+        Error handling pattern: Structured errors with detail and code fields.
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing Supabase Integration -->
+      <artifact path="backend/app/core/supabase.py" kind="module" symbol="get_supabase_client" lines="11-28" reason="Supabase client initialization - reuse for conversion_jobs queries">
+      </artifact>
+
+      <artifact path="backend/app/core/supabase.py" kind="module" symbol="verify_supabase_connection" lines="31-55" reason="Example async Supabase query pattern">
+      </artifact>
+
+      <!-- Authentication Pattern -->
+      <artifact path="backend/app/core/auth.py" kind="module" symbol="get_current_user" lines="18-83" reason="JWT validation dependency - reuse for jobs endpoints authentication">
+      </artifact>
+
+      <!-- Upload API Pattern -->
+      <artifact path="backend/app/api/v1/upload.py" kind="endpoint" symbol="upload_pdf" lines="69-163" reason="Example of authenticated endpoint creating conversion_jobs records - shows database insert pattern">
+      </artifact>
+
+      <!-- Storage Service -->
+      <artifact path="backend/app/services/storage/supabase_storage.py" kind="service" symbol="SupabaseStorageService" reason="Storage service for file operations - needed for delete_file cleanup">
+      </artifact>
+
+      <!-- Schemas -->
+      <artifact path="backend/app/schemas/upload.py" kind="schema" symbol="UploadResponse" lines="10-23" reason="Response schema pattern - create similar JobResponse schema">
+      </artifact>
+
+      <artifact path="backend/app/schemas/auth.py" kind="schema" symbol="AuthenticatedUser" reason="User authentication schema with tier information">
+      </artifact>
+
+      <!-- Test Patterns -->
+      <artifact path="backend/tests/integration/test_api_upload.py" kind="test" reason="Integration test pattern for authenticated endpoints - template for jobs endpoint tests">
+      </artifact>
+
+      <artifact path="backend/tests/conftest.py" kind="test" reason="Pytest fixtures for Supabase mocking and test setup">
+      </artifact>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="fastapi" version="0.122.0" />
+        <package name="uvicorn" version="0.30.0" />
+        <package name="pydantic" version=">=2.11.7,<3.0.0" />
+        <package name="supabase" version="2.24.0" />
+        <package name="python-jose" version="3.3.0" note="JWT authentication" />
+        <package name="pytest" version="8.3.0" />
+        <package name="pytest-asyncio" version="0.21.2" />
+        <package name="httpx" version="0.27.0" note="For test client" />
+        <package name="structlog" version="24.1.0" note="Structured logging (optional)" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - All API endpoints MUST require JWT authentication using get_current_user dependency
+    - Use Supabase RLS policies for user isolation - backend can trust RLS enforcement
+    - Prefer soft delete (deleted_at column) over hard delete for audit trail
+    - Return consistent error format: {"detail": "...", "code": "..."}
+    - Use HTTPException for error responses with appropriate status codes
+    - Follow RESTful conventions: GET for retrieval, DELETE for deletion
+    - Generate Supabase Storage signed URLs with 1-hour expiry for security
+    - All endpoints must handle Supabase client exceptions and convert to HTTP errors
+    - Never log sensitive data (JWT tokens, full file paths, passwords)
+    - Use project-relative paths in code (e.g., "backend/app/api/v1/jobs.py")
+  </constraints>
+
+  <interfaces>
+    <!-- Existing Supabase Client Interface -->
+    <interface name="get_supabase_client" kind="function signature" signature="def get_supabase_client() -> Client" path="backend/app/core/supabase.py">
+    </interface>
+
+    <!-- Authentication Dependency -->
+    <interface name="get_current_user" kind="FastAPI dependency" signature="async def get_current_user(credentials: HTTPAuthorizationCredentials) -> AuthenticatedUser" path="backend/app/core/auth.py">
+    </interface>
+
+    <!-- Supabase Storage Service -->
+    <interface name="SupabaseStorageService" kind="class" signature="class SupabaseStorageService" path="backend/app/services/storage/supabase_storage.py">
+      Methods: upload_file, download_file, delete_file, create_signed_url
+    </interface>
+
+    <!-- Database Schema (to be created) -->
+    <interface name="conversion_jobs table" kind="PostgreSQL table" signature="CREATE TABLE conversion_jobs (...)" path="Supabase SQL Editor">
+      Columns: id (UUID), user_id (UUID FK), status (TEXT), input_path (TEXT), output_path (TEXT), quality_report (JSONB), created_at (TIMESTAMPTZ), completed_at (TIMESTAMPTZ), deleted_at (TIMESTAMPTZ)
+    </interface>
+
+    <!-- API Endpoints (to be created) -->
+    <interface name="GET /api/v1/jobs" kind="REST endpoint" signature="async def list_jobs(limit: int, offset: int, status: str | None, current_user: AuthenticatedUser)" path="backend/app/api/v1/jobs.py">
+      Response: {"jobs": [...], "total": int, "limit": int, "offset": int}
+    </interface>
+
+    <interface name="GET /api/v1/jobs/{job_id}" kind="REST endpoint" signature="async def get_job(job_id: str, current_user: AuthenticatedUser)" path="backend/app/api/v1/jobs.py">
+      Response: Full job object with quality_report
+    </interface>
+
+    <interface name="DELETE /api/v1/jobs/{job_id}" kind="REST endpoint" signature="async def delete_job(job_id: str, current_user: AuthenticatedUser)" path="backend/app/api/v1/jobs.py">
+      Response: 204 No Content
+    </interface>
+
+    <interface name="GET /api/v1/jobs/{job_id}/download" kind="REST endpoint" signature="async def download_job(job_id: str, current_user: AuthenticatedUser)" path="backend/app/api/v1/jobs.py">
+      Response: {"download_url": "...", "expires_at": "..."}
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing Framework: pytest 8.3.0 with pytest-asyncio for async tests
+      Test Client: httpx for FastAPI test client
+      Mocking: Use pytest fixtures to mock Supabase client for unit tests
+      Coverage Target: Minimum 80% code coverage for all endpoints
+
+      Test Structure:
+      - Unit Tests (backend/tests/unit/): Mock all external dependencies (Supabase, storage)
+      - Integration Tests (backend/tests/integration/): Use real or local Supabase instance
+      - Test Fixtures: Define in tests/conftest.py for reusability
+
+      Patterns:
+      - Mock Supabase responses for unit tests to isolate API logic
+      - Use FastAPI TestClient for endpoint testing
+      - Create test users with different JWTs for RLS testing
+      - Test both success and error scenarios
+      - Verify RLS policies prevent cross-user access
+    </standards>
+
+    <locations>
+      backend/tests/unit/test_job_service.py - Unit tests for job service logic
+      backend/tests/unit/test_api_jobs.py - Unit tests for jobs API endpoints
+      backend/tests/integration/test_api_jobs.py - Integration tests with Supabase
+      backend/tests/integration/test_rls_policies.py - RLS policy validation tests
+      backend/tests/conftest.py - Shared pytest fixtures
+    </locations>
+
+    <ideas>
+      AC1 (Database Schema):
+      - Test conversion_jobs table exists in Supabase
+      - Verify all columns present with correct types
+      - Test foreign key constraint on user_id
+      - Verify indexes exist on user_id and created_at
+
+      AC2 (RLS Policies):
+      - Test SELECT policy: User A can read own jobs, cannot read User B's jobs
+      - Test INSERT policy: User can only insert jobs with their own user_id
+      - Test UPDATE policy: User can update own jobs, blocked on other users' jobs
+      - Test DELETE policy: User can delete own jobs, blocked on other users' jobs
+      - Test deleted jobs are excluded from SELECT queries (deleted_at IS NULL check)
+
+      AC3 (GET /api/v1/jobs):
+      - Test list jobs with valid JWT returns user's jobs only
+      - Test pagination with limit and offset parameters
+      - Test status filter returns only matching jobs
+      - Test unauthenticated request returns 401
+      - Test empty list when user has no jobs
+
+      AC4 (GET /api/v1/jobs/{job_id}):
+      - Test get job details for owned job returns full object
+      - Test get another user's job returns 404 (RLS blocks)
+      - Test non-existent job_id returns 404
+      - Test quality_report field is included in response
+
+      AC5 (DELETE /api/v1/jobs/{job_id}):
+      - Test delete own job sets deleted_at timestamp
+      - Test delete schedules file cleanup task
+      - Test delete another user's job returns 404
+      - Test delete non-existent job returns 404
+
+      AC6 (GET /api/v1/jobs/{job_id}/download):
+      - Test download for completed job returns signed URL
+      - Test signed URL is valid and accessible
+      - Test download for processing job returns 404
+      - Test download for failed job returns 404
+      - Test signed URL expires after 1 hour
+
+      AC7 (Supabase Integration):
+      - Test Supabase client initialization succeeds
+      - Test connection verification with health check query
+      - Test async query patterns work correctly
+
+      AC8 (Unit Tests):
+      - Test all endpoints with mocked Supabase client
+      - Achieve 80%+ code coverage
+      - Test error handling for Supabase client exceptions
+
+      AC9 (RLS Integration):
+      - Create two test users (Alice, Bob)
+      - Alice creates job, Bob attempts to read → 404
+      - Alice lists jobs → only sees own jobs
+      - Test cross-user access blocked at all endpoints
+
+      AC10 (Error Handling):
+      - Test invalid JWT returns 401
+      - Test Supabase errors converted to appropriate HTTP status codes
+      - Test logging does not include sensitive data
+      - Test structured log format includes endpoint, user_id, duration
+    </ideas>
+  </tests>
+</story-context>

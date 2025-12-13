@@ -47,26 +47,26 @@ development_status:
   1-3-frontend-nextjs-supabase-client-setup: done
   1-4-celery-worker-ai-sdk-setup: done
   1-5-vercel-railway-deployment-configuration: done
-  epic-1-retrospective: done
+  epic-1-retrospective: completed
 
   epic-2: contexted
   2-1-supabase-authentication-setup: done
   2-2-frontend-supabase-auth-ui: done
   2-3-social-authentication-google-github: done
-  2-4-password-reset-user-profile: backlog
-  2-5-subscription-tier-display: backlog
-  epic-2-retrospective: optional
+  2-4-password-reset-user-profile: done
+  2-5-subscription-tier-display: done
+  epic-2-retrospective: completed
 
-  epic-3: backlog
-  3-1-supabase-storage-service-implementation: backlog
-  3-2-pdf-upload-api-supabase-integration: backlog
-  3-3-drag-and-drop-upload-ui: backlog
-  3-4-conversion-history-backend-supabase: backlog
-  3-5-conversion-history-ui: backlog
-  epic-3-retrospective: optional
+  epic-3: contexted
+  3-1-supabase-storage-service-implementation: done
+  3-2-pdf-upload-api-supabase-integration: done
+  3-3-drag-and-drop-upload-ui: done
+  3-4-conversion-history-backend-supabase: done
+  3-5-conversion-history-ui: done
+  epic-3-retrospective: completed
 
-  epic-4: backlog
-  4-1-conversion-pipeline-orchestrator: backlog
+  epic-4: contexted
+  4-1-conversion-pipeline-orchestrator: done
   4-2-langchain-ai-layout-analysis-integration: backlog
   4-3-ai-powered-structure-recognition-toc-generation: backlog
   4-4-epub-generation-ai-analyzed-content: backlog

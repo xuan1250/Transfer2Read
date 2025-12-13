@@ -1,0 +1,177 @@
+"""
+Upload API Endpoint
+
+Handles PDF file uploads to Supabase Storage with authentication and validation.
+"""
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
+from datetime import datetime
+import uuid
+import logging
+
+from app.core.auth import get_current_user
+from app.schemas.auth import AuthenticatedUser
+from app.schemas.upload import UploadResponse
+from app.services.validation import (
+    FileValidationService,
+    InvalidFileTypeError,
+    FileTooLargeError
+)
+from app.services.storage.supabase_storage import (
+    SupabaseStorageService,
+    StorageUploadError
+)
+from app.core.supabase import get_supabase_client
+from app.tasks.conversion_pipeline import conversion_pipeline
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
+
+
+def get_storage_service() -> SupabaseStorageService:
+    """
+    Dependency for getting initialized SupabaseStorageService.
+
+    Returns:
+        SupabaseStorageService: Configured storage service instance
+    """
+    supabase = get_supabase_client()
+    return SupabaseStorageService(supabase)
+
+
+@router.post(
+    "/upload",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=UploadResponse,
+    summary="Upload PDF for conversion",
+    description="""
+    Upload a PDF file for conversion to EPUB format.
+
+    **Authentication Required:**
+    - Requires valid Supabase JWT token in Authorization header
+    - Format: `Bearer <token>`
+
+    **File Validation:**
+    - File must be valid PDF (verified by magic bytes, not extension)
+    - File size limits based on subscription tier:
+      - FREE tier: 50MB maximum
+      - PRO/PREMIUM tier: 500MB maximum
+
+    **Returns:**
+    - 202 Accepted with job_id for tracking conversion status
+    - Job initially created with status "UPLOADED"
+    - Use `/jobs/{job_id}` endpoint to poll conversion progress
+
+    **Error Codes:**
+    - `INVALID_FILE_TYPE`: File is not a PDF
+    - `FILE_TOO_LARGE`: File exceeds tier limit
+    - `UNAUTHORIZED`: Missing or invalid JWT token
+    - `STORAGE_ERROR`: Failed to upload to storage
+    - `DATABASE_ERROR`: Failed to create job record
+    """
+)
+async def upload_pdf(
+    file: UploadFile = File(..., description="PDF file to upload"),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    storage_service: SupabaseStorageService = Depends(get_storage_service)
+) -> UploadResponse:
+    """
+    Upload PDF file and create conversion job.
+
+    Args:
+        file: Uploaded PDF file (multipart/form-data)
+        current_user: Authenticated user from JWT token
+        storage_service: Supabase storage service
+
+    Returns:
+        UploadResponse: Job information with job_id, status, and timestamp
+
+    Raises:
+        HTTPException(400): Invalid file type
+        HTTPException(401): Authentication failure
+        HTTPException(413): File too large for user's tier
+        HTTPException(500): Storage or database error
+    """
+    # Read file content
+    file_data = await file.read()
+    file_size = len(file_data)
+    filename = file.filename or "unknown.pdf"
+
+    # Validate file type and size
+    validator = FileValidationService()
+
+    try:
+        validator.validate_pdf(file_data)
+        validator.validate_file_size(file_size, current_user.tier)
+    except InvalidFileTypeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"detail": str(e), "code": "INVALID_FILE_TYPE"}
+        )
+    except FileTooLargeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail={"detail": str(e), "code": "FILE_TOO_LARGE"}
+        )
+
+    # Generate job ID and storage path
+    job_id = str(uuid.uuid4())
+    storage_path = f"{current_user.user_id}/{job_id}/input.pdf"
+
+    # Upload to Supabase Storage
+    try:
+        storage_service.upload_file(
+            bucket="uploads",
+            path=storage_path,
+            file_data=file_data,
+            content_type="application/pdf"
+        )
+    except StorageUploadError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Storage upload failed: {str(e)}", "code": "STORAGE_ERROR"}
+        )
+
+    # Create database record
+    supabase = get_supabase_client()
+    created_at = datetime.utcnow()
+
+    job_data = {
+        "id": job_id,
+        "user_id": current_user.user_id,
+        "status": "UPLOADED",
+        "input_path": storage_path,
+        "created_at": created_at.isoformat()
+    }
+
+    try:
+        supabase.table("conversion_jobs").insert(job_data).execute()
+    except Exception as e:
+        # If database insert fails, try to clean up uploaded file
+        try:
+            storage_service.delete_file("uploads", storage_path)
+        except:
+            pass  # Ignore cleanup errors
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Database error: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+    # Dispatch Celery pipeline for async conversion
+    try:
+        logger.info(f"Dispatching conversion pipeline for job {job_id}")
+        conversion_pipeline.delay(job_id)
+        logger.info(f"Successfully dispatched pipeline for job {job_id}")
+    except Exception as e:
+        # Log error but don't fail the request - job can be retried manually
+        logger.error(f"Failed to dispatch conversion pipeline for job {job_id}: {str(e)}", exc_info=True)
+        # Note: We could update job status to FAILED here, but let's allow retry
+        # If Celery is down, the job will remain in UPLOADED status
+
+    # Return success response
+    return UploadResponse(
+        job_id=job_id,
+        status="UPLOADED",
+        input_file=filename,
+        created_at=created_at
+    )
