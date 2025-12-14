@@ -37,6 +37,8 @@ function JobStatusBadge({ status }: { status: string }) {
   const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
     COMPLETED: { variant: 'default', className: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-100' },
     PROCESSING: { variant: 'default', className: 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100' },
+    ANALYZING: { variant: 'default', className: 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100' },
+    QUEUED: { variant: 'secondary', className: 'bg-gray-100 text-gray-800 border-gray-300' },
     UPLOADED: { variant: 'secondary', className: 'bg-gray-100 text-gray-800 border-gray-300' },
     FAILED: { variant: 'destructive', className: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-100' },
   };
@@ -132,7 +134,9 @@ export default function HistoryPage() {
       setOffset(currentOffset);
 
       // Start polling for processing jobs
-      const processingJobs = response.jobs.filter(job => job.status === 'PROCESSING');
+      const processingJobs = response.jobs.filter(job =>
+        job.status === 'PROCESSING' || job.status === 'ANALYZING' || job.status === 'QUEUED'
+      );
       if (processingJobs.length > 0) {
         setPollingJobIds(prev => {
           const newSet = new Set(prev);
@@ -207,8 +211,8 @@ export default function HistoryPage() {
             )
           );
 
-          // Stop polling if status changed from PROCESSING
-          if (updatedJob.status !== 'PROCESSING') {
+          // Stop polling if status changed from PROCESSING/ANALYZING/QUEUED
+          if (updatedJob.status !== 'PROCESSING' && updatedJob.status !== 'ANALYZING' && updatedJob.status !== 'QUEUED') {
             setPollingJobIds(prev => {
               const newSet = new Set(prev);
               newSet.delete(jobId);
@@ -241,7 +245,8 @@ export default function HistoryPage() {
   }, [pollingJobIds, supabase, toast]);
 
   // Extract filename from input_path
-  const getFilename = (inputPath: string): string => {
+  const getFilename = (inputPath: string | null | undefined): string => {
+    if (!inputPath) return 'Untitled';
     const parts = inputPath.split('/');
     return parts[parts.length - 1] || inputPath;
   };

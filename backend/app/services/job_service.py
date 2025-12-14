@@ -11,7 +11,7 @@ import logging
 import json
 import redis
 
-from app.schemas.job import JobSummary, JobDetail, QualityReport
+from app.schemas.job import JobSummary, JobDetail
 from app.services.storage.supabase_storage import SupabaseStorageService
 
 logger = logging.getLogger(__name__)
@@ -94,10 +94,11 @@ class JobService:
             input_path = job_data.get("input_path", "")
             input_file = input_path.split("/")[-1] if input_path else "unknown.pdf"
 
-            # Parse quality_report if present
-            quality_report = None
+            # Extract overall_confidence from quality_report if present
+            overall_confidence = None
             if job_data.get("quality_report"):
-                quality_report = QualityReport(**job_data["quality_report"])
+                quality_report_dict = job_data["quality_report"]
+                overall_confidence = quality_report_dict.get("overall_confidence")
 
             jobs.append(JobSummary(
                 id=job_data["id"],
@@ -105,7 +106,7 @@ class JobService:
                 input_file=input_file,
                 created_at=job_data["created_at"],
                 completed_at=job_data.get("completed_at"),
-                quality_report=quality_report
+                overall_confidence=overall_confidence
             ))
 
         logger.info(f"Found {len(jobs)} jobs for user {user_id} (total: {total})")
@@ -141,21 +142,17 @@ class JobService:
                     logger.info(f"Cache hit for job {job_id}")
                     job_dict = json.loads(cached_data)
 
-                    # Reconstruct QualityReport if present
-                    quality_report = None
-                    if job_dict.get("quality_report"):
-                        quality_report = QualityReport(**job_dict["quality_report"])
-
-                    # Return cached JobDetail
+                    # Return cached JobDetail (quality_report is already a dict)
                     return JobDetail(
                         id=job_dict["id"],
                         user_id=job_dict["user_id"],
                         status=job_dict["status"],
                         input_path=job_dict["input_path"],
+                        original_filename=job_dict.get("stage_metadata", {}).get("original_filename"),
                         output_path=job_dict.get("output_path"),
                         progress=job_dict.get("progress", 0),
                         stage_metadata=job_dict.get("stage_metadata", {}),
-                        quality_report=quality_report,
+                        quality_report=job_dict.get("quality_report"),
                         created_at=datetime.fromisoformat(job_dict["created_at"]),
                         completed_at=datetime.fromisoformat(job_dict["completed_at"]) if job_dict.get("completed_at") else None
                     )
@@ -175,10 +172,8 @@ class JobService:
 
         job_data = response.data[0]
 
-        # Parse quality_report if present
-        quality_report = None
-        if job_data.get("quality_report"):
-            quality_report = QualityReport(**job_data["quality_report"])
+        # Parse quality_report if present (keep as dict for JobDetail schema)
+        quality_report = job_data.get("quality_report")
 
         logger.info(f"Found job {job_id} with status {job_data['status']}")
 
@@ -187,6 +182,7 @@ class JobService:
             user_id=job_data["user_id"],
             status=job_data["status"],
             input_path=job_data["input_path"],
+            original_filename=job_data.get("stage_metadata", {}).get("original_filename"),
             output_path=job_data.get("output_path"),
             progress=job_data.get("progress", 0),
             stage_metadata=job_data.get("stage_metadata", {}),
@@ -207,7 +203,7 @@ class JobService:
                     "output_path": job_detail.output_path,
                     "progress": job_detail.progress,
                     "stage_metadata": job_detail.stage_metadata,
-                    "quality_report": job_detail.quality_report.dict() if job_detail.quality_report else None,
+                    "quality_report": job_detail.quality_report,  # Already a dict
                     "created_at": job_detail.created_at.isoformat() if isinstance(job_detail.created_at, datetime) else job_detail.created_at,
                     "completed_at": job_detail.completed_at.isoformat() if job_detail.completed_at and isinstance(job_detail.completed_at, datetime) else job_detail.completed_at
                 }
@@ -223,7 +219,7 @@ class JobService:
 
     def delete_job(self, job_id: str, user_id: str, async_cleanup: bool = False) -> Tuple[bool, Optional[dict]]:
         """
-        Delete a job (soft delete) with optional file cleanup.
+        Delete a job (hard delete) with optional file cleanup.
 
         Args:
             job_id: Job UUID
@@ -238,7 +234,7 @@ class JobService:
         """
         logger.info(f"Deleting job {job_id} for user {user_id}, async={async_cleanup}")
 
-        # First, get job details to retrieve file paths
+        # First, get job details to retrieve file paths before deletion
         response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).execute()
 
         if not response.data or len(response.data) == 0:
@@ -249,13 +245,23 @@ class JobService:
         input_path = job_data.get("input_path")
         output_path = job_data.get("output_path")
 
-        # Soft delete: Update deleted_at timestamp
-        deleted_at = datetime.utcnow()
-        self.supabase.table("conversion_jobs").update(
-            {"deleted_at": deleted_at.isoformat()}
-        ).eq("id", job_id).execute()
+        # Hard delete: Permanently remove from database
+        delete_response = self.supabase.table("conversion_jobs").delete().eq("id", job_id).execute()
 
-        logger.info(f"Job {job_id} soft-deleted at {deleted_at}")
+        if not delete_response.data or len(delete_response.data) == 0:
+            logger.warning(f"Failed to delete job {job_id}")
+            return False, None
+
+        logger.info(f"Job {job_id} permanently deleted from database")
+
+        # Invalidate Redis cache after deletion
+        if self.redis:
+            try:
+                cache_key = f"job_status:{job_id}"
+                self.redis.delete(cache_key)
+                logger.info(f"Invalidated cache for deleted job {job_id}")
+            except Exception as e:
+                logger.warning(f"Redis cache invalidation failed for job {job_id}: {str(e)}")
 
         file_paths = {
             "input_path": input_path,

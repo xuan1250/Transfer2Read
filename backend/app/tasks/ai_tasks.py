@@ -64,27 +64,27 @@ def test_ai_connection(
             return result
             
         elif provider == "anthropic":
-            # Test Anthropic Claude 3 Haiku connection
+            # Test Anthropic Claude 3.5 Haiku connection
             from langchain_anthropic import ChatAnthropic
-            
+
             if not settings.ANTHROPIC_API_KEY:
                 raise ValueError("ANTHROPIC_API_KEY not configured")
-            
-            logger.info("Initializing ChatAnthropic (Claude 3 Haiku)...")
+
+            logger.info("Initializing ChatAnthropic (Claude 3.5 Haiku)...")
             llm = ChatAnthropic(
-                model="claude-3-haiku-20240307",
+                model="claude-3-5-haiku-20241022",
                 temperature=0,
                 api_key=settings.ANTHROPIC_API_KEY,
                 timeout=30
             )
-            
-            logger.info("Sending test prompt to Claude 3 Haiku...")
+
+            logger.info("Sending test prompt to Claude 3.5 Haiku...")
             response = llm.invoke("Respond with 'AI connection successful'")
-            
+
             result = {
                 "status": "success",
                 "provider": "anthropic",
-                "model": "claude-3-haiku-20240307",
+                "model": "claude-3-5-haiku-20241022",
                 "response": response.content
             }
             logger.info(f"Anthropic test successful: {result['response']}")

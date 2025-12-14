@@ -934,9 +934,43 @@ So that **I know the system is working and when it will be finished.**
 - [ ] Smooth animations for progress transitions
 - [ ] Handling of connection loss/reconnect
 
+**NEW ACCEPTANCE CRITERIA (from Epic 4 Retrospective Action 1.2: AI Cost Monitoring):**
+- [ ] **AI Cost Tracking:** LangChain callbacks implemented to count tokens per AI call
+  - Callback tracks: `prompt_tokens`, `completion_tokens`, `total_tokens`
+  - Callback class: `backend/app/services/ai/cost_tracker.py`
+  - Integrated with Story 4.2 (LayoutAnalyzer) and Story 4.3 (StructureAnalyzer)
+  - Stored in `conversion_jobs.quality_report` JSONB field
+- [ ] **Cost Estimation:** Calculate cost per job based on model pricing
+  - GPT-4o: $2.50/1M input tokens, $10.00/1M output tokens
+  - Claude 3 Haiku: $0.25/1M input tokens, $1.25/1M output tokens
+  - Round to 4 decimal places (e.g., $0.1523)
+- [ ] **Real-time Cost Display:** Progress UI shows estimated cost as jobs complete
+  - Example: "Processing... Estimated cost: $0.12"
+  - Updates incrementally as AI analysis stages complete
+- [ ] **Quality Report Integration:** Add cost fields to quality_report JSON schema:
+  ```json
+  {
+    "overall_confidence": 95,
+    "estimated_cost": 0.15,
+    "token_usage": {
+      "prompt_tokens": 5000,
+      "completion_tokens": 2000,
+      "total_tokens": 7000
+    }
+  }
+  ```
+
+**NEW ACCEPTANCE CRITERIA (from Epic 4 Retrospective Action 1.3: Pre-Flight Checklist):**
+- [ ] **Create Pre-Flight Integration Checklist Template**
+  - Save to `.bmad/bmm/templates/pre-flight-checklist.md`
+  - Template includes: Services & Dependencies, Data Flow, Error Handling, Testing, Documentation
+  - Mandatory for all Epic 5 stories before marking "review"
+  - Include checklist in PR for code review
+
 **Technical Notes:**
 - Architecture: Use Polling for MVP (simpler than WS with serverless) or SSE
 - Update frequency: ~1-2 seconds
+- **Estimated Effort Increase:** +3 hours (Action 1.2: 2-3h, Action 1.3: 30min)
 
 **Prerequisites:** Story 4.1, Story 3.4
 
@@ -956,11 +990,49 @@ So that **I can understand what was converted.**
 - [ ] "Confidence Score" visual indicator
 - [ ] Call-to-action buttons: "Preview Comparison" and "Download EPUB"
 
+**NEW ACCEPTANCE CRITERIA (from Epic 4 Retrospective Action 1.5: Quality Display Language):**
+- [ ] **User-Friendly Quality Messaging:** Map technical confidence scores to plain English
+  - **Mapping Rules:**
+    - 95-100%: "Excellent - All elements preserved perfectly ✅"
+    - 85-94%: "Very Good - Nearly all elements preserved ✅"
+    - 75-84%: "Good - Most elements preserved ⚠️"
+    - 60-74%: "Fair - Some elements may need review ⚠️"
+    - <60%: "Review Required - Significant issues detected ❌"
+  - **Element-Specific Messages:**
+    - Tables (>90%): "12 tables detected and preserved"
+    - Tables (70-90%): "12 tables detected, 2 may need review"
+    - Tables (<70%): "12 tables detected, 5 require manual verification"
+    - Equations (>90%): "All 8 equations rendered correctly"
+    - Equations (<90%): "8 equations detected, 1 may have minor issues"
+- [ ] **Quality Report UI Implementation:**
+  - Overall quality level with emoji (✅/⚠️/❌)
+  - User-friendly message (not raw confidence score)
+  - Expandable element details (tables, images, equations counts)
+  - Warning messages with page numbers and actionable guidance
+  - **Estimated cost displayed** (from Action 1.2, Story 5.1): "Processing cost: $0.15"
+  - User action prompt based on quality level
+
 **Technical Notes:**
 - UX Spec Section 6.2: Processing & Results
 - Fetch data from `ConversionJob` and Quality Report JSON
+- Implements PRD UX Principle: "Transparency Through Feedback"
+- **Estimated Effort Increase:** +1-2 hours (Action 1.5)
 
-**Prerequisites:** Story 5.1, Story 4.5
+**Prerequisites:** Story 5.1, Story 4.5, **Action 1.4 (Sample PDFs curated BEFORE Story 5.2 implementation)**
+
+**CRITICAL PREREQUISITE (from Epic 4 Retrospective Action 1.4: Sample PDFs):**
+**MUST COMPLETE BEFORE STORY 5.2 IMPLEMENTATION BEGINS:**
+- [ ] **Test PDF Suite Curated (5 test PDFs):**
+  1. Simple text PDF (10-20 pages, baseline)
+  2. Complex technical book (50-100 pages, tables/images/equations)
+  3. Multi-language document (EN + CJK characters)
+  4. Large file (300+ pages, performance test)
+  5. Edge case (damaged scan or unusual layout)
+- [ ] All PDFs processed through Epic 4 pipeline
+- [ ] Outputs saved: `tests/fixtures/epic-5-sample-pdfs/{1-5}/` (input.pdf, output.epub, quality_report.json, screenshots/)
+- [ ] Expected quality metrics documented for each PDF
+- [ ] Shared with frontend team for UI development
+- **Estimated Effort:** +1-2 hours
 
 ---
 
@@ -983,7 +1055,28 @@ So that **I can verify the layout and formatting fidelity.**
 - UX Spec: "Pre-Download Quality Verification" pattern
 - This is the **Core Differentiator** - needs high polish
 
-**Prerequisites:** Story 5.2
+**Test Data (from Epic 4 Retrospective Action 1.4, Story 5.2):**
+- Use sample EPUBs from `tests/fixtures/epic-5-sample-pdfs/` for development
+  - Simple text PDF: Baseline rendering test
+  - Complex technical book: Validate table/equation rendering in split-screen
+  - Multi-language document: Test CJK font rendering in browser
+  - Large file: Performance test (react-pdf + react-reader with 300+ pages)
+  - Edge case: Test low-quality rendering and warning displays
+
+**PDF Viewer Evaluation (from Epic 4 Retrospective Action 3.1):**
+- Test `react-pdf` library performance with large PDFs
+  - Load time benchmarks: 10-page, 50-page, 300-page PDFs
+  - Memory usage and scrolling performance (60fps target)
+  - Alternatives: PDF.js, iframe embed, or server-side rendering to images
+  - Success: 300-page PDF loads <5 seconds, smooth scrolling, memory <500MB
+
+**EPUB Rendering Strategy (from Epic 4 Retrospective Action 3.2):**
+- Option A: `react-reader` library (native EPUB rendering)
+- Option B: Convert EPUB → HTML preview on backend
+- Prototype Option A first, compare to Apple Books/Calibre fidelity
+- Success: EPUB renders <3 seconds, 95% visual match to e-readers, TOC functional
+
+**Prerequisites:** Story 5.2 **(including Action 1.4: Sample PDFs curated)**
 
 ---
 
@@ -1000,9 +1093,32 @@ So that **I can read my book and help improve the system.**
 - [ ] Simple feedback form ("Was this conversion good? 👍/👎")
 - [ ] Confetti animation on successful download (Delight factor)
 
+**NEW ACCEPTANCE CRITERIA (from Epic 4 Retrospective Action 1.1: Integration Test Suite):**
+- [ ] **End-to-End Integration Test Suite Created:**
+  - **Test File:** `tests/integration/test_full_pipeline.py`
+  - **Test Scenarios (5 total):**
+    1. Simple Text PDF (10-20 pages) → 99%+ confidence, <30s processing
+    2. Complex Technical Book (50-100 pages, tables/images/equations) → 90-95% confidence
+    3. Multi-Language Document (EN + CJK) → 95%+ confidence, fonts embedded
+    4. Large File (300+ pages) → <2 min conversion (FR35), file size ≤ 120% PDF (FR37)
+    5. Edge Case (corrupted/malformed) → <80% confidence, graceful degradation
+  - **Test Flow:** PDF Upload → AI Analysis → Structure → EPUB → Quality → Download
+  - **Success Criteria:**
+    - All tests pass with real AI APIs (GPT-4o/Claude 3 Haiku)
+    - Quality reports match expected ranges (±5%)
+    - EPUBs validate against EPUB 3.0 spec (epubcheck)
+    - File sizes ≤ 120% of PDF
+  - **CI/CD Integration:** GitHub Actions monthly schedule (cost control)
+  - **Budget:** $50/month AI API budget (~$10-15 per run)
+- [ ] **Pre-Flight Checklist Applied (from Action 1.3, Story 5.1):**
+  - Use template from `.bmad/bmm/templates/pre-flight-checklist.md`
+  - Verify all integration points before marking "review"
+  - Include completed checklist in PR
+
 **Technical Notes:**
 - Track download events for analytics
 - Feedback stored in DB for model improvement
+- **Estimated Effort Increase:** +5-7 hours (Action 1.1: 4-6h, Action 1.3 applied: 1h)
 
 **Prerequisites:** Story 5.2
 

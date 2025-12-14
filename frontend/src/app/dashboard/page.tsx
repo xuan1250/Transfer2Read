@@ -66,19 +66,36 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Placeholder for future features */}
+          {/* Quick Actions */}
           <Card className="shadow-md">
             <CardHeader>
-              <CardTitle>Coming Soon</CardTitle>
-              <CardDescription>More features will be added here</CardDescription>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Get started with your PDF conversions</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>PDF Upload & Conversion</li>
-                <li>Conversion History</li>
-                <li>Account Settings</li>
-                <li>Subscription Management</li>
-              </ul>
+            <CardContent className="space-y-3">
+              <Button
+                onClick={() => router.push('/upload')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
+              >
+                📄 Upload PDF for Conversion
+              </Button>
+              <Button
+                onClick={() => router.push('/history')}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                📋 View Conversion History
+              </Button>
+              <Button
+                onClick={() => router.push('/settings')}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                ⚙️ Account Settings
+              </Button>
             </CardContent>
           </Card>
         </div>

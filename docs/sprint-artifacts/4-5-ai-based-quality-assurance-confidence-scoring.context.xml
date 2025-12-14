@@ -1,0 +1,362 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>5</storyId>
+    <title>AI-Based Quality Assurance & Confidence Scoring</title>
+    <status>done</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-5-ai-based-quality-assurance-confidence-scoring.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to calculate quality confidence scores from AI analysis</iWant>
+    <soThat>users can trust conversion fidelity metrics</soThat>
+    <tasks>
+- [ ] Task 1: Define Quality Report Schema (AC: #4)
+  - [ ] 1.1: Create `backend/app/schemas/quality_report.py`
+  - [ ] 1.2: Define Pydantic models: ElementQuality, QualityReport
+  - [ ] 1.3: Include fields: overall_confidence, elements, warnings, fidelity_targets
+  - [ ] 1.4: Add validators for confidence ranges (0-100)
+  - [ ] 1.5: Test schema validation with sample data
+
+- [ ] Task 2: Implement Confidence Score Calculation (AC: #1)
+  - [ ] 2.1: Create `backend/app/services/conversion/quality_scorer.py`
+  - [ ] 2.2: Create `QualityScorer` class with `calculate_confidence()` method
+  - [ ] 2.3: Implement weighted average calculation
+  - [ ] 2.4: Implement `aggregate_element_scores()` method
+  - [ ] 2.5: Test calculation with different element mixes
+
+- [ ] Task 3: Implement Element Count Tracking (AC: #2)
+  - [ ] 3.1: Create `count_detected_elements()` method in QualityScorer
+  - [ ] 3.2: Extract counts from layout_analysis and document_structure
+  - [ ] 3.3: Store counts in quality_report.elements
+  - [ ] 3.4: Test counting logic with mock data
+
+- [ ] Task 4: Implement Warning Generation (AC: #3)
+  - [ ] 4.1: Create `generate_warnings()` method in QualityScorer
+  - [ ] 4.2: Iterate through elements and flag confidence &lt;80%
+  - [ ] 4.3: Generate specific warning messages with page numbers and context
+  - [ ] 4.4: Add recommendations for manual review
+  - [ ] 4.5: Store warnings in quality_report.warnings list
+  - [ ] 4.6: Test warning generation with low-confidence fixtures
+
+- [ ] Task 5: Implement Fidelity Target Validation (AC: #6)
+  - [ ] 5.1: Create `validate_fidelity_targets()` method in QualityScorer
+  - [ ] 5.2: Determine document type: Complex vs. Text-based
+  - [ ] 5.3: Compare actual confidence against targets (95%+ complex, 99%+ text)
+  - [ ] 5.4: Store comparison in quality_report.fidelity_targets
+  - [ ] 5.5: Test validation with edge cases
+
+- [ ] Task 6: Integrate with Layout Analysis (AC: #5)
+  - [ ] 6.1: Modify `backend/app/tasks/conversion_pipeline.py`
+  - [ ] 6.2: Extract AI confidence scores from responses after layout analysis
+  - [ ] 6.3: Calculate initial quality metrics and store in job metadata
+  - [ ] 6.4: Test integration with quality_report updates
+
+- [ ] Task 7: Integrate with Structure Analysis (AC: #5)
+  - [ ] 7.1: Calculate TOC detection confidence after structure analysis
+  - [ ] 7.2: Append structure metrics to quality_report
+  - [ ] 7.3: Test cumulative quality_report updates
+
+- [ ] Task 8: Integrate with EPUB Generation (AC: #5)
+  - [ ] 8.1: Finalize quality_report after EPUB generation completes
+  - [ ] 8.2: Validate fidelity targets and generate final warnings
+  - [ ] 8.3: Store complete quality_report in conversion_jobs table
+  - [ ] 8.4: Test quality_report persistence
+
+- [ ] Task 9: Update Database Schema (AC: #7)
+  - [ ] 9.1: Check if `conversion_jobs.quality_report` column exists
+  - [ ] 9.2: Create Supabase migration: `007_quality_report_column.sql`
+  - [ ] 9.3: Add column: `quality_report JSONB DEFAULT '{}'::jsonb`
+  - [ ] 9.4: Run migration in development
+  - [ ] 9.5: Verify RLS policies allow users to read quality_report
+
+- [ ] Task 10: Update API Endpoints (AC: #8)
+  - [ ] 10.1: Modify `backend/app/api/v1/jobs.py`
+  - [ ] 10.2: Update `GET /api/v1/jobs/{id}` to include quality_report
+  - [ ] 10.3: Add optional query param: `?include_quality_details=true`
+  - [ ] 10.4: Handle null quality_report gracefully
+  - [ ] 10.5: Test API quality_report serialization
+
+- [ ] Task 11: Implement Real-Time Progress Updates (AC: #9)
+  - [ ] 11.1: Update job status messages to include quality indicators
+  - [ ] 11.2: Emit quality metrics as they're calculated
+  - [ ] 11.3: Ensure frontend polling captures updates
+  - [ ] 11.4: Test real-time updates
+
+- [ ] Task 12: Error Handling and Testing (AC: #10, #11)
+  - [ ] 12.1: Handle AI errors by setting confidence to 0
+  - [ ] 12.2: Implement graceful degradation for failures
+  - [ ] 12.3: Validate confidence scores are 0-100
+  - [ ] 12.4: Create unit tests: `test_quality_scorer.py`
+  - [ ] 12.5: Test weighted calculation, warnings, target validation
+  - [ ] 12.6: Create integration test for full pipeline
+  - [ ] 12.7: Test edge cases
+
+- [ ] Task 13: Documentation (AC: #12)
+  - [ ] 13.1: Update `backend/docs/AI_INTEGRATION.md`
+  - [ ] 13.2: Add section on Quality Assurance and Confidence Scoring
+  - [ ] 13.3: Document confidence calculation algorithm
+  - [ ] 13.4: Explain warning thresholds and recommendations
+  - [ ] 13.5: Document quality report JSON schema
+  - [ ] 13.6: Add examples for different document types
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Confidence Score Calculation:**
+   - Aggregate AI confidence scores from GPT-4o/Claude responses during layout analysis
+   - Weight confidence by element complexity (text: 99%, tables/equations: AI confidence, images: 100%, multi-column: AI confidence)
+   - Calculate overall document confidence as weighted average
+   - Store individual element confidence scores in job metadata
+
+2. **Detected Elements Count Tracking (FR33):**
+   - Count and log all detected elements (tables, images, equations, chapters, multi-column pages)
+   - Store element counts in `quality_report` JSONB field
+   - Update job status with real-time element detection counts
+
+3. **Warning Flags for Low Confidence:**
+   - Flag pages or elements with confidence &lt;80% for user review
+   - Generate specific warnings with context and page numbers
+   - Include recommendations for manual review
+   - Store warnings in quality_report for UI display
+
+4. **Quality Report JSON Schema:**
+   - Define comprehensive Pydantic schema for quality report
+   - Validate schema with Pydantic V2 models
+   - Support null/missing values gracefully
+
+5. **Integration with Conversion Pipeline:**
+   - Calculate quality scores after each analysis step
+   - Accumulate scores progressively through pipeline
+   - Update `conversion_jobs.quality_report` field after each step
+   - Ensure atomic updates to avoid race conditions
+
+6. **Fidelity Target Validation (FR24, FR25):**
+   - Compare actual confidence against PRD targets (95%+ complex, 99%+ text)
+   - Flag documents that fail to meet targets
+   - Provide actionable feedback
+   - Log target achievement metrics
+
+7. **Database Schema Updates:**
+   - Ensure `conversion_jobs.quality_report` column exists (JSONB type)
+   - Add indexes for quality report queries if needed
+   - RLS policies allow users to read their own quality reports
+
+8. **API Endpoint Enhancements:**
+   - Update `GET /api/v1/jobs/{id}` to include quality_report in response
+   - Add query parameter `include_quality_details=true` for verbose report
+   - Handle missing quality_report gracefully (old jobs)
+
+9. **Real-Time Progress Updates:**
+   - Emit quality metrics as they're calculated
+   - Update job status with incremental quality indicators
+   - Support frontend polling for live updates
+
+10. **Error Handling and Edge Cases:**
+    - Handle AI refusal or errors during analysis (return confidence: 0)
+    - Gracefully degrade if quality calculation fails
+    - Handle documents with no complex elements
+    - Validate confidence scores are within 0-100 range
+    - Log errors without blocking EPUB generation
+
+11. **Testing:**
+    - Unit tests with mock AI responses
+    - Test weighted average calculation
+    - Test warning generation for low confidence
+    - Test quality report schema validation
+    - Integration test for full pipeline with quality tracking
+    - Test fidelity target validation
+
+12. **Documentation:**
+    - Update `backend/docs/AI_INTEGRATION.md` with quality scoring section
+    - Document confidence calculation algorithm
+    - Explain warning thresholds and recommendations
+    - Document quality report JSON schema
+    - Add examples of quality reports for different document types
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4 (AI-Powered Conversion Engine)</title>
+        <section>Quality Assurance Architecture</section>
+        <snippet>Quality assurance architecture calculates and tracks conversion quality metrics. Integration points: Layout analysis, Structure analysis, EPUB generation. Storage: conversion_jobs.quality_report JSONB column.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4</title>
+        <section>Functional Requirements Covered</section>
+        <snippet>FR24: System achieves 95%+ fidelity for complex PDFs. FR25: 99%+ fidelity for text-based PDFs. FR32: Users see quality indicators during conversion. FR33: Users receive quality report showing detected elements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - API-First Intelligence</title>
+        <section>AI Model Specification</section>
+        <snippet>GPT-4o (primary): Multimodal understanding, document structure analysis. Claude 3 Haiku (fallback): Fast text processing. LangChain 0.3.x orchestration with built-in retry logic.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Implementation Patterns - Testing</section>
+        <snippet>Backend testing: Pytest + FastAPI TestClient. Fixtures in conftest.py. Async tests with pytest-asyncio. Coverage target: 80% minimum. Test organization: unit/ and integration/ directories.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/schemas/layout_analysis.py</path>
+        <kind>schema</kind>
+        <symbol>PageAnalysis, TableItem, EquationItem, ImageItem</symbol>
+        <lines>1-146</lines>
+        <reason>Contains confidence fields in AI analysis results that need to be aggregated for quality scoring</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/document_structure.py</path>
+        <kind>schema</kind>
+        <symbol>DocumentStructure, TOCEntry</symbol>
+        <lines>1-123</lines>
+        <reason>Contains structure confidence and chapter detection data for quality metrics</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/tasks/conversion_pipeline.py</path>
+        <kind>service</kind>
+        <symbol>update_job_status, conversion_pipeline</symbol>
+        <lines>59-200</lines>
+        <reason>Main pipeline orchestrator where quality scoring will be integrated after each stage</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/ai/layout_analyzer.py</path>
+        <kind>service</kind>
+        <symbol>LayoutAnalyzer</symbol>
+        <lines>N/A</lines>
+        <reason>AI layout analysis returns confidence scores per element that feed into quality calculation</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/ai/structure_analyzer.py</path>
+        <kind>service</kind>
+        <symbol>StructureAnalyzer</symbol>
+        <lines>N/A</lines>
+        <reason>Structure analysis provides TOC confidence and chapter detection for quality metrics</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>config</kind>
+        <symbol>Settings</symbol>
+        <lines>1-69</lines>
+        <reason>Configuration file where quality scoring constants need to be added</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api</kind>
+        <symbol>get_job</symbol>
+        <lines>N/A</lines>
+        <reason>API endpoint that will return quality_report in job details response</reason>
+      </artifact>
+      <artifact>
+        <path>backend/supabase/migrations/006_document_structure_column.sql</path>
+        <kind>migration</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Pattern reference for creating quality_report column migration</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pydantic" version="2.x" reason="Schema validation for QualityReport models"/>
+        <package name="langchain" version="0.3.12" reason="AI responses contain confidence scores to extract"/>
+        <package name="langchain-openai" version="0.2.x" reason="GPT-4o confidence extraction"/>
+        <package name="langchain-anthropic" version="0.2.x" reason="Claude fallback confidence data"/>
+        <package name="celery" version="5.5.3" reason="Progressive quality updates through pipeline stages"/>
+        <package name="redis" version="5.0.1" reason="Cache invalidation for job status updates"/>
+        <package name="supabase" version="2.24.0" reason="Database operations for quality_report storage"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Follow service pattern: All business logic in `backend/app/services/`, NOT in API routes
+- Use Pydantic V2 models for all schemas with field validators
+- Store quality_report as JSONB in PostgreSQL (Supabase)
+- Quality scoring must NOT block EPUB generation - graceful degradation required
+- Confidence scores must be validated to 0-100 range
+- Warning threshold is 80% (configurable via config.py)
+- Fidelity targets: 95%+ for complex PDFs, 99%+ for text-based PDFs
+- Database updates must be atomic to prevent race conditions
+- RLS policies must allow users to read their own quality reports
+- Testing: 80% minimum code coverage
+- Error handling: Log errors, degrade gracefully, continue pipeline
+- Configuration constants in config.py: QUALITY_WARNING_THRESHOLD, QUALITY_TARGET_COMPLEX, QUALITY_TARGET_TEXT
+- Migration naming: 007_quality_report_column.sql
+- Test file naming: test_quality_scorer.py in backend/tests/unit/services/conversion/
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>QualityScorer.calculate_confidence()</name>
+      <kind>method</kind>
+      <signature>def calculate_confidence(self, layout_analysis: Dict[str, Any]) -> float</signature>
+      <path>backend/app/services/conversion/quality_scorer.py</path>
+    </interface>
+    <interface>
+      <name>QualityScorer.count_detected_elements()</name>
+      <kind>method</kind>
+      <signature>def count_detected_elements(self, layout_analysis: Dict, document_structure: Dict) -> Dict[str, Any]</signature>
+      <path>backend/app/services/conversion/quality_scorer.py</path>
+    </interface>
+    <interface>
+      <name>QualityScorer.generate_warnings()</name>
+      <kind>method</kind>
+      <signature>def generate_warnings(self, layout_analysis: Dict, threshold: float = 80.0) -> List[str]</signature>
+      <path>backend/app/services/conversion/quality_scorer.py</path>
+    </interface>
+    <interface>
+      <name>QualityScorer.validate_fidelity_targets()</name>
+      <kind>method</kind>
+      <signature>def validate_fidelity_targets(self, overall_confidence: float, layout_analysis: Dict) -> Dict[str, Any]</signature>
+      <path>backend/app/services/conversion/quality_scorer.py</path>
+    </interface>
+    <interface>
+      <name>GET /api/v1/jobs/{id}</name>
+      <kind>REST endpoint</kind>
+      <signature>Query param: include_quality_details=true. Returns JobDetail with quality_report field.</signature>
+      <path>backend/app/api/v1/jobs.py</path>
+    </interface>
+    <interface>
+      <name>update_job_status()</name>
+      <kind>function</kind>
+      <signature>def update_job_status(job_id: str, status: str, progress: int = None, stage_metadata: Dict = None, error_message: str = None) -> None</signature>
+      <path>backend/app/tasks/conversion_pipeline.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend testing uses Pytest with FastAPI TestClient. Fixtures defined in conftest.py include test_client, test_db, authenticated_user. Dependency overrides used to mock external services. Async tests use pytest-asyncio. Coverage target: 80% minimum. Test organization: tests/unit/ for isolated tests, tests/integration/ for API + DB tests.
+    </standards>
+    <locations>
+- backend/tests/unit/services/conversion/test_quality_scorer.py
+- backend/tests/integration/test_quality_scoring.py
+- backend/tests/fixtures/ (test data and sample PDFs)
+    </locations>
+    <ideas>
+- AC1: Mock layout_analysis with varying confidence scores (50%, 75%, 95%, 100%) and test weighted average calculation
+- AC1: Test confidence calculation with different element distributions (text-heavy vs. complex with tables/equations)
+- AC2: Test element counting with mock layout_analysis and document_structure containing various element types
+- AC3: Test warning generation with confidence scores below 80% - verify warning messages include page numbers and context
+- AC3: Test critical warnings for confidence below 60%
+- AC4: Test QualityReport schema validation with valid and invalid data (confidence > 100, confidence &lt; 0)
+- AC5: Integration test - run full pipeline and verify quality_report is updated after each stage (layout, structure, EPUB)
+- AC6: Test fidelity target validation with edge cases (exactly 95%, below 95%, complex vs. text documents)
+- AC7: Test database migration creates quality_report column with correct type and default value
+- AC8: Test API endpoint returns quality_report when include_quality_details=true
+- AC8: Test API handles null quality_report gracefully for old jobs
+- AC9: Test job status messages include quality indicators during pipeline execution
+- AC10: Test graceful degradation when quality calculation fails (AI error, missing data)
+- AC10: Test handling of documents with no complex elements (100% text)
+- AC11: Full integration test with sample PDF (50 pages, 10 tables, 5 equations) - verify quality metrics in expected ranges
+    </ideas>
+  </tests>
+</story-context>

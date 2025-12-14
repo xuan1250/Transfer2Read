@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { TopBar } from "@/components/layout/TopBar";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Transfer2Read - PDF to EPUB Converter",
@@ -13,10 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <TopBar />
-        <main>{children}</main>
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        <QueryProvider>
+          <TopBar />
+          <main>{children}</main>
+        </QueryProvider>
       </body>
     </html>
   );

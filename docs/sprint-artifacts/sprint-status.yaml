@@ -67,14 +67,14 @@ development_status:
 
   epic-4: contexted
   4-1-conversion-pipeline-orchestrator: done
-  4-2-langchain-ai-layout-analysis-integration: backlog
-  4-3-ai-powered-structure-recognition-toc-generation: backlog
-  4-4-epub-generation-ai-analyzed-content: backlog
-  4-5-ai-based-quality-assurance-confidence-scoring: backlog
-  epic-4-retrospective: optional
+  4-2-langchain-ai-layout-analysis-integration: done
+  4-3-ai-powered-structure-recognition-toc-generation: done
+  4-4-epub-generation-ai-analyzed-content: done
+  4-5-ai-based-quality-assurance-confidence-scoring: done
+  epic-4-retrospective: completed
 
   epic-5: backlog
-  5-1-real-time-progress-updates: backlog
+  5-1-real-time-progress-updates: done
   5-2-job-status-quality-report-page: backlog
   5-3-split-screen-comparison-ui: backlog
   5-4-download-feedback-flow: backlog

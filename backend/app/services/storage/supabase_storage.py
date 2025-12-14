@@ -17,6 +17,11 @@ class StorageDeleteError(Exception):
     pass
 
 
+class StorageDownloadError(Exception):
+    """Raised when file download from Supabase Storage fails."""
+    pass
+
+
 class SupabaseStorageService:
     """
     Service for managing file storage operations with Supabase Storage.
@@ -97,6 +102,44 @@ class SupabaseStorageService:
         except Exception as e:
             raise StorageUploadError(
                 f"Failed to upload file to {bucket}/{path}: {str(e)}"
+            )
+
+    def download_file(
+        self,
+        bucket: str,
+        file_path: str,
+        local_path: str
+    ) -> None:
+        """
+        Download file from Supabase Storage to local filesystem.
+
+        Args:
+            bucket: Bucket name ('uploads' or 'downloads')
+            file_path: File path within bucket (e.g., 'user_id/job_id/filename.pdf')
+            local_path: Local filesystem path to save the downloaded file
+
+        Raises:
+            StorageDownloadError: If download fails due to network, authentication,
+                or storage errors
+
+        Example:
+            >>> storage_service.download_file(
+            ...     "uploads",
+            ...     "550e8400/a1b2c3d4/doc.pdf",
+            ...     "/tmp/downloaded.pdf"
+            ... )
+        """
+        try:
+            # Download file bytes from Supabase Storage
+            file_bytes = self.storage.from_(bucket).download(file_path)
+
+            # Write to local filesystem
+            with open(local_path, 'wb') as f:
+                f.write(file_bytes)
+
+        except Exception as e:
+            raise StorageDownloadError(
+                f"Failed to download file from {bucket}/{file_path}: {str(e)}"
             )
 
     def generate_signed_url(

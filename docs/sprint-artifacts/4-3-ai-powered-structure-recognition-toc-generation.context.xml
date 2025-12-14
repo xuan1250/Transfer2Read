@@ -1,0 +1,376 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>3</storyId>
+    <title>AI-Powered Structure Recognition & TOC Generation</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-3-ai-powered-structure-recognition-toc-generation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to use GPT-4o to analyze document structure and generate TOC</iWant>
+    <soThat>the final EPUB has semantic chapter organization.</soThat>
+    <tasks>- [ ] Task 1: Create Pydantic Models for Document Structure (AC: #1, #4)
+  - [ ] 1.1: Create `backend/app/schemas/document_structure.py`
+  - [ ] 1.2: Define `TOCEntry` model: title, level (1-4), page_number, confidence, text_sample, type (chapter/section/subsection)
+  - [ ] 1.3: Define `TOC` model: items (List[TOCEntry]), total_entries, max_depth
+  - [ ] 1.4: Define `ChapterMetadata` model: chapter_num, title, start_page, end_page, subsections (List[TOCEntry])
+  - [ ] 1.5: Define `DocumentStructure` model: title, author, language, toc (TOC), chapters (List[ChapterMetadata]), confidence_score
+  - [ ] 1.6: Add validation: Ensure hierarchy is valid (level progression logical)
+  - [ ] 1.7: Test models with sample JSON structures
+
+- [ ] Task 2: Implement Structure Analysis Prompt (AC: #1)
+  - [ ] 2.1: Create `backend/app/services/ai/structure_analyzer.py`
+  - [ ] 2.2: Write prompt template for structure detection
+  - [ ] 2.3: Include few-shot examples in prompt (technical book, academic paper)
+  - [ ] 2.4: Implement `async def analyze_structure(text: str, language: str, page_count: int) -> DocumentStructure`
+  - [ ] 2.5: Use `.with_structured_output(DocumentStructure)` for schema validation
+  - [ ] 2.6: Call GPT-4o via LangChain: `await chat_openai.ainvoke()`
+  - [ ] 2.7: Parse response and validate TOC hierarchy
+  - [ ] 2.8: Return DocumentStructure with confidence scores
+
+- [ ] Task 3: Implement Text Chunking for Large Documents (AC: #6)
+  - [ ] 3.1: Create `backend/app/services/conversion/text_chunker.py`
+  - [ ] 3.2: Implement `detect_needs_chunking(page_count: int, text_length: int) -> bool`
+  - [ ] 3.3: Implement `split_text_into_chunks(text: str, max_pages: int = 50) -> List[Chunk]`
+  - [ ] 3.4: Use sliding window: Include overlap (last 5 pages of previous chunk)
+  - [ ] 3.5: Implement `merge_toc_results(chunk_results: List[TOC]) -> TOC`
+  - [ ] 3.6: Validate merged hierarchy: Ensure consistent levels
+  - [ ] 3.7: Test with 200-page document: Verify consistent TOC
+
+- [ ] Task 4: Implement Heuristic Fallback (AC: #3)
+  - [ ] 4.1: Create `backend/app/services/conversion/heuristic_structure.py`
+  - [ ] 4.2: Implement font-size analysis: Extract font sizes from layout analysis
+  - [ ] 4.3: Detect common patterns: Regex for "Chapter X", "Section Y", "Part Z"
+  - [ ] 4.4: Implement `detect_numbered_headings(text: str) -> List[Heading]`
+  - [ ] 4.5: Detect formatting cues: Bold, italic, all-caps
+  - [ ] 4.6: Implement page break detection as chapter boundaries
+  - [ ] 4.7: Build TOC from heuristics: Assign hierarchy levels based on font size
+  - [ ] 4.8: Test fallback: Mock AI failure, verify heuristic output
+
+- [ ] Task 5: Implement Multi-language Support (AC: #7)
+  - [ ] 5.1: Create `backend/app/services/conversion/language_patterns.py`
+  - [ ] 5.2: Define language-specific heading patterns (dictionary)
+  - [ ] 5.3: Implement `get_language_patterns(language: str) -> Dict[str, List[str]]`
+  - [ ] 5.4: Add patterns for: English, Spanish, French, German, Chinese, Japanese
+  - [ ] 5.5: Integrate language patterns into structure analysis prompt
+  - [ ] 5.6: Test with multi-language documents: Verify correct pattern detection
+
+- [ ] Task 6: Implement TOC Generation Logic (AC: #2)
+  - [ ] 6.1: Create `backend/app/services/conversion/toc_generator.py`
+  - [ ] 6.2: Implement `build_epub_ncx(toc: TOC, document_title: str) -> str` (EPUB 2 format)
+  - [ ] 6.3: Implement `build_epub_nav(toc: TOC, document_title: str) -> str` (EPUB 3 format)
+  - [ ] 6.4: Implement `insert_chapter_breaks(content: str, chapters: List[ChapterMetadata]) -> str`
+  - [ ] 6.5: Implement `tag_hierarchical_headers(content: str, toc: TOC) -> str` (H1/H2/H3/H4)
+  - [ ] 6.6: Validate TOC hierarchy: Detect and fix invalid nesting
+  - [ ] 6.7: Test with sample TOC: Verify NCX and Nav XML are valid
+
+- [ ] Task 7: Integrate with Celery Pipeline (AC: #5)
+  - [ ] 7.1: Modify `backend/app/tasks/conversion_pipeline.py`
+  - [ ] 7.2: Update `identify_structure` task to call `structure_analyzer.analyze_structure()`
+  - [ ] 7.3: Extract text from `previous_result["layout_analysis"]` (Story 4.2 output)
+  - [ ] 7.4: Detect document language from `previous_result["layout_analysis"]["primary_language"]`
+  - [ ] 7.5: Check if chunking needed: Call `text_chunker.detect_needs_chunking()`
+  - [ ] 7.6: If chunking: Split, analyze chunks, merge results
+  - [ ] 7.7: If AI fails or low confidence: Call heuristic fallback
+  - [ ] 7.8: Store result in `conversion_jobs.document_structure` JSONB column
+  - [ ] 7.9: Return: `{ "job_id": job_id, "document_structure": {...}, "toc": [...] }`
+  - [ ] 7.10: Update job status: "Analyzing document structure... 65%"
+  - [ ] 7.11: Test end-to-end: Upload PDF → Pipeline → Verify structure stored
+
+- [ ] Task 8: Implement Error Handling and Validation (AC: #8)
+  - [ ] 8.1: Add retry logic with exponential backoff (1min, 5min, 15min)
+  - [ ] 8.2: Validate AI response: Check required fields (title, level, page_number)
+  - [ ] 8.3: Detect malformed TOC: Empty titles, negative page numbers, invalid levels
+  - [ ] 8.4: Trigger fallback on validation failure
+  - [ ] 8.5: Handle edge cases: Single-page docs, no headers, deeply nested structure
+  - [ ] 8.6: Log all errors with context (job_id, page count, validation failures)
+  - [ ] 8.7: Test error scenarios: Invalid AI response, network timeout, corrupt structure
+
+- [ ] Task 9: Write Unit and Integration Tests (AC: #9)
+  - [ ] 9.1: Create `backend/tests/unit/services/conversion/test_structure_analyzer.py`
+  - [ ] 9.2: Mock GPT-4o response: Use fixture with sample DocumentStructure JSON
+  - [ ] 9.3: Test TOC parsing: Verify hierarchy construction (H1 > H2 > H3)
+  - [ ] 9.4: Test heuristic fallback: Mock AI error, verify fallback returns valid TOC
+  - [ ] 9.5: Test text chunking: Verify 200-page document split correctly
+  - [ ] 9.6: Create `backend/tests/integration/test_structure_analysis.py`
+  - [ ] 9.7: Integration test: Analyze technical book PDF (mocked AI), verify TOC structure
+  - [ ] 9.8: Edge case tests: Single-page doc, no headers, 6-level deep hierarchy
+  - [ ] 9.9: Performance test (REQUIRED): 300-page document structure analysis in <2 minutes (mocked AI)
+  - [ ] 9.10: Multi-language test: Verify pattern detection for EN, ES, FR, DE, ZH
+
+- [ ] Task 10: Documentation and Database Migration (AC: #10)
+  - [ ] 10.1: Add docstrings to all functions (inputs, outputs, raises)
+  - [ ] 10.2: Inline comments: Explain heuristic logic and confidence thresholds
+  - [ ] 10.3: Update `backend/docs/AI_INTEGRATION.md`: Add structure analysis section
+  - [ ] 10.4: Document fallback behavior: When triggered, what heuristics used
+  - [ ] 10.5: Add examples: Show sample TOC outputs for different document types
+  - [ ] 10.6: Create database migration: `backend/supabase/migrations/006_document_structure_column.sql`
+  - [ ] 10.7: Migration adds: `conversion_jobs.document_structure JSONB` column
+  - [ ] 10.8: Add index: `CREATE INDEX idx_document_structure ON conversion_jobs USING GIN(document_structure)`
+  - [ ] 10.9: Test migration: Apply to dev database, verify column exists</tasks>
+  </story>
+
+  <acceptanceCriteria>1. **Structure Analysis Prompt:**
+   - [ ] Create prompt template for document structure analysis
+   - [ ] Input: Full extracted text from PDF (or chunked for large documents >100 pages)
+   - [ ] Prompt: "Analyze this document. Identify: chapter titles, section headers, subsection headers, hierarchy (H1/H2/H3/H4). Return JSON with TOC structure."
+   - [ ] Use LangChain's `.with_structured_output()` with Pydantic model for structured response
+   - [ ] GPT-4o returns: `{ "toc": [{ "title": "Chapter 1", "level": 1, "page": 5, "type": "chapter" }, ...] }`
+   - [ ] Include confidence scores for each detected heading (0-100)
+
+2. **TOC Generation:**
+   - [ ] Parse AI response to build hierarchical TOC structure (FR27)
+   - [ ] Create EPUB NCX (Navigation Control File for EPUB 2) structure
+   - [ ] Create EPUB NavMap/Nav structure for EPUB 3 specification
+   - [ ] Insert chapter breaks (`<div class="chapter">`) into content (FR28)
+   - [ ] Tag hierarchical headers correctly: `<h1>`, `<h2>`, `<h3>`, `<h4>` (FR29)
+   - [ ] Validate TOC hierarchy: Ensure proper nesting (no H3 under H1 without H2)
+   - [ ] Support documents without clear structure (single-level TOC for simple documents)
+
+3. **Heuristic Fallback:**
+   - [ ] Trigger fallback if AI fails or returns low confidence (<70%)
+   - [ ] Use font-size heuristics: Larger text = higher-level headers
+   - [ ] Detect common patterns: "Chapter X", "Section Y", numbered headings (1.1, 1.2, etc.)
+   - [ ] Use text formatting: Bold, italic, all-caps as header indicators
+   - [ ] Detect page breaks as potential chapter boundaries
+   - [ ] Log when fallback is used: "Structure detection fallback: {reason}"
+
+4. **Output Format:**
+   - [ ] Structured intermediate format: JSON with TOC tree structure
+   - [ ] Schema: `{ "document_structure": { "title": "...", "author": "...", "toc": [...], "chapters": [...] } }`
+   - [ ] Each TOC entry includes: `title`, `level` (1-4), `page_number`, `confidence`, `text_sample` (first 100 chars)
+   - [ ] Chapter metadata: `{ "chapter_num": 1, "title": "Introduction", "start_page": 5, "end_page": 24, "subsections": [...] }`
+   - [ ] Store structured output in `conversion_jobs.document_structure` JSONB column
+
+5. **Integration with Pipeline:**
+   - [ ] Integrate with `identify_structure` task from Story 4.1
+   - [ ] Accept `job_id` and `previous_result` dict from pipeline (contains layout_analysis from Story 4.2)
+   - [ ] Extract text content from `previous_result["layout_analysis"]`
+   - [ ] Return: `{ "job_id": job_id, "document_structure": {...}, "toc": [...] }`
+   - [ ] Pass structured result to next task (`generate_epub`) via Celery chain
+   - [ ] Update job status: "Analyzing document structure..." with progress percentage
+
+6. **Text Chunking for Large Documents:**
+   - [ ] Detect document size: If >100 pages or >500K tokens, enable chunking
+   - [ ] Split document into logical chunks (max 50 pages or 200K tokens per chunk)
+   - [ ] Analyze chunks independently, then merge TOC results
+   - [ ] Ensure consistent hierarchy across chunks (validate H2 follows H1, etc.)
+   - [ ] Use sliding window: Include last page of previous chunk for context
+
+7. **Multi-language Support:**
+   - [ ] Detect primary document language from layout analysis (Story 4.2 output)
+   - [ ] Adapt structure detection patterns for language (English, Spanish, French, German, Chinese)
+   - [ ] Use language-specific regex patterns for numbered headings
+   - [ ] Log detected language: "Document language: {language}"
+
+8. **Error Handling and Validation:**
+   - [ ] Retry logic: Max 3 attempts with exponential backoff (1min, 5min, 15min)
+   - [ ] Validate AI response structure: Check all required fields present
+   - [ ] Detect malformed TOC: Empty titles, invalid hierarchy, missing page numbers
+   - [ ] Fallback to heuristics if AI returns invalid structure
+   - [ ] Handle edge cases: Documents with no clear structure, single-page documents
+   - [ ] Error logging: Include job_id, page count, error details
+
+9. **Testing:**
+   - [ ] Unit tests: Mock AI responses with sample TOC structures
+   - [ ] Test TOC parsing: Verify correct hierarchy construction
+   - [ ] Test heuristic fallback: Mock AI failure, verify fallback works
+   - [ ] Integration test: Analyze sample PDFs (technical book, academic paper, simple report)
+   - [ ] Edge case tests: Single-page document, document with no headers, deeply nested structure (5+ levels)
+   - [ ] Performance test: Measure structure analysis time for 300-page document (target: <2 minutes with mocked AI)
+
+10. **Documentation:**
+    - [ ] Docstrings: All functions document inputs, outputs, errors
+    - [ ] Inline comments: Explain structure detection logic and heuristics
+    - [ ] Update `backend/docs/AI_INTEGRATION.md`: Add structure analysis section
+    - [ ] Document fallback behavior and confidence thresholds
+    - [ ] Add examples of detected TOC structures for different document types</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>AI Structural Analysis</section>
+        <snippet>FR26-FR29 define document structure detection requirements: auto-detect chapters/sections/headings, generate TOC, tag chapter breaks, and recognize header hierarchy. Core value proposition: 95%+ fidelity for complex PDFs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>MVP Scope - AI Structural Analysis</section>
+        <snippet>Auto-detect and generate Table of Contents from document structure. Identify chapter/section breaks and tag correctly. Recognize headers, titles, and document hierarchy. Book-type detection: Detect technical vs. narrative books and adapt conversion strategy.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>AI Model Specification</section>
+        <snippet>Primary: GPT-4o (OpenAI) for multimodal understanding and document structure analysis. Fallback: Claude 3 Haiku (Anthropic) for cost optimization. Orchestration: LangChain 0.3.x with RecursiveCharacterTextSplitter for large documents. Retry logic with exponential backoff.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>PDF Conversion Pipeline</section>
+        <snippet>Pipeline steps: Ingest (PyMuPDF) → Analyze (GPT-4o via LangChain) → Structure (AI-detected hierarchy) → Reflow → Generate EPUB. Celery retries: max 3 with exponential backoff. Timeout: 15min per job. API failures trigger fallback to Claude or heuristics.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification - Epic 4</title>
+        <section>AI Layout Analysis (LangChain)</section>
+        <snippet>Input: PDF Page Image + Text Layer. Model: GPT-4o (Temperature 0). Fallback: Claude 3 Haiku. Output: JSON structure describing page layout. LangChain Pydantic output parsers ensure valid JSON with few-shot prompting.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification - Epic 4</title>
+        <section>EPUB Generation</section>
+        <snippet>Use ebooklib to construct EPUB. Map recognized structures (Chapters, Sections) to NCX/Nav table. Inject CSS for responsive tables and images. Full EPUB 3 compliance with reflowable content.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification - Epic 4</title>
+        <section>AI Prompt Strategy</section>
+        <snippet>Few-shot prompting with LangChain Pydantic output parsers. Structure Element format: { "type": "chapter_title", "text": "Chapter 1: Introduction", "level": 1 }. Ensures consistent JSON schema across AI responses.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="backend/app/schemas/layout_analysis.py" kind="schema" symbol="LayoutDetection" lines="120-146" reason="Pydantic model for layout analysis output - Story 4.2 provides this as input via previous_result['layout_analysis']" />
+      <artifact path="backend/app/services/ai/base.py" kind="service" symbol="AIProvider" lines="12-85" reason="Abstract base class for AI providers - reuse pattern for structure analysis provider" />
+      <artifact path="backend/app/services/ai/gpt4.py" kind="service" symbol="GPT4Provider" lines="16-167" reason="GPT-4o implementation with .with_structured_output() pattern - reuse for structure analysis" />
+      <artifact path="backend/app/services/ai/claude.py" kind="service" symbol="ClaudeProvider" lines="1-" reason="Claude 3 Haiku fallback implementation - use if GPT-4o fails" />
+      <artifact path="backend/app/services/conversion/batch_analyzer.py" kind="service" symbol="create_batch_analyzer" lines="1-" reason="Async batch processing pattern for concurrent page analysis" />
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="task" symbol="identify_structure" lines="480-540" reason="Celery task placeholder for Story 4.3 - THIS IS WHERE WE IMPLEMENT structure recognition" />
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="task" symbol="update_job_status" lines="55-110" reason="Helper function to update conversion job status with progress and metadata" />
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="helper" symbol="check_cancellation" lines="112-147" reason="Check if job was cancelled and raise TaskCancelled exception" />
+      <artifact path="backend/app/core/config.py" kind="config" symbol="Settings" lines="12-54" reason="Application configuration with AI API keys, retry settings, and feature flags" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="langchain" version="~0.3.0" usage="AI orchestration framework for structure analysis" />
+        <package name="langchain-openai" version="~0.2.0" usage="GPT-4o integration via ChatOpenAI with .with_structured_output()" />
+        <package name="langchain-anthropic" version="~0.3.0" usage="Claude 3 Haiku fallback for structure analysis" />
+        <package name="pymupdf" version="1.24.10" usage="PDF text extraction (already used in Story 4.2)" />
+        <package name="ebooklib" version="latest" usage="EPUB generation (NCX, Nav structure)" />
+        <package name="pydantic" version=">=2.11.7,<3.0.0" usage="Pydantic models for structured AI output validation" />
+        <package name="celery" version="5.5.3" usage="Task orchestration for conversion pipeline" />
+        <package name="redis" version="5.0.1" usage="Celery broker and result backend" />
+        <package name="supabase" version="2.24.0" usage="Database client for job status and structure storage" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>MUST reuse AIProvider pattern from Story 4.2 - create StructureAnalyzer following same pattern as LayoutAnalyzer</constraint>
+    <constraint>MUST use LangChain .with_structured_output(Pydantic Model) for strict JSON validation (no manual parsing)</constraint>
+    <constraint>MUST implement in identify_structure task (lines 480-540 in conversion_pipeline.py) - placeholder already exists</constraint>
+    <constraint>MUST accept previous_result dict from pipeline containing layout_analysis from Story 4.2</constraint>
+    <constraint>MUST extract text from previous_result["layout_analysis"]["page_analyses"] - text_blocks contain full text</constraint>
+    <constraint>MUST implement retry logic with exponential backoff (1min, 5min, 15min) - reuse pattern from analyze_layout task</constraint>
+    <constraint>MUST use GPT-4o as primary model, Claude 3 Haiku as fallback (config: AI_FALLBACK_ENABLED)</constraint>
+    <constraint>MUST store document_structure in conversion_jobs.document_structure JSONB column (migration required)</constraint>
+    <constraint>MUST update job status with update_job_status() at stages: 75% (analyzing structure), 80% (TOC generated)</constraint>
+    <constraint>MUST implement text chunking for large documents (>100 pages) using RecursiveCharacterTextSplitter</constraint>
+    <constraint>MUST detect primary language from previous_result["layout_analysis"]["page_analyses"][0].primary_language</constraint>
+    <constraint>MUST implement heuristic fallback if AI confidence <70% or AI fails after retries</constraint>
+    <constraint>MUST create Pydantic models in backend/app/schemas/document_structure.py (NEW FILE)</constraint>
+    <constraint>MUST follow service pattern: logic in backend/app/services/, NOT in tasks</constraint>
+    <constraint>MUST write comprehensive tests with MOCKED AI responses (zero API cost)</constraint>
+    <constraint>MUST include performance test: 300-page document in <2 minutes (mocked AI)</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="identify_structure Celery Task" kind="celery-task" signature="identify_structure(previous_result: Dict[str, Any]) -> Dict[str, Any]" path="backend/app/tasks/conversion_pipeline.py:480-540">
+      <input>previous_result: dict with keys: job_id, layout_analysis (summary), page_analyses (list of LayoutDetection)</input>
+      <output>dict with keys: job_id, layout_analysis, extracted_content, document_structure (TOC + chapters)</output>
+      <behavior>Analyze full document text to detect structure (chapters/sections), generate TOC, return structured result</behavior>
+    </interface>
+    <interface name="DocumentStructure Pydantic Model" kind="pydantic-schema" signature="class DocumentStructure(BaseModel)" path="backend/app/schemas/document_structure.py (NEW)">
+      <fields>title: str, author: Optional[str], language: str, toc: TOC, chapters: List[ChapterMetadata], confidence_score: int</fields>
+      <usage>Output schema for .with_structured_output() - ensures strict JSON validation from AI</usage>
+    </interface>
+    <interface name="TOC Pydantic Model" kind="pydantic-schema" signature="class TOC(BaseModel)" path="backend/app/schemas/document_structure.py (NEW)">
+      <fields>items: List[TOCEntry], total_entries: int, max_depth: int</fields>
+      <usage>Nested model for table of contents structure</usage>
+    </interface>
+    <interface name="TOCEntry Pydantic Model" kind="pydantic-schema" signature="class TOCEntry(BaseModel)" path="backend/app/schemas/document_structure.py (NEW)">
+      <fields>title: str, level: int (1-4), page_number: int, confidence: int, text_sample: str, type: Literal["chapter", "section", "subsection"]</fields>
+      <usage>Individual TOC entry with hierarchy level and confidence score</usage>
+    </interface>
+    <interface name="analyze_structure Function" kind="async-function" signature="async def analyze_structure(text: str, language: str, page_count: int) -> DocumentStructure" path="backend/app/services/ai/structure_analyzer.py (NEW)">
+      <input>text: full extracted text from PDF, language: ISO 639-1 code (e.g., 'en'), page_count: total pages</input>
+      <output>DocumentStructure: Pydantic model with TOC, chapters, confidence scores</output>
+      <behavior>Call GPT-4o via LangChain with structure analysis prompt, use .with_structured_output(DocumentStructure)</behavior>
+    </interface>
+    <interface name="conversion_jobs Table" kind="database-table" signature="JSONB column: document_structure" path="backend/supabase/migrations/006_document_structure_column.sql (NEW)">
+      <columns>document_structure JSONB - stores full DocumentStructure JSON from AI analysis</columns>
+      <indexes>GIN index on document_structure for efficient JSON queries</indexes>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing framework: pytest 8.3.0 with pytest-asyncio 0.21.2 for async tests. CRITICAL: All AI calls MUST be mocked - zero API costs during testing. Use fixtures with sample DocumentStructure JSON responses. Follow existing test patterns from Story 4.2 (backend/tests/unit/services/ai/test_layout_analyzer.py and backend/tests/integration/test_layout_analysis.py). Unit tests validate Pydantic schemas, TOC hierarchy logic, and heuristic fallbacks. Integration tests use mocked AI with real PDF processing. Performance tests REQUIRED: 300-page document structure analysis in <2 minutes (mocked AI, simulated token usage). Coverage target: 80% minimum. Test organization: backend/tests/unit/services/conversion/ for unit tests, backend/tests/integration/ for integration tests.
+    </standards>
+    <locations>
+      <location>backend/tests/unit/services/conversion/test_structure_analyzer.py (NEW) - Unit tests for structure analysis service</location>
+      <location>backend/tests/unit/services/conversion/test_text_chunker.py (NEW) - Unit tests for text chunking logic</location>
+      <location>backend/tests/unit/services/conversion/test_heuristic_structure.py (NEW) - Unit tests for heuristic fallback</location>
+      <location>backend/tests/integration/test_structure_analysis.py (NEW) - Integration tests with mocked AI and real PDFs</location>
+      <location>backend/tests/fixtures/ - Store sample DocumentStructure JSON responses for mocking</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1" test="Unit test: Mock GPT-4o response with sample DocumentStructure JSON, verify Pydantic validation succeeds">
+        Test that .with_structured_output(DocumentStructure) correctly validates AI JSON responses with nested TOC structure
+      </idea>
+      <idea ac="AC2" test="Unit test: Build TOC from sample structure, verify NCX XML and Nav HTML generation">
+        Test TOC generator creates valid EPUB NCX (EPUB 2) and Nav (EPUB 3) structures from DocumentStructure input
+      </idea>
+      <idea ac="AC2" test="Unit test: Validate TOC hierarchy - detect invalid nesting (H3 under H1 without H2)">
+        Test hierarchy validation catches malformed TOC structures and fixes or reports them
+      </idea>
+      <idea ac="AC3" test="Unit test: Mock AI failure (raises exception), verify heuristic fallback triggers">
+        Test that AI errors automatically fall back to font-size and pattern-based heuristics
+      </idea>
+      <idea ac="AC3" test="Unit test: Mock low confidence AI response (<70%), verify heuristic fallback triggers">
+        Test confidence threshold triggers fallback when AI returns uncertain results
+      </idea>
+      <idea ac="AC4" test="Unit test: Validate DocumentStructure Pydantic schema with sample JSON">
+        Test all required fields, nested models (TOC, ChapterMetadata), and field constraints
+      </idea>
+      <idea ac="AC5" test="Integration test: Load previous_result from Story 4.2, extract text from page_analyses, call structure analyzer">
+        Test end-to-end integration with layout analysis output - extract text, detect language, analyze structure
+      </idea>
+      <idea ac="AC6" test="Unit test: Simulate 200-page document, verify text chunked into 4 chunks (50 pages each)">
+        Test chunking logic splits large documents correctly with 5-page overlap between chunks
+      </idea>
+      <idea ac="AC6" test="Unit test: Merge TOC results from 4 chunks, verify consistent hierarchy">
+        Test that TOC results from multiple chunks are merged correctly without hierarchy conflicts
+      </idea>
+      <idea ac="AC7" test="Unit test: Test language pattern detection for EN, ES, FR, DE, ZH">
+        Test get_language_patterns() returns correct heading patterns for each language
+      </idea>
+      <idea ac="AC7" test="Integration test: Analyze Spanish PDF with 'Capítulo' headings, verify correct detection">
+        Test multi-language support with real document using non-English heading patterns
+      </idea>
+      <idea ac="AC8" test="Unit test: Mock network timeout, verify retry logic with exponential backoff">
+        Test that transient errors trigger 3 retries with 1min, 5min, 15min delays before failing
+      </idea>
+      <idea ac="AC8" test="Unit test: Mock AI returns malformed JSON (missing fields), verify validation error and fallback">
+        Test Pydantic validation catches incomplete AI responses and triggers fallback
+      </idea>
+      <idea ac="AC9" test="Performance test (REQUIRED): Analyze 300-page document (mocked AI), verify completion in <2 minutes">
+        Test performance target with mocked AI responses - measure chunking, merging, and total time
+      </idea>
+      <idea ac="AC9" test="Edge case test: Single-page document, verify TOC generated even without chapters">
+        Test minimal documents produce valid (even if empty) TOC structure
+      </idea>
+      <idea ac="AC9" test="Edge case test: Document with no headers, verify heuristic fallback handles gracefully">
+        Test documents without clear structure don't crash - return simple TOC or error gracefully
+      </idea>
+      <idea ac="AC9" test="Edge case test: 6-level deep hierarchy, verify max depth enforcement (H1-H4 only)">
+        Test deeply nested structures are flattened or capped at max_depth=4 as designed
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
+

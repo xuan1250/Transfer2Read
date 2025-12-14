@@ -16,6 +16,7 @@ from app.schemas.job import (
     JobDetail,
     DownloadUrlResponse
 )
+from app.schemas.progress import ProgressUpdate, ElementsDetected
 from app.core.supabase import get_supabase_client
 from app.core.redis_client import init_redis_client
 from app.services.storage.supabase_storage import SupabaseStorageService
@@ -165,6 +166,7 @@ async def list_jobs(
 )
 async def get_job(
     job_id: str,
+    include_quality_details: bool = Query(True, description="Include full quality report details"),
     current_user: AuthenticatedUser = Depends(get_current_user),
     job_service: JobService = Depends(get_job_service)
 ) -> JobDetail:
@@ -173,6 +175,7 @@ async def get_job(
 
     Args:
         job_id: Job identifier (UUID)
+        include_quality_details: Include full quality report (default: True)
         current_user: Authenticated user from JWT token
         job_service: Job service instance
 
@@ -215,9 +218,14 @@ async def get_job(
             extra={
                 "user_id": current_user.user_id,
                 "job_id": job_id,
-                "duration_ms": request_duration
+                "duration_ms": request_duration,
+                "include_quality_details": include_quality_details
             }
         )
+
+        # Conditionally exclude quality report if not requested
+        if not include_quality_details:
+            job.quality_report = None
 
         return job
 
@@ -239,21 +247,189 @@ async def get_job(
         )
 
 
+@router.get(
+    "/jobs/{job_id}/progress",
+    status_code=status.HTTP_200_OK,
+    response_model=ProgressUpdate,
+    summary="Get real-time conversion progress",
+    description="""
+    Get lightweight progress update for polling during conversion.
+
+    **Authentication Required:**
+    - Requires valid Supabase JWT token in Authorization header
+    - User must own the job (enforced by RLS)
+
+    **Designed for Polling:**
+    - Optimized for 2-second polling interval
+    - Lightweight payload (<1KB) with only progress data
+    - Efficient database query (indexed job_id lookup)
+
+    **Returns:**
+    - 200 OK with current progress state
+    - Includes: progress %, current stage, elements detected, cost estimate
+
+    **Polling Behavior:**
+    - Poll while status = QUEUED or PROCESSING
+    - Stop polling when status = COMPLETED or FAILED
+    - Updates available every 1-2 seconds during active conversion
+
+    **Error Codes:**
+    - `UNAUTHORIZED`: Missing or invalid JWT token
+    - `NOT_FOUND`: Job not found or user doesn't own job
+    - `DATABASE_ERROR`: Failed to query job
+    """
+)
+async def get_job_progress(
+    job_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> ProgressUpdate:
+    """
+    Get real-time progress update for conversion job.
+
+    Designed for efficient polling: returns only progress data, not full job object.
+
+    Args:
+        job_id: Job identifier (UUID)
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        ProgressUpdate: Current progress state
+
+    Raises:
+        HTTPException(401): Authentication failure
+        HTTPException(404): Job not found or user doesn't own job
+        HTTPException(500): Database error
+    """
+    request_start = datetime.utcnow()
+    logger.debug(
+        "get_job_progress_request",
+        extra={
+            "user_id": current_user.user_id,
+            "job_id": job_id
+        }
+    )
+
+    try:
+        job = job_service.get_job(job_id, current_user.user_id)
+
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "NOT_FOUND"}
+            )
+
+        # Extract progress metadata from stage_metadata JSONB field
+        progress_data = job.stage_metadata or {}
+
+        # Extract elements detected (nested in progress metadata or quality report)
+        elements = progress_data.get("elements_detected", {})
+        if not elements and job.quality_report:
+            # Fallback: extract from quality report if available
+            quality_elements = job.quality_report.get("elements", {})
+            elements = {
+                "tables": quality_elements.get("tables", {}).get("count", 0),
+                "images": quality_elements.get("images", {}).get("count", 0),
+                "equations": quality_elements.get("equations", {}).get("count", 0),
+                "chapters": quality_elements.get("chapters", {}).get("count", 0)
+            }
+
+        # Extract quality confidence from quality report
+        quality_confidence = None
+        if job.quality_report:
+            quality_confidence = job.quality_report.get("overall_confidence")
+
+        # Extract estimated cost (priority: stage_metadata > quality_report)
+        estimated_cost = progress_data.get("estimated_cost")
+        if estimated_cost is None and job.quality_report:
+            estimated_cost = job.quality_report.get("estimated_cost")
+
+        # Determine stage description based on status if not in metadata
+        if progress_data.get("stage_description"):
+            stage_description = progress_data["stage_description"]
+        elif job.status == "COMPLETED":
+            stage_description = "Conversion completed successfully!"
+        elif job.status == "FAILED":
+            stage_description = "Conversion failed"
+        elif job.status == "ANALYZING":
+            stage_description = "Analyzing document layout..."
+        elif job.status == "EXTRACTING":
+            stage_description = "Extracting content..."
+        elif job.status == "STRUCTURING":
+            stage_description = "Identifying document structure..."
+        elif job.status == "GENERATING":
+            stage_description = "Generating EPUB file..."
+        elif job.status == "PROCESSING":
+            stage_description = "Processing..."
+        elif job.status == "QUEUED":
+            stage_description = "Queued for processing..."
+        else:
+            stage_description = "Waiting to start..."
+
+        # Build progress update response
+        progress_update = ProgressUpdate(
+            job_id=job.id,
+            status=job.status,
+            progress_percentage=job.progress,
+            current_stage=progress_data.get("current_stage", job.status.lower()),
+            stage_description=stage_description,
+            elements_detected=ElementsDetected(**elements) if elements else ElementsDetected(),
+            estimated_time_remaining=progress_data.get("estimated_time_remaining"),
+            estimated_cost=estimated_cost,
+            quality_confidence=int(quality_confidence) if quality_confidence else None,
+            timestamp=progress_data.get("timestamp", datetime.utcnow())
+        )
+
+        request_duration = (datetime.utcnow() - request_start).total_seconds() * 1000
+
+        # Use debug logging to avoid overwhelming logs during polling
+        if request_duration > 200:
+            logger.warning(
+                "get_job_progress_slow",
+                extra={
+                    "user_id": current_user.user_id,
+                    "job_id": job_id,
+                    "duration_ms": request_duration,
+                    "progress": job.progress
+                }
+            )
+
+        return progress_update
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "get_job_progress_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Database error: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+
 @router.delete(
     "/jobs/{job_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete job",
     description="""
-    Delete a conversion job (soft delete with async file cleanup).
+    Delete a conversion job (hard delete with async file cleanup).
 
     **Authentication Required:**
     - Requires valid Supabase JWT token in Authorization header
     - User must own the job (enforced by RLS)
 
     **Deletion Strategy:**
-    - Soft delete: Sets `deleted_at` timestamp on job record
+    - Hard delete: Permanently removes job record from database
     - Schedules asynchronous cleanup of associated files via Celery
-    - Deleted jobs are excluded from list queries via RLS policy
+    - Deleted jobs cannot be recovered
 
     **File Cleanup:**
     - Removes input file from uploads bucket (async)
@@ -275,7 +451,7 @@ async def delete_job(
     job_service: JobService = Depends(get_job_service)
 ):
     """
-    Delete a conversion job (soft delete with async file cleanup).
+    Delete a conversion job (hard delete with async file cleanup).
 
     Args:
         job_id: Job identifier (UUID)

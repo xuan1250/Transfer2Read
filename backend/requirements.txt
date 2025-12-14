@@ -25,6 +25,10 @@ langchain-anthropic~=0.3.0
 # PDF Processing
 pymupdf==1.24.10
 ebooklib
+Pillow>=10.0.0
+
+# HTTP Client for font downloads
+requests>=2.31.0
 
 # Storage (for future file operations)
 boto3==1.36.0

@@ -3,6 +3,28 @@ import { Job, JobListResponse, DownloadUrlResponse } from '@/types/job';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
+ * Extract error message from API response
+ */
+function getErrorMessage(errorData: { detail?: unknown }, fallback: string): string {
+  if (!errorData.detail) return fallback;
+
+  // Handle nested detail object: {detail: {detail: "message", code: "CODE"}}
+  if (typeof errorData.detail === 'object' && errorData.detail !== null && 'detail' in errorData.detail) {
+    const nestedDetail = errorData.detail as { detail?: unknown };
+    if (typeof nestedDetail.detail === 'string') {
+      return nestedDetail.detail;
+    }
+  }
+
+  // Handle simple string detail: {detail: "message"}
+  if (typeof errorData.detail === 'string') {
+    return errorData.detail;
+  }
+
+  return fallback;
+}
+
+/**
  * Fetch list of jobs with pagination
  */
 export async function fetchJobs(
@@ -24,7 +46,7 @@ export async function fetchJobs(
       throw new Error('UNAUTHORIZED');
     }
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Failed to fetch jobs');
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch jobs'));
   }
 
   return response.json();
@@ -48,7 +70,7 @@ export async function fetchJob(token: string, jobId: string): Promise<Job> {
       throw new Error('UNAUTHORIZED');
     }
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Failed to fetch job');
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch job'));
   }
 
   return response.json();
@@ -78,14 +100,14 @@ export async function getDownloadUrl(
       throw new Error('File not found or job not completed');
     }
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Failed to get download URL');
+    throw new Error(getErrorMessage(errorData, 'Failed to get download URL'));
   }
 
   return response.json();
 }
 
 /**
- * Delete a job (soft delete)
+ * Delete a job (hard delete)
  */
 export async function deleteJob(token: string, jobId: string): Promise<void> {
   const response = await fetch(
@@ -107,6 +129,6 @@ export async function deleteJob(token: string, jobId: string): Promise<void> {
       return;
     }
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Failed to delete job');
+    throw new Error(getErrorMessage(errorData, 'Failed to delete job'));
   }
 }

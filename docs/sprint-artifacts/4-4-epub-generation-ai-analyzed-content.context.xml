@@ -1,0 +1,490 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4</storyId>
+    <title>EPUB Generation from AI-Analyzed Content</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-4-epub-generation-ai-analyzed-content.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to convert AI-analyzed content into valid EPUB files</iWant>
+    <soThat>users can read on their e-readers with preserved formatting.</soThat>
+    <tasks>
+- [ ] Task 1: Setup EPUB Generation Service (AC: #1)
+  - [ ] 1.1: Install `ebooklib` library: `pip install ebooklib`
+  - [ ] 1.2: Create `backend/app/services/conversion/epub_generator.py`
+  - [ ] 1.3: Create `EpubGenerator` class with initialization method
+  - [ ] 1.4: Implement `create_epub_book()` method: Initialize epub.EpubBook()
+  - [ ] 1.5: Implement `set_metadata()` method: Set title, author, language, identifier
+  - [ ] 1.6: Test basic EPUB creation: Generate minimal valid EPUB
+
+- [ ] Task 2: Implement Content Assembly from AI Analysis (AC: #2)
+  - [ ] 2.1: Create `backend/app/services/conversion/content_assembler.py`
+  - [ ] 2.2: Implement `extract_chapters()`: Parse `document_structure["chapters"]` from Story 4.3
+  - [ ] 2.3: Implement `convert_table_to_html()`: Transform table data to HTML `<table>` with styling
+  - [ ] 2.4: Implement `embed_image()`: Extract image from layout analysis, add to EPUB with `<img>` tag
+  - [ ] 2.5: Implement `convert_equation_to_mathml()`: Transform equation to MathML with PNG fallback
+  - [ ] 2.6: Implement `reflow_multicolumn_content()`: Convert multi-column to single-column XHTML
+  - [ ] 2.7: Implement `build_xhtml_chapter()`: Assemble chapter XHTML from detected elements
+  - [ ] 2.8: Test content assembly: Verify tables, images, equations correctly formatted
+
+- [ ] Task 3: Implement TOC and Navigation (AC: #3)
+  - [ ] 3.1: Reuse `toc_generator.py` from Story 4.3 for NCX and Nav generation
+  - [ ] 3.2: Implement `add_toc_to_epub()`: Add NCX file to EPUB package
+  - [ ] 3.3: Implement `add_nav_to_epub()`: Add Nav XHTML for EPUB 3
+  - [ ] 3.4: Link chapters to TOC entries using spine and navigation points
+  - [ ] 3.5: Test TOC rendering: Open EPUB in reader, verify navigation works
+
+- [ ] Task 4: Implement Metadata Extraction and Embedding (AC: #3)
+  - [ ] 4.1: Create `backend/app/services/conversion/metadata_extractor.py`
+  - [ ] 4.2: Implement `extract_pdf_metadata()`: Use PyMuPDF to extract title, author
+  - [ ] 4.3: Implement `generate_cover_image()`: Render first PDF page as thumbnail
+  - [ ] 4.4: Implement `embed_metadata_in_epub()`: Add Dublin Core metadata to EPUB
+  - [ ] 4.5: Test metadata extraction: Verify title, author, language correctly embedded
+
+- [ ] Task 5: Implement Font Embedding for Multi-Language Support (AC: #4)
+  - [ ] 5.1: Create `backend/app/services/conversion/font_manager.py`
+  - [ ] 5.2: Define font requirements for languages: EN, ZH, JP, KO, VI
+  - [ ] 5.3: Implement `detect_required_fonts()`: Analyze text for special characters
+  - [ ] 5.4: Implement `embed_fonts_in_epub()`: Add font files to EPUB package
+  - [ ] 5.5: Create CSS @font-face rules for embedded fonts
+  - [ ] 5.6: Test CJK character rendering: Verify no missing glyphs
+
+- [ ] Task 6: Create CSS Stylesheet for EPUB (AC: #5)
+  - [ ] 6.1: Create `backend/app/services/conversion/templates/epub_styles.css`
+  - [ ] 6.2: Define responsive table styles: Horizontal scroll, mobile-friendly
+  - [ ] 6.3: Define typography: Font sizes, line heights, margins, text alignment
+  - [ ] 6.4: Define chapter styles: Page breaks, heading hierarchy (H1-H4)
+  - [ ] 6.5: Define image styles: Max-width, centering, captions
+  - [ ] 6.6: Add CSS to EPUB package via `add_item()` method
+  - [ ] 6.7: Test stylesheet: Verify rendering in Apple Books and Calibre
+
+- [ ] Task 7: Implement EPUB Validation (AC: #6)
+  - [ ] 7.1: Create `backend/app/services/conversion/epub_validator.py`
+  - [ ] 7.2: Implement `validate_epub_structure()`: Check all files referenced exist
+  - [ ] 7.3: Implement `validate_xhtml()`: Verify well-formed XML with lxml parser
+  - [ ] 7.4: Implement `check_file_size()`: Verify EPUB ≤ 120% of PDF size
+  - [ ] 7.5: Optional: Integrate `epubcheck` CLI if available (subprocess call)
+  - [ ] 7.6: Implement `compress_images_if_oversized()`: Reduce image quality if EPUB too large
+  - [ ] 7.7: Test validation: Verify catches malformed EPUB structures
+
+- [ ] Task 8: Integrate with Supabase Storage (AC: #7)
+  - [ ] 8.1: Use existing `SupabaseStorageService` from Story 3.1
+  - [ ] 8.2: Implement `upload_epub_to_storage()`: Upload file to `downloads/{user_id}/{job_id}/`
+  - [ ] 8.3: Generate signed download URL with 1-hour expiration
+  - [ ] 8.4: Update `conversion_jobs` table: Set `output_file_key`, `status`, `completed_at`
+  - [ ] 8.5: Handle upload failures: Retry 3 times with exponential backoff
+  - [ ] 8.6: Test storage integration: Verify file uploaded and accessible
+
+- [ ] Task 9: Implement Celery Task Integration (AC: #8)
+  - [ ] 9.1: Modify `backend/app/tasks/conversion_pipeline.py`
+  - [ ] 9.2: Implement `generate_epub` task accepting `job_id` and `previous_result`
+  - [ ] 9.3: Extract data from pipeline: `document_structure`, `layout_analysis`
+  - [ ] 9.4: Call `EpubGenerator` with extracted data
+  - [ ] 9.5: Upload generated EPUB to Supabase Storage
+  - [ ] 9.6: Update job progress: 85% (generating), 95% (uploading), 100% (complete)
+  - [ ] 9.7: Return result: `{ "job_id": job_id, "output_path": "...", "epub_metadata": {...} }`
+  - [ ] 9.8: Handle errors: Update job status to "FAILED" with detailed error message
+  - [ ] 9.9: Test end-to-end: Run full pipeline, verify EPUB generated and stored
+
+- [ ] Task 10: Error Handling and Testing (AC: #9, #10)
+  - [ ] 10.1: Implement graceful degradation for missing TOC (single-chapter EPUB)
+  - [ ] 10.2: Handle missing images: Skip or use placeholder image
+  - [ ] 10.3: Handle malformed tables: Convert to paragraphs with warning
+  - [ ] 10.4: Set timeout: Max 10 minutes for EPUB generation task
+  - [ ] 10.5: Add retry logic: Max 3 attempts with exponential backoff
+  - [ ] 10.6: Create unit tests: `backend/tests/unit/services/conversion/test_epub_generator.py`
+  - [ ] 10.7: Test table conversion, image embedding, TOC integration
+  - [ ] 10.8: Create integration test: `backend/tests/integration/test_epub_generation.py`
+  - [ ] 10.9: Test full pipeline with sample PDF (technical book, 50 pages)
+  - [ ] 10.10: Test multi-language: Chinese, Japanese documents
+  - [ ] 10.11: Test edge cases: Empty TOC, single page, no images
+  - [ ] 10.12: Compatibility test: Open EPUB in Apple Books, Calibre, Kindle Previewer
+  - [ ] 10.13: File size test: Verify EPUB ≤ 120% PDF size
+
+- [ ] Task 11: Documentation (AC: #11)
+  - [ ] 11.1: Add comprehensive docstrings to all functions
+  - [ ] 11.2: Inline comments: Explain ebooklib API usage and EPUB structure
+  - [ ] 11.3: Document CSS stylesheet design decisions and responsive patterns
+  - [ ] 11.4: Update `backend/docs/AI_INTEGRATION.md`: Add EPUB generation section
+  - [ ] 11.5: Document font embedding strategy for each language
+  - [ ] 11.6: Create example EPUB structure diagram
+  - [ ] 11.7: Write troubleshooting guide: Common EPUB issues and fixes
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **EPUB Generation Library Integration:**
+   - [ ] Use Python `ebooklib` library for EPUB v3 creation
+   - [ ] Create `EpubGenerator` service class following established service patterns
+   - [ ] Initialize EPUB book with proper metadata and navigation
+   - [ ] Support EPUB 3.0 specification compliance
+   - [ ] Handle EPUB container structure (mimetype, META-INF, OEBPS)
+   - [ ] Alternative fallback: `pandoc` CLI if ebooklib fails (optional for MVP)
+
+2. **Content Assembly from AI Analysis (FR17-FR20):**
+   - [ ] Convert AI-detected elements to EPUB XHTML format:
+     - **Tables** → HTML `<table>` with CSS styling for responsive rendering (FR17)
+     - **Images** → Embedded images with `<img>` tags, preserve positioning and captions (FR18)
+     - **Equations** → MathML format with PNG fallback for readers without MathML support (FR19)
+     - **Multi-column content** → Single-column reflowable XHTML (FR20)
+   - [ ] Extract content from `document_structure` (Story 4.3 output) and `layout_analysis` (Story 4.2 output)
+   - [ ] Build XHTML chapters based on TOC structure from Story 4.3
+   - [ ] Apply semantic HTML5 tags (`<section>`, `<article>`, `<aside>`)
+   - [ ] Preserve text formatting: bold, italic, underline, font styles
+   - [ ] Handle special characters and Unicode properly
+
+3. **Metadata Embedding:**
+   - [ ] Extract metadata from PDF or use defaults:
+     - Title (from PDF metadata or first detected heading)
+     - Author (from PDF metadata or "Unknown")
+     - Language (from `layout_analysis["primary_language"]`)
+     - Publication date (conversion date)
+   - [ ] Generate cover image: First page thumbnail or placeholder
+   - [ ] Embed AI-generated TOC from Story 4.3 (`document_structure["toc"]`)
+   - [ ] Add Dublin Core metadata (dc:title, dc:creator, dc:language, dc:date)
+   - [ ] Include unique identifier (UUID)
+
+4. **Font Embedding for Multi-Language Support (FR22):**
+   - [ ] Detect required fonts based on document language and characters
+   - [ ] Embed fonts for special characters to prevent missing glyphs (FR22)
+   - [ ] Support multi-language documents (EN, ZH, JP, KO, VI) from PRD
+   - [ ] Use web-safe fallback fonts for common scripts
+   - [ ] Configure font-face CSS for embedded fonts
+   - [ ] Test glyph rendering for CJK characters
+
+5. **CSS Styling and Responsive Design:**
+   - [ ] Create master CSS stylesheet for EPUB:
+     - Responsive table styling (horizontal scroll on small screens)
+     - Image max-width constraints for reflowable content
+     - Typography: Line height, font sizes, margins
+     - Chapter styling: Page breaks, heading hierarchy
+   - [ ] Support night mode / reader themes (use semantic color variables)
+   - [ ] Ensure compatibility with e-reader CSS limitations
+   - [ ] Test rendering on multiple readers (Apple Books, Calibre viewer)
+
+6. **EPUB Validation and Quality Checks (FR37):**
+   - [ ] Validate EPUB structure before upload:
+     - All referenced files exist in package
+     - NCX and Nav match chapter structure
+     - XHTML is well-formed XML
+   - [ ] Run `epubcheck` validation (if available):
+     - EPUB 3.0 spec compliance check
+     - Accessibility checks (ARIA roles, alt text)
+     - Report validation errors clearly
+   - [ ] Verify file size constraint: EPUB ≤ 120% of original PDF size (FR37)
+   - [ ] If oversized: Compress images or warn user
+   - [ ] Log validation results to job metadata
+
+7. **Storage Integration with Supabase:**
+   - [ ] Generate unique output filename: `{job_id}-{timestamp}.epub`
+   - [ ] Upload EPUB to Supabase Storage: `downloads/{user_id}/{job_id}/output.epub`
+   - [ ] Set file permissions: Private, accessible only by owner
+   - [ ] Generate signed download URL with 1-hour expiration
+   - [ ] Update `conversion_jobs` table:
+     - Set `output_file_key` = storage path
+     - Set `status` = "COMPLETED"
+     - Set `completed_at` = current timestamp
+   - [ ] Handle upload failures gracefully with retry logic
+
+8. **Pipeline Integration with Celery (AC: #5):**
+   - [ ] Implement `generate_epub` Celery task in `conversion_pipeline.py`
+   - [ ] Accept `job_id` and `previous_result` dict from pipeline:
+     - `previous_result["document_structure"]` from Story 4.3
+     - `previous_result["layout_analysis"]` from Story 4.2
+   - [ ] Extract required data: TOC, chapters, page analyses, detected elements
+   - [ ] Generate EPUB file and upload to storage
+   - [ ] Return: `{ "job_id": job_id, "output_path": "downloads/...", "epub_metadata": {...} }`
+   - [ ] Update job progress: "Generating EPUB... 85%", "Uploading file... 95%"
+   - [ ] Handle errors and update job status to "FAILED" with reason
+
+9. **Error Handling and Edge Cases:**
+   - [ ] Handle missing or incomplete AI analysis data
+   - [ ] Gracefully degrade if TOC not detected (create single-chapter EPUB)
+   - [ ] Handle images that fail to embed (skip or use placeholder)
+   - [ ] Detect and handle malformed tables (convert to paragraphs if necessary)
+   - [ ] Handle extremely large PDFs (>500 pages): Warn about processing time
+   - [ ] Timeout protection: Set max 10 minutes for EPUB generation
+   - [ ] Retry logic: Max 3 attempts with exponential backoff
+   - [ ] Clear error messages for debugging
+
+10. **Testing:**
+    - [ ] Unit tests: Mock AI analysis results, test EPUB structure generation
+    - [ ] Test EPUB validator integration (mocked epubcheck if not available)
+    - [ ] Test table conversion: Verify HTML table structure
+    - [ ] Test image embedding: Verify images referenced and included
+    - [ ] Test TOC integration: Verify NCX and Nav match structure
+    - [ ] Integration test: Full pipeline from PDF → EPUB with sample documents
+    - [ ] Test multi-language documents: Verify font embedding and character rendering
+    - [ ] Edge case tests: Empty TOC, single-page document, document with no images
+    - [ ] Compatibility test: Open generated EPUB in Apple Books and Calibre
+    - [ ] File size test: Verify EPUB ≤ 120% of PDF size for sample documents
+
+11. **Documentation:**
+    - [ ] Docstrings: All functions document inputs, outputs, errors
+    - [ ] Inline comments: Explain EPUB structure and ebooklib usage
+    - [ ] Document CSS stylesheet design decisions
+    - [ ] Update `backend/docs/AI_INTEGRATION.md`: Add EPUB generation section
+    - [ ] Document font embedding strategy and supported languages
+    - [ ] Add examples of generated EPUB structure
+    - [ ] Create troubleshooting guide for common EPUB issues
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4 (AI-Powered Conversion Engine)</title>
+        <section>EPUB Generation (Story 4.4)</section>
+        <snippet>Use `ebooklib` to construct the EPUB. Map recognized structures (Chapters, Sections) to NCX/Nav table. Inject CSS for responsive tables and images.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4</title>
+        <section>Pipeline Architecture</section>
+        <snippet>Celery chain: analyze_layout → extract_content → identify_structure → generate_epub → calculate_quality_score. Each task updates conversion_jobs table with status and progress.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4</title>
+        <section>Dependencies</section>
+        <snippet>ebooklib for EPUB creation, pymupdf (fitz) for PDF rasterization, langchain for AI orchestration. Configure Celery visibility timeout to 20 minutes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - API-First Intelligence</title>
+        <section>Novel Pattern Designs - PDF Conversion Pipeline</section>
+        <snippet>Worker downloads PDF, runs Pipeline (Ingest → Analyze with GPT-4o → Structure → Reflow → Generate EPUB), uploads EPUB, updates DB record. Max 15 minute timeout per job.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>AI Model Specification</section>
+        <snippet>Primary: GPT-4o for layout analysis (~$2.50/1M input tokens). Fallback: Claude 3 Haiku for cost optimization (~$0.25/1M tokens). LangChain 0.3.x orchestrates with retry logic.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Implementation Patterns - Service Pattern</section>
+        <snippet>Business logic MUST exist in backend/app/services/, NOT in API routes. Routes handle request parsing and response formatting only.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture - File Security</section>
+        <snippet>Supabase Storage: Private buckets (uploads/, downloads/). Access via signed URLs with 1-hour expiration. Automatic 30-day cleanup.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/app/schemas/document_structure.py</path>
+        <kind>schema</kind>
+        <symbol>DocumentStructure, TOC, ChapterMetadata, TOCEntry</symbol>
+        <lines>1-123</lines>
+        <reason>Pydantic models for TOC and chapter structure - outputs from Story 4.3 that EPUB generator will consume</reason>
+      </file>
+      <file>
+        <path>backend/app/schemas/layout_analysis.py</path>
+        <kind>schema</kind>
+        <symbol>LayoutDetection, PageAnalysis, TableItem, ImageItem, EquationItem</symbol>
+        <lines>1-146</lines>
+        <reason>Layout analysis outputs from Story 4.2 - tables, images, equations that EPUB generator must convert to XHTML</reason>
+      </file>
+      <file>
+        <path>backend/app/services/conversion/toc_generator.py</path>
+        <kind>service</kind>
+        <symbol>TOCGenerator</symbol>
+        <lines>1-420</lines>
+        <reason>REUSE: Existing NCX and Nav generator from Story 4.3 - build_epub_ncx(), build_epub_nav() methods ready to use</reason>
+      </file>
+      <file>
+        <path>backend/app/services/storage/supabase_storage.py</path>
+        <kind>service</kind>
+        <symbol>SupabaseStorageService</symbol>
+        <lines>1-196</lines>
+        <reason>REUSE: Storage service for EPUB upload to downloads/ bucket - upload_file(), generate_signed_url() methods</reason>
+      </file>
+      <file>
+        <path>backend/app/tasks/conversion_pipeline.py</path>
+        <kind>task</kind>
+        <symbol>generate_epub, conversion_pipeline, update_job_status</symbol>
+        <lines>747-804</lines>
+        <reason>MODIFY: Celery task stub for EPUB generation - currently placeholder, needs full implementation with ebooklib</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="ebooklib" version="(not specified)" reason="EPUB 3.0 creation - main library for EPUB generation" />
+        <package name="pymupdf" version="1.24.10" reason="PDF metadata extraction and page rendering for cover images" />
+        <package name="Pillow" version="(implicit)" reason="Image processing and compression if EPUB exceeds size limits" />
+        <package name="lxml" version="(implicit)" reason="XML validation for EPUB XHTML structure" />
+        <package name="celery" version="5.5.3" reason="Task orchestration for EPUB generation pipeline" />
+        <package name="redis" version="5.0.1" reason="Celery message broker and caching" />
+        <package name="supabase" version="2.24.0" reason="Storage upload and database operations" />
+        <package name="pydantic" version=">=2.11.7" reason="Data validation for input schemas" />
+      </python>
+      <internal>
+        <module path="backend/app/services/conversion/toc_generator.py" exports="TOCGenerator" reason="REUSE for NCX and Nav generation" />
+        <module path="backend/app/services/storage/supabase_storage.py" exports="SupabaseStorageService" reason="REUSE for EPUB upload to downloads/ bucket" />
+        <module path="backend/app/schemas/document_structure.py" exports="DocumentStructure, TOC, ChapterMetadata" reason="Input data from Story 4.3" />
+        <module path="backend/app/schemas/layout_analysis.py" exports="LayoutDetection, PageAnalysis, TableItem, ImageItem" reason="Input data from Story 4.2" />
+        <module path="backend/app/tasks/conversion_pipeline.py" exports="update_job_status, check_cancellation" reason="Status tracking and cancellation checks" />
+        <module path="backend/app/core/config.py" exports="settings" reason="Configuration: SUPABASE_URL, OPENAI_API_KEY, etc." />
+      </internal>
+      <config>
+        <variable name="SUPABASE_URL" required="true" reason="Supabase project URL for storage operations" />
+        <variable name="SUPABASE_SERVICE_KEY" required="true" reason="Service role key for backend admin operations" />
+        <variable name="EPUB_MAX_FILE_SIZE_MB" required="false" default="100" reason="Max EPUB size before image compression (FR37: 120% of PDF)" />
+        <variable name="EPUB_IMAGE_QUALITY" required="false" default="85" reason="JPEG quality (0-100) for image compression" />
+        <variable name="EPUB_VALIDATION_ENABLED" required="false" default="true" reason="Enable epubcheck validation if available" />
+        <variable name="EPUB_GENERATION_TIMEOUT" required="false" default="600" reason="Max 10 minutes for EPUB generation task" />
+        <variable name="EPUB_COVER_WIDTH" required="false" default="800" reason="Cover image width in pixels" />
+        <variable name="EPUB_COVER_HEIGHT" required="false" default="1200" reason="Cover image height in pixels" />
+      </config>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Service Pattern: Business logic MUST reside in backend/app/services/conversion/, NOT in task files or API routes</constraint>
+    <constraint>REUSE TOCGenerator: Do NOT recreate NCX/Nav generation - import and use existing TOCGenerator from toc_generator.py (Story 4.3)</constraint>
+    <constraint>REUSE SupabaseStorageService: Do NOT recreate storage methods - use existing upload_file() and generate_signed_url()</constraint>
+    <constraint>EPUB 3.0 Spec: Must generate valid EPUB 3.0 structure (mimetype, META-INF/container.xml, OEBPS/ with OPF, NCX, Nav)</constraint>
+    <constraint>File Size Limit: EPUB must be ≤ 120% of original PDF size (FR37) - compress images if oversized</constraint>
+    <constraint>Multi-Language Support: Must embed fonts for CJK characters (EN, ZH, JP, KO, VI) to prevent missing glyphs</constraint>
+    <constraint>Celery Timeouts: Max 10 minutes (600 sec) for EPUB generation task - use soft_time_limit and time_limit</constraint>
+    <constraint>Retry Logic: Max 3 retries with exponential backoff for transient failures (network, API)</constraint>
+    <constraint>Error Handling: Use custom exceptions (InvalidPDFError, CorruptedFileError) for permanent failures - no retry</constraint>
+    <constraint>Progress Updates: Call update_job_status() at key milestones: 85% (generating), 95% (uploading), 100% (complete)</constraint>
+    <constraint>Testing: Mock external dependencies (Storage, AI) in unit tests - use real storage in integration tests</constraint>
+    <constraint>Validation: Run EPUB structure validation before upload - check all referenced files exist, XHTML is well-formed XML</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>DocumentStructure (Input from Story 4.3)</name>
+      <kind>Pydantic Model</kind>
+      <signature>DocumentStructure(title: str, author: Optional[str], language: str, toc: TOC, chapters: List[ChapterMetadata], confidence_score: int)</signature>
+      <path>backend/app/schemas/document_structure.py:68-90</path>
+    </interface>
+    <interface>
+      <name>LayoutDetection / PageAnalysis (Input from Story 4.2)</name>
+      <kind>Pydantic Model</kind>
+      <signature>LayoutDetection(page_number: int, tables: Tables, images: Images, equations: Equations, text_blocks: TextBlocks, layout: Layout, primary_language: str)</signature>
+      <path>backend/app/schemas/layout_analysis.py:120-142</path>
+    </interface>
+    <interface>
+      <name>TOCGenerator.build_epub_ncx (REUSE)</name>
+      <kind>Function</kind>
+      <signature>build_epub_ncx(toc_entries: List[Dict], document_title: str, uid: str) -> str</signature>
+      <path>backend/app/services/conversion/toc_generator.py:26-98</path>
+    </interface>
+    <interface>
+      <name>TOCGenerator.build_epub_nav (REUSE)</name>
+      <kind>Function</kind>
+      <signature>build_epub_nav(toc_entries: List[Dict], document_title: str) -> str</signature>
+      <path>backend/app/services/conversion/toc_generator.py:166-233</path>
+    </interface>
+    <interface>
+      <name>SupabaseStorageService.upload_file (REUSE)</name>
+      <kind>Function</kind>
+      <signature>upload_file(bucket: str, path: str, file_data: bytes, content_type: str) -> str</signature>
+      <path>backend/app/services/storage/supabase_storage.py:53-100</path>
+    </interface>
+    <interface>
+      <name>update_job_status (REUSE)</name>
+      <kind>Function</kind>
+      <signature>update_job_status(job_id: str, status: str, progress: int, stage_metadata: Dict, error_message: str) -> None</signature>
+      <path>backend/app/tasks/conversion_pipeline.py:59-113</path>
+    </interface>
+    <interface>
+      <name>generate_epub (Celery Task - TO IMPLEMENT)</name>
+      <kind>Celery Task</kind>
+      <signature>@celery_app.task generate_epub(previous_result: Dict[str, Any]) -> Dict[str, Any]</signature>
+      <path>backend/app/tasks/conversion_pipeline.py:747-804</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      **Testing Framework:** pytest 8.3.0 with pytest-asyncio for async tests
+
+      **Mocking Strategy:** Use unittest.mock (Mock, MagicMock, patch) to mock external dependencies
+      - Mock Supabase Storage for upload operations in unit tests
+      - Mock ebooklib EPUB generation in unit tests
+      - Mock AI analysis results (layout_analysis, document_structure) with fixtures
+      - Use real storage in integration tests (test against actual Supabase project)
+
+      **Test Organization:**
+      - Unit tests: backend/tests/unit/services/conversion/test_epub_generator.py
+      - Integration tests: backend/tests/integration/test_epub_generation.py
+      - Fixtures: Shared test data in conftest.py (sample layouts, structures, PDFs)
+
+      **Coverage Target:** 80% minimum for EPUB generation services (per architecture.md)
+
+      **Naming Convention:** test_*.py files, test_* functions, descriptive names (test_table_conversion_creates_valid_html)
+
+      **Assertion Style:** Use pytest assertions (assert x == y), avoid unittest TestCase
+    </standards>
+    <locations>
+      <location>backend/tests/unit/services/conversion/test_epub_generator.py</location>
+      <location>backend/tests/unit/services/conversion/test_content_assembler.py</location>
+      <location>backend/tests/unit/services/conversion/test_metadata_extractor.py</location>
+      <location>backend/tests/unit/services/conversion/test_font_manager.py</location>
+      <location>backend/tests/unit/services/conversion/test_epub_validator.py</location>
+      <location>backend/tests/integration/test_epub_generation.py</location>
+      <location>backend/tests/fixtures/sample_pdfs/</location>
+    </locations>
+    <ideas>
+      <test ac="AC1" id="test_epub_basic_creation">
+        Test basic EPUB creation with minimal metadata - verify epub.EpubBook() initialization, set_metadata() with title/author/language, generate valid EPUB file structure
+      </test>
+      <test ac="AC2" id="test_table_html_conversion">
+        Test table conversion from layout analysis - mock TableItem with rows/cols/bbox, verify HTML table structure with thead/tbody, check responsive CSS applied
+      </test>
+      <test ac="AC2" id="test_image_embedding">
+        Test image embedding from layout analysis - mock ImageItem with bbox/image_bytes, verify image added to EPUB package with correct MIME type, check img tag references correct path
+      </test>
+      <test ac="AC2" id="test_equation_mathml_conversion">
+        Test equation conversion to MathML - mock EquationItem with LaTeX, verify MathML generated, check PNG fallback created for compatibility
+      </test>
+      <test ac="AC3" id="test_toc_integration">
+        Test TOC integration using existing TOCGenerator - mock TOC entries from document_structure, call build_epub_ncx() and build_epub_nav(), verify NCX and Nav XHTML files added to EPUB
+      </test>
+      <test ac="AC3" id="test_metadata_extraction">
+        Test PDF metadata extraction - mock PyMuPDF document with title/author, verify metadata embedded in EPUB with Dublin Core format, check unique identifier (UUID) generated
+      </test>
+      <test ac="AC4" id="test_font_detection_cjk">
+        Test CJK font detection - mock document with Chinese text, verify detect_required_fonts() identifies need for NotoSansCJKsc, check font embedded in EPUB package
+      </test>
+      <test ac="AC5" id="test_css_stylesheet_creation">
+        Test CSS stylesheet creation - verify responsive table styles, image max-width constraints, typography rules (font sizes, line heights), chapter page breaks
+      </test>
+      <test ac="AC6" id="test_epub_validation">
+        Test EPUB structure validation - create EPUB with missing references, verify validate_epub_structure() catches errors, check XHTML well-formed XML validation
+      </test>
+      <test ac="AC6" id="test_file_size_check">
+        Test file size constraint - mock PDF size 10MB, generate EPUB 12MB (120%), verify check_file_size() passes, test 13MB (130%) triggers compression warning
+      </test>
+      <test ac="AC7" id="test_storage_upload">
+        Test Supabase Storage upload - mock SupabaseStorageService, verify upload_file() called with correct bucket/path, check signed URL generated with 1-hour expiration
+      </test>
+      <test ac="AC8" id="test_celery_task_integration">
+        Test Celery task integration - mock previous_result with document_structure and layout_analysis, call generate_epub(), verify status updates (85%, 95%, 100%), check result contains job_id and output_path
+      </test>
+      <test ac="AC9" id="test_missing_toc_graceful_degradation">
+        Test missing TOC handling - mock empty document_structure.toc, verify single-chapter EPUB created without errors, check fallback chapter created
+      </test>
+      <test ac="AC9" id="test_missing_images_handling">
+        Test missing image handling - mock image embedding failure, verify EPUB generation continues, check placeholder image or skip logic works
+      </test>
+      <test ac="AC10" id="test_integration_full_pipeline">
+        Integration test - use real sample PDF (50 pages, tables, images), run full pipeline (layout analysis → structure → EPUB), verify EPUB file created and uploaded, open in Calibre viewer
+      </test>
+      <test ac="AC10" id="test_multi_language_document">
+        Test multi-language support - use Chinese PDF sample, run pipeline, verify CJK fonts embedded, check character rendering (no missing glyphs), open in Apple Books
+      </test>
+    </ideas>
+  </tests>
+</story-context>

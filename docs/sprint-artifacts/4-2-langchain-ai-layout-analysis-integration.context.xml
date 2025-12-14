@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>2</storyId>
+    <title>LangChain AI Layout Analysis Integration</title>
+    <status>done</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-2-langchain-ai-layout-analysis-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to integrate GPT-4o via LangChain for PDF layout analysis</iWant>
+    <soThat>complex elements (tables, equations, images) are extracted with high fidelity.</soThat>
+    <tasks>
+- Task 1: Setup LangChain AI Clients (AC: #2, #3)
+- Task 2: Implement PDF Page Image Extraction (AC: #1)
+- Task 3: Create Structured Output Pydantic Models (AC: #4)
+- Task 4: Implement GPT-4o Layout Analysis (AC: #2, #4)
+- Task 5: Implement Claude 3 Fallback (AC: #3, #5)
+- Task 6: Implement Parallel Page Processing (AC: #6)
+- Task 7: Integrate with Celery Pipeline (AC: #7)
+- Task 8: Implement Logging and Monitoring (AC: #8)
+- Task 9: Write Unit and Integration Tests (AC: #9)
+- Task 10: Documentation and Deployment (AC: #10, #11)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. LangChain Document Loader: Use PyPDFLoader to extract text + metadata, render pages with pymupdf to images (base64), handle multi-page PDFs efficiently
+2. GPT-4o Integration: Initialize ChatOpenAI(model="gpt-4o", temperature=0), create structured output schema, analyze page content, use .with_structured_output() for JSON validation
+3. Claude 3 Haiku Fallback: Trigger on OpenAI failure, initialize ChatAnthropic(model="claude-3-5-haiku-20241022"), use same prompt/schema, log fallback usage
+4. Detection Output Structure: Tables (count, items array with bbox/cells/confidence), Images (count, items array with bbox/alt-text/format), Equations (count, items array with LaTeX/positions), Multi-column detection, Headers/Footers, Text blocks, Language detection
+5. Error Handling and Retries: Max 3 attempts with exponential backoff (1min, 5min, 15min), catch transient errors, permanent errors fail immediately, fallback to Claude for remaining pages
+6. Performance Optimization: Parallel processing of 4 pages concurrently using asyncio, page batch processing, caching of layout results, token optimization, progress reporting
+7. Integration with Celery Pipeline: Accept job_id from analyze_layout task, return structured result with layout_analysis and page_analyses, read input from Supabase Storage
+8. Logging and Monitoring: Log analysis start, per-page metrics, fallback triggers, token usage, error details
+9. Testing: Unit tests (mocked AI), integration tests (sample PDF), fallback testing, parallelization testing, performance testing (100-page target &lt;10min with mocked AI - REQUIRED)
+10. Documentation: Docstrings, inline comments, README section on AI integration, cost estimation
+11. Configuration Management: All AI settings configurable via env vars, validate required vars at startup, log configuration on initialization (sanitized), add validation for invalid settings
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact path="docs/sprint-artifacts/tech-spec-epic-4.md" title="Technical Specification Epic 4" section="AI Layout Analysis" snippet="Input: PDF Page Image (converted via PyMuPDF) + Text Layer. Model: GPT-4o (Temperature 0). Fallback: Claude 3.5 Haiku on OpenAI API failure. Output: JSON structure describing the page layout."/>
+      <artifact path="docs/architecture.md" title="Architecture - API-First Intelligence" section="PDF Conversion Pipeline" snippet="Pipeline steps: Ingest PDF with PyMuPDF, Analyze with GPT-4o via LangChain, Structure using AI-detected hierarchy, Reflow content for EPUB, Generate EPUB container. Failure handling includes Celery retries with exponential backoff (1min, 5min, 15min)."/>
+      <artifact path="docs/sprint-artifacts/4-1-conversion-pipeline-orchestrator.md" title="Story 4.1 Conversion Pipeline Orchestrator" section="Pipeline Orchestration and Error Handling" snippet="Celery chain orchestrates 4 stages: analyze_layout, extract_content, identify_structure, generate_epub. Each task accepts job_id, updates conversion_jobs table with status/progress. Error types: Transient (retry 3x), Permanent (fail immediately), API failures trigger Claude fallback."/>
+      <artifact path="docs/prd.md" title="PRD - Transfer2Read" section="AI-Powered PDF Analysis" snippet="System must analyze PDF layout to detect complex elements (tables, charts, images, equations, multi-column layouts). Achieve 95%+ fidelity for complex elements, 99%+ for text-based PDFs. Detection output includes confidence scores, bounding boxes, element metadata."/>
+    </docs>
+    <code>
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="task" symbol="analyze_layout" lines="260-320" reason="Placeholder for Story 4.2 layout analysis task. Shows established Celery task pattern: decorators, error handling, status updates. Will integrate GPT-4o analysis in this function."/>
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="function" symbol="update_job_status" lines="52-107" reason="Pattern for updating conversion_jobs table with status/progress/metadata. Story 4.2 will call this after each page analysis to report progress."/>
+      <artifact path="backend/app/tasks/conversion_pipeline.py" kind="function" symbol="check_cancellation" lines="109-144" reason="Pattern for checking if job has been cancelled. Used in Story 4.2 to gracefully exit analysis if user cancels."/>
+      <artifact path="backend/app/tasks/ai_tasks.py" kind="task" symbol="test_ai_connection" lines="16-106" reason="Existing LangChain integration pattern for ChatOpenAI and ChatAnthropic. Shows how to initialize AI clients and handle timeouts. Story 4.2 will extend this for layout analysis."/>
+      <artifact path="backend/app/core/config.py" kind="file" symbol="Settings" reason="Configuration management pattern. Story 4.2 will add ANALYSIS_CONCURRENCY, ANALYSIS_TIMEOUT_PER_PAGE, MAX_IMAGE_SIZE, AI_ANALYSIS_MAX_RETRIES, AI_FALLBACK_ENABLED env vars here."/>
+      <artifact path="backend/app/services/storage/supabase_storage.py" kind="service" symbol="SupabaseStorageService" reason="Storage service pattern for file operations. Story 4.2 will use this to read input PDF from Supabase Storage and store analysis results."/>
+    </code>
+    <dependencies>
+      <dependency name="langchain" version="0.3.12" source="requirements.txt" reason="Framework for AI orchestration and structured output parsing with Pydantic models"/>
+      <dependency name="langchain-openai" version="0.2.x" source="requirements.txt" reason="OpenAI integration for ChatOpenAI(model='gpt-4o') with vision capabilities"/>
+      <dependency name="langchain-anthropic" version="0.3.0" source="requirements.txt" reason="Anthropic integration for Claude 3.5 Haiku fallback when GPT-4o fails"/>
+      <dependency name="pymupdf" version="1.24.10" source="requirements.txt" reason="PDF processing: page extraction, text layer access, page-to-image conversion for vision input"/>
+      <dependency name="celery" version="5.5.3" source="requirements.txt" reason="Task orchestration: async PDF analysis with retry logic and worker management"/>
+      <dependency name="redis" version="5.0.1" source="requirements.txt" reason="Message broker for Celery task queue and result backend"/>
+      <dependency name="pydantic" version=">=2.11.7" source="requirements.txt" reason="Pydantic models for structured AI output (LayoutDetection, PageAnalysis schemas with nested items arrays)"/>
+      <dependency name="supabase" version="2.24.0" source="requirements.txt" reason="File storage access and database updates for job status tracking"/>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Must follow Service Pattern: All AI integration logic in backend/app/services/ai/, not in Celery tasks. Tasks orchestrate and call services.</constraint>
+    <constraint type="pattern">Must use Pydantic models for all AI outputs with LangChain's .with_structured_output() to enforce strict JSON validation.</constraint>
+    <constraint type="pattern">Must use asyncio for concurrent page processing with async/await pattern. Use asyncio.gather() with asyncio.Semaphore for concurrency control.</constraint>
+    <constraint type="error-handling">Transient failures (OpenAI API timeouts, rate limits) trigger automatic retry with exponential backoff: 1min, 5min, 15min (max 3 attempts).</constraint>
+    <constraint type="error-handling">Permanent failures (invalid API key, unsupported model) fail immediately without retry. Log error and update job status to FAILED.</constraint>
+    <constraint type="fallback">On OpenAI failure (after 3 retries), automatically fallback to Claude 3.5 Haiku using same prompt and Pydantic schema for remaining pages.</constraint>
+    <constraint type="database">Store layout_analysis results in conversion_jobs.layout_analysis JSONB column. Update job status after every N pages analyzed (progress reporting).</constraint>
+    <constraint type="concurrency">Parallel processing must be configurable via ANALYSIS_CONCURRENCY env var (default: 4 pages concurrent). Must use asyncio.Semaphore, not Celery sub-tasks.</constraint>
+    <constraint type="celery-integration">Accept job_id as first parameter from analyze_layout Celery task. Return dict with structure: { "job_id": "...", "layout_analysis": {...}, "page_analyses": [...] }</constraint>
+    <constraint type="paths">Supabase Storage paths: uploads/{user_id}/{job_id}/input.pdf. Local filesystem paths: project-relative only. Store relative paths in database, never absolute paths.</constraint>
+    <constraint type="logging">Use structured logging with job_id in all AI analysis logs. Log start time, page count, user_id (sanitized), per-page metrics, fallback triggers, token usage.</constraint>
+    <constraint type="timeout">Per-page analysis timeout: 30 seconds (configurable via ANALYSIS_TIMEOUT_PER_PAGE). Overall task timeout: 20 minutes (matches Celery hard limit from Story 4.1).</constraint>
+    <constraint type="version">Use Claude 3.5 Haiku model: "claude-3-5-haiku-20241022" (NOT claude-3-haiku-20240307 from ai_tasks.py). Update that test task after implementation.</constraint>
+    <constraint type="config">All AI settings must be configurable via environment variables. Validate required env vars at startup, fail fast with clear error messages if missing.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="AI Layout Analysis Service" kind="Python async function" signature="async def analyze_all_pages(job_id: str, pdf_path: str, concurrency: int = 4) -> List[PageAnalysis]" path="backend/app/services/conversion/batch_analyzer.py" reason="Primary interface: Analyzes all PDF pages concurrently using asyncio.gather() with semaphore. Returns list of page analysis results. Called by Celery analyze_layout task."/>
+    <interface name="Single Page Analysis" kind="Python async function" signature="async def analyze_page(image_b64: str, text: str, page_num: int) -> LayoutDetection" path="backend/app/services/ai/layout_analyzer.py" reason="Core AI interface: Sends page image + text to GPT-4o (or Claude fallback) using async invocation. Returns structured LayoutDetection object with element detection results."/>
+    <interface name="Document Loader" kind="Python function" signature="def load_and_render_pages(pdf_path: str) -> List[PageData]" path="backend/app/services/conversion/document_loader.py" reason="PDF processing interface: Extracts text layer and renders pages to base64 images for vision input. Synchronous function."/>
+    <interface name="AI Client Initialization" kind="Python function" signature="def get_gpt4_client() -> ChatOpenAI / def get_claude_client() -> ChatAnthropic" path="backend/app/services/ai/gpt4.py, backend/app/services/ai/claude.py" reason="AI provider interfaces: Initialize LangChain clients with proper timeouts, temperature=0, and API keys from settings."/>
+    <interface name="Job Status Update" kind="Python function" signature="def update_job_status(job_id: str, status: str, progress: int, stage_metadata: dict, error_message: str)" path="backend/app/tasks/conversion_pipeline.py:52-107" reason="Existing interface for updating conversion_jobs table. Story 4.2 will call after each page batch analyzed (every 5 pages)."/>
+    <interface name="Celery Task Entry Point" kind="Celery Task" signature="@celery_app.task def analyze_layout(self, job_id: str) -> Dict[str, Any]" path="backend/app/tasks/conversion_pipeline.py:260-320" reason="Celery task interface: Called by conversion_pipeline orchestrator. Will dispatch to batch_analyzer.analyze_all_pages() using asyncio.run() and handle retries/errors."/>
+  </interfaces>
+
+  <tests>
+    <standards>Unit and integration testing with Pytest 8.3.0. Unit tests use mocked AI responses (fixtures with sample LayoutDetection JSON) to avoid API costs. Mocking via pytest fixtures or unittest.mock.patch. Integration tests use sample PDFs with real LangChain clients but mocked OpenAI/Anthropic responses. Use pytest-asyncio for async test cases. Target 80%+ code coverage (run pytest --cov=app). Key test patterns: Mock ChatOpenAI/ChatAnthropic responses, validate Pydantic model parsing with nested items arrays, test retry logic with exponential backoff simulation, test fallback trigger on simulated API errors, verify concurrent page processing with asyncio, measure performance on 100-page PDF with mocked AI (target &lt;10 minutes - REQUIRED for DoD).</standards>
+    <locations>
+      <location pattern="backend/tests/unit/services/ai/" description="Unit tests for AI services: test_layout_analyzer.py, test_gpt4.py, test_claude.py"/>
+      <location pattern="backend/tests/unit/services/conversion/" description="Unit tests for document loader and batch analyzer"/>
+      <location pattern="backend/tests/integration/" description="Integration tests: test_layout_analysis.py with real PDF fixtures"/>
+      <location pattern="backend/tests/fixtures/" description="Test PDFs and mock response fixtures: sample_5page.pdf, sample_100page.pdf, mock_responses.py"/>
+    </locations>
+    <ideas>
+      <idea ac_id="1">Test PyMuPDF page extraction: Load sample PDF, verify text layer extraction and page-to-image conversion produces base64 with correct dimensions</idea>
+      <idea ac_id="2,3">Test GPT-4o initialization and structured output: Mock ChatOpenAI response, verify .with_structured_output(LayoutDetection) enforces schema, validates JSON parsing with nested items arrays</idea>
+      <idea ac_id="3">Test Claude fallback: Mock OpenAI APIError, verify automatic switch to Claude 3.5 Haiku, confirm same output schema returned</idea>
+      <idea ac_id="4">Test detection output structure: Verify LayoutDetection Pydantic model correctly parses tables.items[], images.items[], equations.items[], multi-column detection, headers/footers, text blocks, language detection from AI response</idea>
+      <idea ac_id="5">Test error handling and retries: Mock transient errors (timeout, rate limit), verify exponential backoff (1min, 5min, 15min), max 3 attempts. Test permanent error (invalid key) fails immediately</idea>
+      <idea ac_id="6">Test parallel processing: Analyze 20-page PDF with concurrency=4 using asyncio, verify 4 pages processed concurrently with semaphore, measure time (should be ~5x faster than sequential)</idea>
+      <idea ac_id="7">Test Celery integration: Mock analyze_layout task, verify returns correct structure with job_id and page_analyses list, check job status updates after batch</idea>
+      <idea ac_id="8">Test logging and monitoring: Verify structured logs include job_id, page count, per-page metrics, fallback triggers, token usage. Check ai_analysis.log file format</idea>
+      <idea ac_id="9">Integration test with real PDF: Load sample 5-page PDF, run full analysis (mocked AI), verify output structure with nested items, validate confidence scores, check performance (&lt;10 seconds with mocks)</idea>
+      <idea ac_id="9">Performance test (REQUIRED): Analyze 100-page PDF with mocked AI responses, measure time (target &lt;10 minutes), log simulated token usage for cost estimation. Required for DoD.</idea>
+      <idea ac_id="11">Test configuration validation: Verify all env vars loaded correctly, test startup failure with missing API keys, test validation of invalid settings (concurrency &lt;= 0, timeout &lt;= 0)</idea>
+    </ideas>
+  </tests>
+
+  <environmentVariables>
+    <var name="OPENAI_API_KEY" required="true" description="OpenAI API key for GPT-4o access" example="sk-..."/>
+    <var name="ANTHROPIC_API_KEY" required="true" description="Anthropic API key for Claude 3.5 Haiku fallback" example="sk-ant-..."/>
+    <var name="ANALYSIS_CONCURRENCY" required="false" default="4" description="Number of concurrent page analyses (asyncio semaphore limit)" example="4"/>
+    <var name="ANALYSIS_PAGE_BATCH_SIZE" required="false" default="5" description="Update job progress after every N pages" example="5"/>
+    <var name="ANALYSIS_TIMEOUT_PER_PAGE" required="false" default="30" description="Timeout per page analysis in seconds" example="30"/>
+    <var name="MAX_IMAGE_SIZE" required="false" default="2048" description="Max pixel dimension for vision input (resize larger images)" example="2048"/>
+    <var name="AI_ANALYSIS_MAX_RETRIES" required="false" default="3" description="Max retry attempts for AI API calls before fallback" example="3"/>
+    <var name="AI_FALLBACK_ENABLED" required="false" default="true" description="Enable/disable Claude fallback on OpenAI failure" example="true"/>
+  </environmentVariables>
+
+  <databaseSchema>
+    <table name="conversion_jobs">
+      <column name="layout_analysis" type="JSONB" nullable="true" description="Full AI analysis results with page_analyses array. Format: {page_analyses: [{page_number, tables: {count, items: [...]}, images: {count, items: [...]}, ...}]}"/>
+      <column name="ai_model_used" type="TEXT" nullable="true" description="AI model used: 'gpt-4o', 'claude-3-5-haiku-20241022', or 'mixed' (if fallback occurred)"/>
+      <column name="token_usage" type="JSONB" nullable="true" description="Token usage tracking: {total_prompt_tokens, total_completion_tokens, per_page_average: {prompt, completion}, estimated_cost_usd}"/>
+      <index name="idx_conversion_jobs_ai_model_used" columns="ai_model_used" type="btree" condition="WHERE ai_model_used IS NOT NULL"/>
+      <index name="idx_conversion_jobs_layout_analysis" columns="layout_analysis" type="gin" condition="WHERE layout_analysis IS NOT NULL"/>
+    </table>
+  </databaseSchema>
+
+  <pydanticModels>
+    <model name="TableItem" path="backend/app/schemas/layout_analysis.py" description="Single table detection with bounding box and structure">
+      <field name="bbox" type="List[int]" description="Bounding box [x1, y1, x2, y2] in pixels"/>
+      <field name="rows" type="int" description="Number of table rows"/>
+      <field name="cols" type="int" description="Number of table columns"/>
+      <field name="confidence" type="int" description="Confidence score 0-100"/>
+      <field name="header_detected" type="bool" description="Whether table header was detected"/>
+      <field name="content_sample" type="str" description="Sample content from table"/>
+    </model>
+    <model name="Tables" path="backend/app/schemas/layout_analysis.py" description="All tables on a page">
+      <field name="count" type="int" description="Number of tables detected"/>
+      <field name="items" type="List[TableItem]" description="List of detected tables"/>
+    </model>
+    <model name="ImageItem" path="backend/app/schemas/layout_analysis.py" description="Single image/diagram detection">
+      <field name="bbox" type="List[int]" description="Bounding box [x1, y1, x2, y2] in pixels"/>
+      <field name="format" type="Literal['photo', 'diagram', 'chart']" description="Image format type"/>
+      <field name="alt_text" type="str" description="AI-generated alt text description"/>
+    </model>
+    <model name="Images" path="backend/app/schemas/layout_analysis.py" description="All images on a page">
+      <field name="count" type="int" description="Number of images detected"/>
+      <field name="items" type="List[ImageItem]" description="List of detected images"/>
+    </model>
+    <model name="EquationItem" path="backend/app/schemas/layout_analysis.py" description="Single equation detection">
+      <field name="latex" type="str" description="LaTeX representation of equation"/>
+      <field name="confidence" type="int" description="Confidence score 0-100"/>
+      <field name="position" type="Literal['inline', 'block']" description="Equation position type"/>
+    </model>
+    <model name="Equations" path="backend/app/schemas/layout_analysis.py" description="All equations on a page">
+      <field name="count" type="int" description="Number of equations detected"/>
+      <field name="items" type="List[EquationItem]" description="List of detected equations"/>
+    </model>
+    <model name="Layout" path="backend/app/schemas/layout_analysis.py" description="Page layout structure">
+      <field name="is_multi_column" type="bool" description="Whether page has multiple columns"/>
+      <field name="column_count" type="Optional[int]" description="Number of columns if multi-column"/>
+      <field name="reflow_strategy" type="str" description="Recommended reflow strategy"/>
+    </model>
+    <model name="HeaderFooter" path="backend/app/schemas/layout_analysis.py" description="Header or footer detection">
+      <field name="position" type="Literal['header', 'footer']" description="Position type"/>
+      <field name="text" type="str" description="Header/footer text content"/>
+      <field name="page_num" type="int" description="Page number"/>
+    </model>
+    <model name="TokenUsage" path="backend/app/schemas/layout_analysis.py" description="Token usage for cost tracking">
+      <field name="prompt" type="int" description="Prompt tokens used"/>
+      <field name="completion" type="int" description="Completion tokens used"/>
+    </model>
+    <model name="AnalysisMetadata" path="backend/app/schemas/layout_analysis.py" description="Analysis execution metadata">
+      <field name="model_used" type="Literal['gpt-4o', 'claude-3-5-haiku-20241022']" description="AI model used"/>
+      <field name="response_time_ms" type="int" description="Response time in milliseconds"/>
+      <field name="tokens_used" type="TokenUsage" description="Token usage details"/>
+    </model>
+    <model name="LayoutDetection" path="backend/app/schemas/layout_analysis.py" description="Complete layout detection for a single PDF page">
+      <field name="page_number" type="int" description="PDF page number (1-indexed)"/>
+      <field name="tables" type="Tables" description="Detected tables with nested items"/>
+      <field name="images" type="Images" description="Detected images with nested items"/>
+      <field name="equations" type="Equations" description="Detected equations with nested items"/>
+      <field name="layout" type="Layout" description="Page layout structure"/>
+      <field name="headers_footers" type="List[HeaderFooter]" description="Detected headers and footers"/>
+      <field name="primary_language" type="str" description="Primary language (ISO 639-1 code)"/>
+      <field name="secondary_languages" type="List[str]" description="Secondary languages detected"/>
+      <field name="overall_confidence" type="int" description="Overall analysis confidence 0-100"/>
+      <field name="analysis_metadata" type="AnalysisMetadata" description="Analysis execution metadata"/>
+    </model>
+    <model name="PageAnalysis" path="backend/app/schemas/layout_analysis.py" description="Alias for LayoutDetection for clarity in batch processing"/>
+  </pydanticModels>
+</story-context>

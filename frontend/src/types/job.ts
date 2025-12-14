@@ -1,4 +1,4 @@
-export type JobStatus = 'UPLOADED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type JobStatus = 'UPLOADED' | 'QUEUED' | 'ANALYZING' | 'EXTRACTING' | 'STRUCTURING' | 'GENERATING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
 export interface QualityReport {
   overall_confidence?: number;
@@ -19,9 +19,11 @@ export interface Job {
   id: string;
   user_id: string;
   status: JobStatus;
-  input_path: string;
-  output_path?: string;
+  input_path: string | null;
+  original_filename?: string | null;
+  output_path?: string | null;
   quality_report?: QualityReport;
+  error_message?: string;
   created_at: string;
   completed_at?: string;
 }

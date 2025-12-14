@@ -21,7 +21,14 @@ from app.services.storage.supabase_storage import (
     StorageUploadError
 )
 from app.core.supabase import get_supabase_client
-from app.tasks.conversion_pipeline import conversion_pipeline
+from celery import chain
+from app.tasks.conversion_pipeline import (
+    analyze_layout,
+    extract_content,
+    identify_structure,
+    generate_epub,
+    calculate_quality_score
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -140,6 +147,7 @@ async def upload_pdf(
         "user_id": current_user.user_id,
         "status": "UPLOADED",
         "input_path": storage_path,
+        "stage_metadata": {"original_filename": filename},
         "created_at": created_at.isoformat()
     }
 
@@ -160,7 +168,19 @@ async def upload_pdf(
     # Dispatch Celery pipeline for async conversion
     try:
         logger.info(f"Dispatching conversion pipeline for job {job_id}")
-        conversion_pipeline.delay(job_id)
+
+        # Build the conversion chain directly (avoid orchestrator task anti-pattern)
+        workflow = chain(
+            analyze_layout.s(job_id),
+            extract_content.s(),
+            identify_structure.s(),
+            generate_epub.s(),
+            calculate_quality_score.s()
+        )
+
+        # Execute the chain asynchronously (no .get() - fire and forget)
+        workflow.apply_async()
+
         logger.info(f"Successfully dispatched pipeline for job {job_id}")
     except Exception as e:
         # Log error but don't fail the request - job can be retried manually

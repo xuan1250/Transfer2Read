@@ -3,35 +3,9 @@ Job API Schemas
 
 Pydantic models for conversion job request/response validation.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-
-
-class QualityReport(BaseModel):
-    """
-    Quality metrics from AI analysis.
-
-    Attributes:
-        overall_confidence: Overall conversion quality score (0-100)
-        tables: Table extraction metrics
-        images: Image extraction metrics
-        equations: Equation rendering metrics
-    """
-    overall_confidence: Optional[int] = Field(None, ge=0, le=100, description="Overall quality score")
-    tables: Optional[Dict[str, Any]] = Field(None, description="Table extraction metrics")
-    images: Optional[Dict[str, Any]] = Field(None, description="Image extraction metrics")
-    equations: Optional[Dict[str, Any]] = Field(None, description="Equation rendering metrics")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "overall_confidence": 95,
-                "tables": {"count": 12, "avg_confidence": 93},
-                "images": {"count": 8},
-                "equations": {"count": 5, "avg_confidence": 97}
-            }
-        }
 
 
 class JobSummary(BaseModel):
@@ -44,29 +18,25 @@ class JobSummary(BaseModel):
         input_file: Original filename (extracted from input_path)
         created_at: Job creation timestamp
         completed_at: Job completion timestamp (if completed)
-        quality_report: AI quality metrics (if completed)
+        overall_confidence: Overall quality confidence score (if quality report available)
     """
     id: str
     status: str
     input_file: str
     created_at: datetime
     completed_at: Optional[datetime] = None
-    quality_report: Optional[QualityReport] = None
+    overall_confidence: Optional[float] = Field(None, ge=0, le=100, description="Overall quality confidence")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "550e8400-e29b-41d4-a716-446655440000",
-                "status": "COMPLETED",
-                "input_file": "document.pdf",
-                "created_at": "2025-12-12T10:30:00Z",
-                "completed_at": "2025-12-12T10:32:15Z",
-                "quality_report": {
-                    "overall_confidence": 95,
-                    "tables": {"count": 12}
-                }
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "status": "COMPLETED",
+            "input_file": "document.pdf",
+            "created_at": "2025-12-12T10:30:00Z",
+            "completed_at": "2025-12-12T10:32:15Z",
+            "overall_confidence": 95.2
         }
+    })
 
 
 class JobDetail(BaseModel):
@@ -78,10 +48,11 @@ class JobDetail(BaseModel):
         user_id: Owner's user ID (UUID)
         status: Current job status
         input_path: Supabase Storage path to input PDF
+        original_filename: Original filename of uploaded PDF
         output_path: Supabase Storage path to output EPUB (if completed)
         progress: Progress percentage (0-100)
         stage_metadata: JSONB metadata about current pipeline stage
-        quality_report: AI quality metrics (if completed)
+        quality_report: Complete AI quality metrics (if completed and requested)
         created_at: Job creation timestamp
         completed_at: Job completion timestamp (if completed)
     """
@@ -89,32 +60,46 @@ class JobDetail(BaseModel):
     user_id: str
     status: str
     input_path: str
+    original_filename: Optional[str] = None
     output_path: Optional[str] = None
     progress: int = Field(0, ge=0, le=100, description="Progress percentage")
     stage_metadata: Dict[str, Any] = Field(default_factory=dict, description="Current stage metadata")
-    quality_report: Optional[QualityReport] = None
+    quality_report: Optional[Dict[str, Any]] = None
     created_at: datetime
     completed_at: Optional[datetime] = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "550e8400-e29b-41d4-a716-446655440000",
-                "user_id": "123e4567-e89b-12d3-a456-426614174000",
-                "status": "ANALYZING",
-                "input_path": "uploads/user-id/job-id/input.pdf",
-                "output_path": None,
-                "progress": 25,
-                "stage_metadata": {
-                    "current_stage": "ANALYZING",
-                    "progress_percent": 25,
-                    "stage_started_at": "2025-12-12T10:30:00Z"
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "user_id": "123e4567-e89b-12d3-a456-426614174000",
+            "status": "COMPLETED",
+            "input_path": "uploads/user-id/job-id/input.pdf",
+            "original_filename": "my-document.pdf",
+            "output_path": "downloads/user-id/job-id/output.epub",
+            "progress": 100,
+            "stage_metadata": {
+                "current_stage": "COMPLETED",
+                "progress_percent": 100,
+                "quality_confidence": 95.2,
+                "completed_at": "2025-12-12T10:32:15Z",
+                "original_filename": "my-document.pdf"
+            },
+            "quality_report": {
+                "overall_confidence": 95.2,
+                "elements": {
+                    "tables": {"count": 12, "avg_confidence": 93.5},
+                    "images": {"count": 8, "avg_confidence": 100.0},
+                    "equations": {"count": 5, "avg_confidence": 97.0}
                 },
-                "quality_report": None,
-                "created_at": "2025-12-12T10:30:00Z",
-                "completed_at": None
-            }
+                "warnings": [],
+                "fidelity_targets": {
+                    "complex_elements": {"target": 95, "actual": 95.2, "met": True}
+                }
+            },
+            "created_at": "2025-12-12T10:30:00Z",
+            "completed_at": "2025-12-12T10:32:15Z"
         }
+    })
 
 
 class JobListResponse(BaseModel):
@@ -132,23 +117,22 @@ class JobListResponse(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "jobs": [
-                    {
-                        "id": "550e8400-e29b-41d4-a716-446655440000",
-                        "status": "COMPLETED",
-                        "input_file": "document.pdf",
-                        "created_at": "2025-12-12T10:30:00Z",
-                        "completed_at": "2025-12-12T10:32:15Z"
-                    }
-                ],
-                "total": 50,
-                "limit": 20,
-                "offset": 0
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "jobs": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "status": "COMPLETED",
+                    "input_file": "document.pdf",
+                    "created_at": "2025-12-12T10:30:00Z",
+                    "completed_at": "2025-12-12T10:32:15Z"
+                }
+            ],
+            "total": 50,
+            "limit": 20,
+            "offset": 0
         }
+    })
 
 
 class DownloadUrlResponse(BaseModel):
@@ -162,10 +146,9 @@ class DownloadUrlResponse(BaseModel):
     download_url: str
     expires_at: datetime
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "download_url": "https://supabase.co/.../output.epub?token=...",
-                "expires_at": "2025-12-12T11:30:00Z"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "download_url": "https://supabase.co/.../output.epub?token=...",
+            "expires_at": "2025-12-12T11:30:00Z"
         }
+    })

@@ -1,7 +1,32 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      router.push('/upload');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -15,8 +40,12 @@ export default function Home() {
         </div>
 
         <div className="flex justify-center gap-4">
-          <Button size="lg">Get Started</Button>
-          <Button size="lg" variant="outline">Learn More</Button>
+          <Button size="lg" onClick={handleGetStarted}>
+            Get Started
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => router.push('/pricing')}>
+            Learn More
+          </Button>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mt-16">

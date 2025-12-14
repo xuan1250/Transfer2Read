@@ -1,0 +1,416 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>1</storyId>
+    <title>Real-Time Progress Updates</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-1-real-time-progress-updates.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to see the progress of my conversion in real-time</iWant>
+    <soThat>I know the system is working and when it will be finished</soThat>
+    <tasks>
+1. Design Real-Time Communication Strategy (polling-based for MVP, serverless-compatible)
+2. Implement Backend Progress API (GET /jobs/{job_id}/progress endpoint with ProgressUpdate schema)
+3. Enhance Pipeline to Emit Progress (update job metadata after each stage: 25%, 50%, 75%, 95%, 100%)
+4. Implement AI Cost Tracking (CostTrackerCallback for LangChain to track tokens and calculate cost)
+5. Create Frontend useJobProgress Hook (polling logic with TanStack Query, 2-second interval)
+6. Create Progress UI Component (JobProgress.tsx with progress bar, element counters, cost display)
+7. Integrate Progress UI into Job Status Page (frontend/src/app/jobs/[id]/page.tsx)
+8. Connection Handling and Reliability (retry logic, exponential backoff, reconnection handling)
+9. Create Pre-Flight Checklist Template (.bmad/bmm/templates/pre-flight-checklist.md)
+10. Apply Pre-Flight Checklist (verify integration before marking ready for review)
+11. Testing (backend unit tests, frontend unit tests, integration tests, performance tests)
+12. Documentation (backend/docs/REAL_TIME_UPDATES.md with architecture and integration guide)
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Real-Time Progress Mechanism: Polling-based (2-second interval), automatic reconnection after network interruption, clean connection close
+2. Progress Bar and Status Updates (FR31): 0-100% progress with smooth animations, stage descriptions ("Uploading... 10%", "Analyzing layout... 25%"), estimated time remaining
+3. Detected Elements Counter (FR32): Live counters for tables, images, equations, chapters; incremental updates (not all at once); element icons/badges with checkmarks when complete
+4. Connection Handling and Reliability: Graceful connection loss handling, automatic reconnection with exponential backoff (1s, 2s, 4s, max 10s), visual "Reconnecting..." indicator, resume from current state, fallback to polling
+5. Performance Optimization: Updates throttled to max 2/sec, delta updates (only changed fields), connection cleanup on unmount, efficient JSON serialization
+6. AI Cost Tracking (Epic 4 Action 1.2): LangChain CostTrackerCallback tracks tokens (prompt_tokens, completion_tokens, total_tokens); calculate cost using model pricing (GPT-4o: $2.50/$10.00 per 1M, Claude 3 Haiku: $0.25/$1.25 per 1M); real-time cost display in progress UI ("Processing... Estimated cost: $0.12"); store in quality_report.estimated_cost with token_usage
+7. Pre-Flight Integration Checklist (Epic 4 Action 1.3): Template at .bmad/bmm/templates/pre-flight-checklist.md with sections: Services & Dependencies, Data Flow, Error Handling, Testing, Documentation; apply before marking "review"; include in PR description
+8. Backend API Endpoints: GET /api/v1/jobs/{job_id}/progress returns ProgressUpdate; RLS validation (user ownership); 404 if not found, 403 if not user's job
+9. Progress Data Schema: ProgressUpdate Pydantic model with job_id, status, progress_percentage, current_stage, stage_description, elements_detected {tables, images, equations, chapters}, estimated_time_remaining, estimated_cost, quality_confidence, timestamp
+10. Frontend Integration: useJobProgress React hook with polling; JobProgress component displays progress bar, stage description, element counters with icons, estimated time remaining, real-time cost estimate; loading skeletons, error boundary, toast on completion
+11. Error Handling: Handle job failures (display error message), WebSocket/SSE connection errors (fallback to polling), timeout scenarios (>10min no updates), clear error messages, log errors without sensitive data
+12. Testing: Backend unit tests (progress update generation, connection handling, mock Celery results); Frontend unit tests (useJobProgress hook, progress component, reconnection logic); Integration tests (end-to-end progress updates, connection loss recovery, concurrent connections); Performance tests (latency <200ms, connection overhead minimal)
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Transfer2Read Product Requirements Document</title>
+        <section>FR31-FR32: Real-Time Progress and Quality Indicators</section>
+        <snippet>FR31: Users can view real-time conversion progress during processing. FR32: Users see quality indicators during conversion (element counts, detection progress). Core UX Principle: Transparency Through Feedback - show users what the AI is detecting as it works.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Transfer2Read System Architecture</title>
+        <section>API-First Intelligence Architecture with Supabase</section>
+        <snippet>Next.js 15 frontend + FastAPI backend + Celery workers with Redis. Supabase manages PostgreSQL, auth, and storage. LangChain orchestrates GPT-4o (primary) and Claude 3 Haiku (fallback) for AI analysis. Deployed on Vercel (frontend) + Railway (backend/workers).</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Transfer2Read UX Design Specification</title>
+        <section>Section 6.2: Processing & Results - Progress Feedback</section>
+        <snippet>Desktop-first web application with Professional Blue theme. Core experience: Check conversion quality before downloading (defining moment of trust). Real-time visual feedback during conversion with progress bar, stage descriptions, and element detection counters builds confidence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 5: Quality Preview & Download Experience</title>
+        <section>Story 5.1 with Epic 4 Retrospective Actions</section>
+        <snippet>Epic 5 Goal: Users verify conversion quality before downloading. Story 5.1 NEW AC from Epic 4 Retrospective: Action 1.2 (AI Cost Monitoring) - LangChain callbacks track tokens, calculate cost per job, display real-time cost in progress UI. Action 1.3 (Pre-Flight Checklist) - Template for integration verification before code review.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/4-5-ai-based-quality-assurance-confidence-scoring.md</path>
+        <title>Story 4.5: AI-Based Quality Assurance & Confidence Scoring (COMPLETED)</title>
+        <section>Completion Notes - Learnings for Story 5.1</section>
+        <snippet>QualityReport schema exists in backend/app/schemas/quality_report.py - extend with estimated_cost and token_usage fields. Pipeline pattern: Each task in conversion_pipeline.py updates job status with stage metadata. Quality confidence already calculated - display in real-time progress. Services to reuse: quality_scorer.py, layout_analyzer.py, structure_analyzer.py.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic-4-retrospective-2025-12-13.md</path>
+        <title>Epic 4 Retrospective (2025-12-13)</title>
+        <section>Action Items 1.2 and 1.3 for Story 5.1</section>
+        <snippet>Action 1.2 (REQUIRED): Add LangChain cost tracking callbacks to monitor AI API usage. Track prompt_tokens, completion_tokens, calculate USD cost, display in progress UI. Estimated +2-3 hours. Action 1.3 (REQUIRED): Create pre-flight integration checklist template. Apply to all Epic 5 stories before marking "review". Estimated +30 minutes.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api_router</kind>
+        <symbol>get_job, list_jobs, download_job</symbol>
+        <lines>1-477</lines>
+        <reason>Existing jobs API with GET /jobs/{job_id} endpoint. Need to add new GET /jobs/{job_id}/progress endpoint for polling. Pattern: Uses JobService dependency, RLS validation, HTTPException for 404/500. include_quality_details query parameter pattern established.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/job.py</path>
+        <kind>pydantic_schema</kind>
+        <symbol>JobDetail, JobSummary</symbol>
+        <lines>42-99</lines>
+        <reason>JobDetail includes progress (int 0-100) and stage_metadata (Dict[str, Any]) fields. Need to create new ProgressUpdate schema for lighter polling payload. Pattern: Uses Pydantic BaseModel with ConfigDict, Field validators, json_schema_extra examples.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/quality_report.py</path>
+        <kind>pydantic_schema</kind>
+        <symbol>QualityReport, ElementQuality</symbol>
+        <lines>1-131</lines>
+        <reason>QualityReport tracks overall_confidence, elements {tables, images, equations, chapters}, warnings, fidelity_targets. Need to extend with estimated_cost (float) and token_usage (dict) fields for AC #6 cost tracking. Already has field_validator pattern for confidence validation.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/tasks/conversion_pipeline.py</path>
+        <kind>celery_tasks</kind>
+        <symbol>update_job_status</symbol>
+        <lines>59-100</lines>
+        <reason>Helper function update_job_status updates conversion_jobs table with status, progress (0-100), stage_metadata (JSONB). Need to enhance to store full ProgressUpdate structure after each pipeline stage (25%, 50%, 75%, 95%, 100%). Sets completed_at when status=COMPLETED.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/ai/layout_analyzer.py</path>
+        <kind>service</kind>
+        <symbol>LayoutAnalyzer</symbol>
+        <lines>N/A</lines>
+        <reason>Existing LayoutAnalyzer service uses LangChain for AI-powered layout analysis. Need to integrate CostTrackerCallback to track tokens during GPT-4o/Claude API calls. Pattern: Pass callback to ChatOpenAI/ChatAnthropic, return cost_metadata in result dict. DO NOT recreate this service - extend it.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/ai/structure_analyzer.py</path>
+        <kind>service</kind>
+        <symbol>StructureAnalyzer</symbol>
+        <lines>N/A</lines>
+        <reason>Existing StructureAnalyzer service uses LangChain for document structure detection. Need to integrate CostTrackerCallback similar to LayoutAnalyzer. Aggregate token costs across both services for total job cost. DO NOT recreate this service - extend it.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/job_service.py</path>
+        <kind>service</kind>
+        <symbol>JobService</symbol>
+        <lines>N/A</lines>
+        <reason>Service layer for job operations with Redis caching. Implements list_jobs, get_job, delete_job, generate_download_url. Used as dependency in jobs.py router. May need to add get_progress method or reuse get_job with lightweight projection.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>settings</kind>
+        <symbol>settings</symbol>
+        <lines>N/A</lines>
+        <reason>Environment configuration with Supabase, Redis, AI API keys. Need to add new config variables for cost tracking: OPENAI_INPUT_COST_PER_1M, OPENAI_OUTPUT_COST_PER_1M, ANTHROPIC_INPUT_COST_PER_1M, ANTHROPIC_OUTPUT_COST_PER_1M, PROGRESS_POLLING_INTERVAL (default: 2000ms).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useUser.ts</path>
+        <kind>react_hook</kind>
+        <symbol>useUser</symbol>
+        <lines>N/A</lines>
+        <reason>Existing pattern for custom React hooks in frontend. Create new useJobProgress.ts hook following this structure. Use TanStack Query (not installed yet - need to add @tanstack/react-query to package.json) for polling with refetchInterval.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/business/UploadZone.tsx</path>
+        <kind>react_component</kind>
+        <symbol>UploadZone</symbol>
+        <lines>N/A</lines>
+        <reason>Existing business component pattern. Create new JobProgress.tsx component in same directory. Use shadcn/ui Progress component (@radix-ui/react-progress already installed). Pattern: TypeScript, functional component, professional blue theme, error boundaries.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>dependencies</kind>
+        <symbol>dependencies</symbol>
+        <lines>14-38</lines>
+        <reason>Frontend dependencies: Next.js 15.5.7, React 19.2.1, @radix-ui/react-progress 1.1.8 (for progress bar). Need to add @tanstack/react-query for efficient polling in useJobProgress hook. Already has axios 1.13.2 for API calls. Uses Vitest for testing.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>next</package>
+        <version>^15.5.7</version>
+        <reason>Frontend framework - latest stable with App Router</reason>
+      </node>
+      <package>react</package>
+        <version>^19.2.1</version>
+        <reason>UI library - latest stable</reason>
+      </node>
+      <package>@radix-ui/react-progress</package>
+        <version>^1.1.8</version>
+        <reason>Already installed - use for JobProgress progress bar component</reason>
+      </node>
+      <package>@tanstack/react-query</package>
+        <version>MISSING - need to install</version>
+        <reason>Required for useJobProgress hook polling logic with refetchInterval</reason>
+      </node>
+      <package>axios</package>
+        <version>^1.13.2</version>
+        <reason>Already installed - HTTP client for polling /jobs/{id}/progress endpoint</reason>
+      </node>
+    </dependencies>
+    <python>
+      <package>fastapi</package>
+        <version>0.122.0</version>
+        <reason>Backend framework - add progress endpoint to existing jobs router</reason>
+      </package>
+      <package>pydantic</package>
+        <version>2.x</version>
+        <reason>Schema validation - create ProgressUpdate model, extend QualityReport</reason>
+      </package>
+      <package>celery</package>
+        <version>5.5.3</version>
+        <reason>Async task queue - emit progress updates from conversion pipeline tasks</reason>
+      </package>
+      <package>langchain</package>
+        <version>0.3.12</version>
+        <reason>AI orchestration - implement CostTrackerCallback for token tracking</reason>
+      </package>
+      <package>langchain-openai</package>
+        <version>0.2.9</version>
+        <reason>GPT-4o integration - track tokens via callback</reason>
+      </package>
+      <package>langchain-anthropic</package>
+        <version>0.2.5</version>
+        <reason>Claude 3 Haiku integration - track tokens via callback</reason>
+      </package>
+      <package>redis</package>
+        <version>5.0.1</version>
+        <reason>Cache invalidation when progress updates</reason>
+      </package>
+    </python>
+  </artifacts>
+
+  <constraints>
+- **Polling Architecture (MVP):** Use HTTP polling (2-second interval) instead of WebSocket/SSE for Railway/Vercel serverless compatibility. Future enhancement: Migrate to WebSocket when infrastructure supports it.
+- **Service Pattern:** All business logic in services (JobService, LayoutAnalyzer, StructureAnalyzer). Controllers/routers delegate to services.
+- **DO NOT RECREATE Existing Services:** Extend backend/app/services/ai/layout_analyzer.py and structure_analyzer.py with CostTrackerCallback - do NOT rewrite from scratch.
+- **Extend QualityReport Schema:** Add estimated_cost and token_usage fields to backend/app/schemas/quality_report.py - do NOT create new schema file.
+- **RLS Policy Enforcement:** All job queries must validate user ownership (auth.uid() = user_id) via Supabase RLS.
+- **Progress Update Pattern:** After each pipeline stage, call update_job_status with progress_percentage (25%, 50%, 75%, 95%, 100%) and stage_metadata including elements_detected, estimated_cost.
+- **Testing Pattern:** Mock AI responses with fixtures. Unit tests for core logic. Integration tests for full pipeline. No sensitive data in logs.
+- **Professional Blue Theme:** UI components use UX spec colors - Primary: #2563eb, Secondary: #64748b, Accent: #0ea5e9, Success: #10b981, Warning: #f59e0b, Error: #ef4444.
+- **Error Handling:** Graceful degradation. User-facing messages clear and actionable. Log errors for debugging without exposing sensitive data.
+- **Code Style:** Backend: Python 3.13, FastAPI patterns, Pydantic V2, async/await. Frontend: TypeScript, React 19, Next.js App Router, functional components, shadcn/ui.
+- **Pre-Flight Checklist Mandatory:** Must complete checklist from .bmad/bmm/templates/pre-flight-checklist.md before marking story as "review". Include in PR description.
+</constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/v1/jobs/{job_id}/progress</name>
+      <kind>REST_API</kind>
+      <signature>
+GET /api/v1/jobs/{job_id}/progress
+Headers: Authorization: Bearer &lt;supabase_jwt&gt;
+Response 200: ProgressUpdate {
+  job_id: string (UUID)
+  status: string (QUEUED|PROCESSING|COMPLETED|FAILED)
+  progress_percentage: int (0-100)
+  current_stage: string (upload|layout_analysis|structure|epub_generation|quality_scoring)
+  stage_description: string ("Analyzing layout...", "Detecting tables and images...")
+  elements_detected: {
+    tables: int
+    images: int
+    equations: int
+    chapters: int
+  }
+  estimated_time_remaining: int | null (seconds)
+  estimated_cost: float | null (USD, e.g., 0.15)
+  quality_confidence: int | null (0-100)
+  timestamp: datetime (ISO 8601)
+}
+Response 404: Job not found or user doesn't own job
+Response 403: Forbidden (RLS policy violation)
+      </signature>
+      <path>backend/app/api/v1/jobs.py</path>
+    </interface>
+    <interface>
+      <name>ProgressUpdate Pydantic Schema</name>
+      <kind>pydantic_model</kind>
+      <signature>
+class ProgressUpdate(BaseModel):
+    job_id: str = Field(description="Job UUID")
+    status: str = Field(description="QUEUED|PROCESSING|COMPLETED|FAILED")
+    progress_percentage: int = Field(ge=0, le=100)
+    current_stage: str = Field(description="upload|layout_analysis|structure|epub_generation|quality_scoring")
+    stage_description: str = Field(description="User-friendly stage description")
+    elements_detected: ElementsDetected = Field(default_factory=ElementsDetected)
+    estimated_time_remaining: Optional[int] = Field(default=None, description="Seconds remaining")
+    estimated_cost: Optional[float] = Field(default=None, description="Estimated AI cost in USD")
+    quality_confidence: Optional[int] = Field(default=None, ge=0, le=100)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class ElementsDetected(BaseModel):
+    tables: int = Field(default=0, ge=0)
+    images: int = Field(default=0, ge=0)
+    equations: int = Field(default=0, ge=0)
+    chapters: int = Field(default=0, ge=0)
+      </signature>
+      <path>backend/app/schemas/progress.py (NEW FILE)</path>
+    </interface>
+    <interface>
+      <name>CostTrackerCallback LangChain Callback</name>
+      <kind>langchain_callback</kind>
+      <signature>
+from langchain.callbacks.base import BaseCallbackHandler
+
+class CostTrackerCallback(BaseCallbackHandler):
+    def __init__(self):
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.total_tokens = 0
+        self.model_costs = {
+            "gpt-4o": {"input": 2.50, "output": 10.00},  # per 1M tokens
+            "claude-3-haiku": {"input": 0.25, "output": 1.25}
+        }
+
+    def on_llm_end(self, response, **kwargs):
+        # Extract token usage from LLM response
+        # Update self.prompt_tokens, self.completion_tokens, self.total_tokens
+
+    def get_total_cost(self, model_name: str = "gpt-4o") -> float:
+        # Calculate: (prompt_tokens / 1M) * input_cost + (completion_tokens / 1M) * output_cost
+        # Return rounded to 4 decimal places
+
+    def get_token_usage(self) -> Dict[str, int]:
+        return {
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "total_tokens": self.total_tokens
+        }
+      </signature>
+      <path>backend/app/services/ai/cost_tracker.py (NEW FILE)</path>
+    </interface>
+    <interface>
+      <name>useJobProgress React Hook</name>
+      <kind>react_hook</kind>
+      <signature>
+import { useQuery } from '@tanstack/react-query';
+
+interface ProgressUpdate {
+  job_id: string;
+  status: string;
+  progress_percentage: number;
+  current_stage: string;
+  stage_description: string;
+  elements_detected: {
+    tables: number;
+    images: number;
+    equations: number;
+    chapters: number;
+  };
+  estimated_time_remaining?: number;
+  estimated_cost?: number;
+  quality_confidence?: number;
+  timestamp: string;
+}
+
+export function useJobProgress(jobId: string) {
+  const { data: progress, isLoading, error } = useQuery&lt;ProgressUpdate&gt;({
+    queryKey: ['job-progress', jobId],
+    queryFn: async () =&gt; {
+      const res = await fetch(`/api/v1/jobs/${jobId}/progress`);
+      if (!res.ok) throw new Error('Failed to fetch progress');
+      return res.json();
+    },
+    refetchInterval: (data) =&gt; {
+      // Poll every 2 seconds while PROCESSING or QUEUED
+      if (data?.status === 'PROCESSING' || data?.status === 'QUEUED') {
+        return 2000;
+      }
+      return false; // Stop polling when complete
+    },
+    retry: 3,
+    retryDelay: (attemptIndex) =&gt; Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+  });
+
+  return { progress, isLoading, error };
+}
+      </signature>
+      <path>frontend/src/hooks/useJobProgress.ts (NEW FILE)</path>
+    </interface>
+    <interface>
+      <name>JobProgress React Component</name>
+      <kind>react_component</kind>
+      <signature>
+import { Progress } from '@/components/ui/progress';
+import { useJobProgress } from '@/hooks/useJobProgress';
+
+export function JobProgress({ jobId }: { jobId: string }) {
+  const { progress, isLoading, error } = useJobProgress(jobId);
+
+  // Render:
+  // - Progress bar with percentage (0-100%)
+  // - Stage description text ("Analyzing layout... 25%")
+  // - Element detection counters (grid of 4 cards: Tables, Images, Equations, Chapters)
+  // - Estimated time remaining ("~45 seconds remaining")
+  // - Real-time cost estimate ("Estimated cost: $0.12")
+  // - Quality confidence indicator ("Quality: 94%" with color coding)
+  // - Loading skeleton, error boundary
+}
+      </signature>
+      <path>frontend/src/components/business/JobProgress.tsx (NEW FILE)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend: pytest with fixtures for AI responses, mock Celery tasks, Supabase client mocks. Unit tests in tests/unit/, integration tests in tests/integration/. Frontend: Vitest with @testing-library/react, mock API responses. Test files colocated or in __tests__/. Pattern: Arrange-Act-Assert. Coverage target: 80%+ for critical paths.
+    </standards>
+    <locations>
+backend/tests/unit/services/ai/test_cost_tracker.py (NEW)
+backend/tests/unit/api/test_progress_endpoint.py (NEW)
+backend/tests/integration/test_real_time_progress.py (NEW)
+frontend/src/hooks/__tests__/useJobProgress.test.ts (NEW)
+frontend/src/components/business/__tests__/JobProgress.test.tsx (NEW)
+    </locations>
+    <ideas>
+- AC #1 (Polling Mechanism): Test useJobProgress hook starts polling when status=PROCESSING, stops when status=COMPLETED. Mock fetch responses with different progress states.
+- AC #2 (Progress Bar): Test JobProgress component renders progress bar with correct percentage. Verify smooth animation CSS class applied.
+- AC #3 (Element Counters): Test counters increment as elements_detected updates. Verify tables=12, images=8, equations=5, chapters=15 renders correctly.
+- AC #4 (Connection Handling): Test useJobProgress retry logic with failed fetch. Verify exponential backoff (1s, 2s, 4s, max 10s). Simulate network offline and verify pause/resume.
+- AC #5 (Performance): Measure progress endpoint latency <200ms target. Test concurrent polling (100 users) doesn't degrade performance.
+- AC #6 (Cost Tracking): Test CostTrackerCallback.on_llm_end extracts token usage. Verify get_total_cost calculation: (5000 prompt + 2000 completion) * GPT-4o pricing = $0.1325. Test integration with LayoutAnalyzer and StructureAnalyzer.
+- AC #8 (API Endpoint): Test GET /jobs/{id}/progress returns ProgressUpdate schema. Verify RLS: user can't fetch other user's job progress (403). Verify 404 if job not found.
+- AC #9 (Schema Validation): Test ProgressUpdate Pydantic validates progress_percentage 0-100. Test invalid values raise ValidationError.
+- AC #11 (Error Handling): Test progress endpoint handles job FAILED status gracefully. Test useJobProgress displays connection error when fetch fails. Test timeout scenario (>10min no updates).
+- AC #12 (Integration): Run full pipeline with mock PDF. Poll progress endpoint during conversion. Verify progress sequence: 0% → 25% → 50% → 75% → 95% → 100%. Verify elements_detected increments correctly. Verify estimated_cost appears after AI stages complete.
+    </ideas>
+  </tests>
+</story-context>
