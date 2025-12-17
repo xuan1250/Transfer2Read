@@ -27,6 +27,7 @@ migrations = [
     "005_ai_layout_analysis_columns.sql",
     "006_document_structure_column.sql",
     "007_quality_report_column.sql",
+    "008_feedback_and_issues_tables.sql",
 ]
 
 migrations_dir = Path(__file__).parent / "supabase" / "migrations"

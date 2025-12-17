@@ -1,0 +1,678 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>4</storyId>
+    <title>Download & Feedback Flow</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-4-download-feedback-flow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to download the final EPUB and provide feedback on the conversion quality</iWant>
+    <soThat>I can read my book and help improve the system</soThat>
+    <tasks>
+- Task 1: Backend Feedback & Issue Reporting API (AC: #5)
+  - 1.1: Create `job_feedback` table in Supabase with RLS policies
+  - 1.2: Create `job_issues` table in Supabase with RLS policies
+  - 1.3: Create `POST /api/v1/jobs/{job_id}/feedback` endpoint
+  - 1.4: Create `POST /api/v1/jobs/{job_id}/issues` endpoint
+  - 1.5: Add validation logic (job ownership, required fields)
+  - 1.6: Unit tests for feedback and issue endpoints
+
+- Task 2: Download EPUB Button Implementation (AC: #1)
+  - 2.1: Add "Download EPUB" button to `/jobs/{id}` page
+  - 2.2: Integrate with existing download endpoint (`GET /api/v1/jobs/{job_id}/download`)
+  - 2.3: Implement loading spinner during download initiation
+  - 2.4: Implement error handling (404, 403, network timeout)
+  - 2.5: Add success message after download starts
+  - 2.6: Add retry button on error
+
+- Task 3: Confetti Animation Integration (AC: #2)
+  - 3.1: Integrate `canvas-confetti` or `react-confetti` library
+  - 3.2: Trigger confetti animation on successful download
+  - 3.3: Ensure animation plays once per download (use localStorage flag)
+  - 3.4: Add accessibility option to disable animation
+  - 3.5: Test confetti animation performance (<100KB bundle size)
+
+- Task 4: Feedback Widget UI (AC: #4, #6)
+  - 4.1: Create feedback widget component with 👍/👎 buttons
+  - 4.2: Integrate with backend `POST /api/v1/jobs/{job_id}/feedback` endpoint
+  - 4.3: Add optional follow-up textarea if 👎 clicked
+  - 4.4: Display thank you message after submission
+  - 4.5: Hide widget after feedback submitted (replace with "Thanks!" message)
+  - 4.6: Add error handling for API failures
+
+- Task 5: Report Issue Modal (AC: #3, #6)
+  - 5.1: Create modal dialog component with shadcn/ui Dialog
+  - 5.2: Create form with issue_type dropdown, page_number input, description textarea
+  - 5.3: Add form validation (description required, page_number numeric)
+  - 5.4: Integrate with backend `POST /api/v1/jobs/{job_id}/issues` endpoint
+  - 5.5: Display success message and close modal after submission
+  - 5.6: Add error handling for API failures
+
+- Task 6: Analytics Event Tracking (AC: #7)
+  - 6.1: Create `conversion_events` table for analytics
+  - 6.2: Log download events (job_id, user_id, timestamp)
+  - 6.3: Log feedback events (job_id, rating, timestamp)
+  - 6.4: Log issue report events (job_id, issue_type, timestamp)
+  - 6.5: Backend structured logging for analytics pipeline
+
+- Task 7: End-to-End Integration Tests (AC: #8)
+  - 7.1: Set up test fixtures (5 sample PDFs from Epic 4 Action 1.4)
+  - 7.2: Create `tests/integration/test_full_pipeline.py` test file
+  - 7.3: Implement test scenario 1: Simple Text PDF (99%+ confidence, <30s)
+  - 7.4: Implement test scenario 2: Complex Technical Book (90-95% confidence)
+  - 7.5: Implement test scenario 3: Multi-Language Document (95%+, fonts embedded)
+  - 7.6: Implement test scenario 4: Large File (300+ pages, <2 min, ≤120% size)
+  - 7.7: Implement test scenario 5: Edge Case (corrupted, <80%, graceful degradation)
+  - 7.8: Configure GitHub Actions monthly schedule (cost control)
+  - 7.9: Document AI API budget tracking ($50/month limit)
+
+- Task 8: Pre-Flight Integration Checklist (AC: #9)
+  - 8.1: Complete pre-flight checklist template
+  - 8.2: Verify Services & Dependencies (Backend API, Supabase, DB tables)
+  - 8.3: Verify Data Flow (Download → Feedback → Issue reporting)
+  - 8.4: Verify Error Handling (404, 403, network, API failures)
+  - 8.5: Verify Testing (unit, integration, E2E)
+  - 8.6: Save completed checklist to docs/sprint-artifacts/
+
+- Task 9: Accessibility and Performance Testing (AC: #11, #12)
+  - 9.1: Test keyboard navigation (download, feedback, issue report)
+  - 9.2: Test screen reader compatibility (ARIA labels)
+  - 9.3: Test confetti animation accessibility (motion sensitivity)
+  - 9.4: Measure download performance (immediate start, no delays)
+  - 9.5: Measure confetti library size (<100KB)
+  - 9.6: Test feedback/issue submission performance (async, non-blocking)
+
+- Task 10: Integration and Final Testing (AC: #10)
+  - 10.1: Integration test: Download EPUB with valid job
+  - 10.2: Integration test: Download error handling (404, 403, timeout)
+  - 10.3: Integration test: Feedback submission (positive/negative)
+  - 10.4: Integration test: Issue report submission (all fields)
+  - 10.5: Integration test: Error handling for feedback/issue APIs
+  - 10.6: Cross-browser testing (Chrome, Firefox, Safari, Edge)
+  - 10.7: Mobile device testing (iOS, Android)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Download EPUB Button:
+   - "Download EPUB" button prominently displayed after conversion completes
+   - Button triggers download via signed URL from Supabase Storage
+   - Download uses browser native download mechanism
+   - Button disabled while job status != COMPLETED
+   - Loading spinner during download initiation
+   - Success message after download starts
+   - Error handling for 404, 403, network timeout
+   - Retry button shown on error
+
+2. Confetti Animation on Success:
+   - Confetti animation plays on successful download
+   - Animation is celebratory and brief (2-3 seconds)
+   - Animation library integrated (canvas-confetti)
+   - Animation plays once per download only
+   - Animation can be skipped for motion sensitivity
+   - Delight factor: Creates positive emotional response
+
+3. Report Issue Button:
+   - "Report Issue" button visible after conversion completes
+   - Button opens modal dialog with issue reporting form
+   - Form includes: issue_type dropdown, page_number input, description textarea, screenshot upload (optional)
+   - Form validation: description required, page_number optional numeric
+   - Submit calls backend API to store issue report
+   - Success message after submission
+   - Modal closes after successful submission
+   - Error handling for API failures
+
+4. Simple Feedback Form (Thumbs Up/Down):
+   - Feedback widget displayed after conversion completes
+   - Two-button interface: 👍 (Good) / 👎 (Poor)
+   - Clicking either button submits to backend API
+   - Optional follow-up question if 👎 clicked
+   - Thank you message after submission
+   - Widget disappears after submission
+   - Backend stores feedback with user_id, job_id, rating, comment
+   - Analytics: Track thumbs up/down ratio
+
+5. Backend API for Feedback Storage:
+   - POST /api/v1/jobs/{job_id}/feedback endpoint (rating, comment)
+   - POST /api/v1/jobs/{job_id}/issues endpoint (issue_type, page_number, description, screenshot_url)
+   - Authentication required (JWT from Supabase Auth)
+   - Validation: job_id belongs to authenticated user
+   - Database tables: job_feedback, job_issues with RLS policies
+   - Returns appropriate status codes (200 OK, 201 Created)
+
+6. Integration with Quality Report Page:
+   - Download button integrated into /jobs/{id} page
+   - Feedback widget positioned below quality report summary
+   - Report Issue button near download button
+   - Responsive layout: Stack vertically on mobile
+   - Professional Blue theme styling consistent
+   - shadcn/ui components used
+
+7. Analytics and Tracking:
+   - Download events tracked (job_id, user_id, timestamp)
+   - Feedback submission tracked (job_id, rating, timestamp)
+   - Issue report submission tracked (job_id, issue_type, timestamp)
+   - Backend logs structured events
+   - Events stored in conversion_events table
+   - Aggregate metrics: downloads, feedback ratio, issue frequency
+
+8. End-to-End Integration Test Suite:
+   - Test file: tests/integration/test_full_pipeline.py
+   - 5 test scenarios covering full pipeline
+   - Tests use real AI APIs (GPT-4o/Claude 3 Haiku)
+   - Quality reports match expected ranges (±5%)
+   - EPUBs validate against EPUB 3.0 spec
+   - File sizes ≤ 120% of PDF
+   - CI/CD: GitHub Actions monthly schedule
+   - Budget: $50/month AI API limit
+
+9. Pre-Flight Integration Checklist:
+   - Complete checklist before marking "review"
+   - Template: .bmad/bmm/templates/pre-flight-checklist.md
+   - Verify: Services, Data Flow, Error Handling, Testing, Documentation
+   - Include completed checklist in code review PR
+
+10. Error Handling and Edge Cases:
+    - Download button disabled if EPUB not ready
+    - Graceful error if EPUB deleted (404)
+    - Network timeout handling with retry
+    - Feedback submission failure handling
+    - Issue report validation (prevent empty descriptions)
+    - Duplicate feedback prevention
+
+11. Accessibility:
+    - Download button keyboard accessible
+    - Feedback buttons keyboard accessible
+    - Modal dialog ARIA labels
+    - Form inputs have proper labels
+    - Error messages announced to screen readers
+    - Confetti animation can be disabled
+
+12. Performance:
+    - Download starts immediately
+    - Confetti animation lightweight (<100KB)
+    - Feedback submission async (non-blocking)
+    - Issue report modal lazy-loaded
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD - Functional Requirements -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>EPUB Output & Download (FR36-FR40)</section>
+        <snippet>FR38: Users can download converted EPUB files. FR33: Users receive a quality report after conversion showing detected elements (tables, images, chapters). FR35: System completes conversion of 300-page technical book in under 2 minutes.</snippet>
+      </doc>
+
+      <!-- PRD - Success Criteria -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Success Criteria - User Behavior Signals</section>
+        <snippet>Quality Validation: Beta tester quote "This finally works!" or "I can actually read this now". 4.5+ / 5 stars on conversion quality rating. Refund rate < 5% (indicates delivered value).</snippet>
+      </doc>
+
+      <!-- Architecture - API Contracts -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>API Contracts - Download Endpoint</section>
+        <snippet>GET /api/v1/jobs/{job_id}/download - Response: 302 Redirect (to S3 Presigned URL). Used to download converted EPUB files with signed URLs from Supabase Storage.</snippet>
+      </doc>
+
+      <!-- Architecture - Supabase Storage -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture - File Security</section>
+        <snippet>Uploads and downloads are private Supabase Storage objects. Access via signed URLs with configurable expiration (default 1 hour). Automatic file cleanup via Supabase Storage lifecycle policies (30 days).</snippet>
+      </doc>
+
+      <!-- Architecture - Testing Patterns -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Testing Patterns - Frontend Testing</section>
+        <snippet>Component Tests: Test user interactions, not implementation details. Mocking: Mock API calls using vi.mock() or MSW. Async Testing: Use waitFor() for async state updates. Coverage Target: 70% minimum.</snippet>
+      </doc>
+
+      <!-- UX Design - Quality Feedback UI -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 6.2 - Secondary Journey: Customization Flow</section>
+        <snippet>Quality Preview screen with download and customization actions. Users verify conversion quality before downloading. Professional Blue theme (#2563eb primary, #10b981 success). shadcn/ui components: Button, Dialog, Textarea, Alert.</snippet>
+      </doc>
+
+      <!-- UX Design - Accessibility Standards -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 8.3 - Accessibility Standards</section>
+        <snippet>WCAG 2.1 AA Compliance. Keyboard Navigation: All interactive elements focusable. Screen Reader Support: ARIA labels for icon-only buttons, live regions for updates. Motion: Respect prefers-reduced-motion, disable animations for motion sensitivity.</snippet>
+      </doc>
+
+      <!-- Epics - Story 5.4 Details -->
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 5 - Story 5.4: Download & Feedback Flow</section>
+        <snippet>End-to-End Integration Test Suite (AC #8): Test full pipeline with 5 scenarios using real AI APIs. Monthly GitHub Actions schedule for cost control. Budget: $50/month AI API limit. Pre-Flight Checklist (AC #9): Mandatory template verification before review.</snippet>
+      </doc>
+
+      <!-- Epics - Story 5.3 Learnings -->
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 5 - Story 5.4: Learnings from Previous Story</section>
+        <snippet>Reuse patterns from Story 5.3: useJob hook (TanStack Query), download endpoint (backend/app/api/v1/jobs.py:779-818), Supabase Storage signed URLs, shadcn/ui components (Button, Dialog, Textarea), authentication guard, error handling (FailedJobState.tsx), responsive design patterns.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Frontend - useJob Hook (REUSE) -->
+      <artifact>
+        <path>frontend/src/hooks/useJob.ts</path>
+        <kind>hook</kind>
+        <symbol>useJob</symbol>
+        <lines>18-57</lines>
+        <reason>Reuse existing hook for fetching job details with TanStack Query. Already handles auth, error states (404, 403), and includes quality_details parameter. Pattern established in Story 5.3.</reason>
+      </artifact>
+
+      <!-- Frontend - Job Types (REUSE) -->
+      <artifact>
+        <path>frontend/src/types/job.ts</path>
+        <kind>type</kind>
+        <symbol>Job, JobStatus, QualityReport, DownloadUrlResponse</symbol>
+        <lines>1-62</lines>
+        <reason>Existing TypeScript interfaces for Job entities. DownloadUrlResponse interface shows download_url and expires_at fields - use for download button implementation.</reason>
+      </artifact>
+
+      <!-- Backend - JobService Download URL Generator (REUSE) -->
+      <artifact>
+        <path>backend/app/services/job_service.py</path>
+        <kind>service</kind>
+        <symbol>JobService.generate_download_url</symbol>
+        <lines>299-309</lines>
+        <reason>Existing method generates signed Supabase Storage URLs for EPUB downloads. Returns tuple of (signed_url, expires_at). Already used by download endpoint - integrate with frontend download button.</reason>
+      </artifact>
+
+      <!-- Frontend - shadcn/ui Components (REUSE) -->
+      <artifact>
+        <path>frontend/src/components/ui/</path>
+        <kind>component</kind>
+        <symbol>Button, Dialog, Toast, Alert, Tabs, Tooltip, Collapsible</symbol>
+        <lines>N/A</lines>
+        <reason>Existing shadcn/ui components for UI implementation. Use Dialog for "Report Issue" modal, Toast for success messages, Button for download/feedback actions, Tooltip for accessibility hints.</reason>
+      </artifact>
+
+      <!-- Backend - API Pattern Reference -->
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>router</kind>
+        <symbol>jobs_router</symbol>
+        <lines>1-749</lines>
+        <reason>Existing jobs API router. Follow established patterns for: authentication (Supabase JWT), error handling, response schemas. Add new feedback and issues endpoints to this router.</reason>
+      </artifact>
+
+      <!-- Frontend - Job Detail Page Pattern Reference -->
+      <artifact>
+        <path>frontend/src/app/jobs/[id]/page.tsx</path>
+        <kind>page</kind>
+        <symbol>JobDetailPage</symbol>
+        <lines>N/A</lines>
+        <reason>Job detail page from Story 5.2/5.3. Add download button, feedback widget, and issue report button to this page. Follow existing layout and authentication guard patterns.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <!-- Frontend Dependencies -->
+      <ecosystem name="Node.js/npm">
+        <package name="canvas-confetti" version="^1.9.3" usage="NEW - Confetti animation for successful download (Task 3). Lightweight library (<100KB) for celebratory effect. Install: npm install canvas-confetti" />
+        <package name="@tanstack/react-query" version="^5.90.12" usage="EXISTING - Already used in useJob hook for data fetching. Reuse for mutations (feedback/issue submission)." />
+        <package name="react-hook-form" version="^7.68.0" usage="EXISTING - Form management for issue report modal. Already in project." />
+        <package name="zod" version="^4.1.13" usage="EXISTING - Schema validation for forms. Use for issue report form validation." />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" usage="EXISTING - shadcn/ui Dialog component for 'Report Issue' modal." />
+        <package name="@radix-ui/react-toast" version="^1.2.15" usage="EXISTING - shadcn/ui Toast for success/error notifications." />
+      </ecosystem>
+
+      <!-- Backend Dependencies -->
+      <ecosystem name="Python/pip">
+        <package name="fastapi" version="0.122.0" usage="EXISTING - Web framework for new feedback/issues endpoints." />
+        <package name="supabase" version="2.24.0" usage="EXISTING - Supabase client for database operations (job_feedback, job_issues tables)." />
+        <package name="pydantic" version="^2.0" usage="EXISTING - Request/response schemas for feedback and issues endpoints." />
+        <package name="pytest" version="^8.0" usage="EXISTING - Testing framework for E2E integration tests (Task 7)." />
+        <package name="httpx" version="^0.27.0" usage="EXISTING or NEW - Required for async HTTP requests in E2E tests." />
+      </ecosystem>
+
+      <!-- Database (Supabase PostgreSQL) -->
+      <ecosystem name="Database">
+        <package name="job_feedback table" version="N/A" usage="NEW - Store user feedback (👍/👎). Schema in story Dev Notes. Create via Supabase SQL Editor." />
+        <package name="job_issues table" version="N/A" usage="NEW - Store reported issues. Schema in story Dev Notes. Create via Supabase SQL Editor." />
+        <package name="conversion_events table" version="N/A" usage="NEW - Analytics events table. Schema in story Dev Notes." />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Authentication & Authorization -->
+    <constraint category="security">
+      All API endpoints MUST require Supabase JWT authentication. Extract user_id from JWT token, never trust client-provided user_id. Validate job ownership: job.user_id must match authenticated user_id.
+    </constraint>
+
+    <constraint category="security">
+      Row Level Security (RLS) policies MUST be enabled on job_feedback, job_issues, and conversion_events tables. Policy: Users can only INSERT rows where auth.uid() = user_id. Users can only SELECT their own rows.
+    </constraint>
+
+    <!-- Professional Blue Theme -->
+    <constraint category="styling">
+      All UI components MUST use Professional Blue theme: Primary #2563eb, Success #10b981, Error #ef4444. Follow UX Spec Section 4.1 color system. Use existing shadcn/ui components styled with theme tokens.
+    </constraint>
+
+    <!-- Accessibility (WCAG 2.1 AA) -->
+    <constraint category="accessibility">
+      Keyboard Navigation: Download button, feedback buttons, and issue report modal MUST be fully keyboard accessible (Tab, Enter, Escape). Screen Reader: ARIA labels required for icon-only buttons, form inputs must have proper labels, error messages must be announced.
+    </constraint>
+
+    <constraint category="accessibility">
+      Motion Sensitivity: Confetti animation MUST respect prefers-reduced-motion media query. If user has motion sensitivity preference, skip animation entirely. Implement in confetti-utils.ts helper.
+    </constraint>
+
+    <!-- Performance -->
+    <constraint category="performance">
+      Confetti library MUST be lightweight (<100KB). Use canvas-confetti package. Download action MUST initiate immediately (no artificial delays). Feedback/issue API calls MUST be async and non-blocking (don't freeze UI).
+    </constraint>
+
+    <constraint category="performance">
+      Issue report modal MUST be lazy-loaded (not included in initial bundle). Use Next.js dynamic import: const IssueReportModal = dynamic(() => import('./IssueReportModal'), { ssr: false }).
+    </constraint>
+
+    <!-- Data Validation -->
+    <constraint category="validation">
+      Feedback API: rating field MUST be enum ('positive' | 'negative'). Comment field optional (TEXT). Issue API: description field REQUIRED (cannot be empty). Page_number field OPTIONAL (integer only if provided). Issue_type MUST be from predefined list.
+    </constraint>
+
+    <!-- Testing Requirements -->
+    <constraint category="testing">
+      End-to-End Integration Tests (AC #8): MUST use real AI APIs (GPT-4o, Claude 3 Haiku). Tests run monthly via GitHub Actions (cost control). Budget limit: $50/month. Tests validate full pipeline: Upload → AI → EPUB → Download. EPUBs MUST pass epubcheck validation.
+    </constraint>
+
+    <constraint category="testing">
+      Pre-Flight Checklist (AC #9): MANDATORY before marking story as "review". Use template from .bmad/bmm/templates/pre-flight-checklist.md. Verify: Services, Data Flow, Error Handling, Testing, Documentation. Include completed checklist in PR.
+    </constraint>
+
+    <!-- Architecture Patterns -->
+    <constraint category="architecture">
+      Service Pattern: Business logic MUST exist in backend/app/services/, NOT in API routes. Routes handle request/response only. Create FeedbackService and IssueService for business logic.
+    </constraint>
+
+    <constraint category="architecture">
+      Error Handling: Backend errors return standard JSON: {"detail": "message", "code": "ERROR_CODE"}. Frontend uses React Query onError for API failures. Display user-friendly error messages (not raw exceptions).
+    </constraint>
+
+    <!-- Code Organization -->
+    <constraint category="code-organization">
+      Frontend components follow domain organization: New components go in src/components/business/ (FeedbackWidget.tsx, IssueReportModal.tsx). Shared utilities in src/lib/ (confetti-utils.ts).
+    </constraint>
+
+    <constraint category="code-organization">
+      Database migrations via Supabase SQL Editor (NOT Alembic). Create tables manually with RLS policies. Document SQL in story Dev Notes for reproducibility.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Existing Download Endpoint (REUSE) -->
+    <interface>
+      <name>GET /api/v1/jobs/{job_id}/download</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: GET /api/v1/jobs/{job_id}/download
+        Headers: Authorization: Bearer {supabase_jwt}
+        Response 200: { "download_url": "https://...", "expires_at": "ISO8601" }
+        Response 404: Job not found
+        Response 403: Unauthorized (job doesn't belong to user)
+        Response 400: Job not completed (EPUB not ready)
+      </signature>
+      <path>backend/app/api/v1/jobs.py (existing endpoint)</path>
+    </interface>
+
+    <!-- NEW: Feedback Submission Endpoint -->
+    <interface>
+      <name>POST /api/v1/jobs/{job_id}/feedback</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: POST /api/v1/jobs/{job_id}/feedback
+        Headers: Authorization: Bearer {supabase_jwt}, Content-Type: application/json
+        Body: { "rating": "positive" | "negative", "comment": "optional text" }
+        Response 200: { "feedback_id": "uuid", "created_at": "ISO8601" }
+        Response 400: Invalid rating or job_id
+        Response 403: Unauthorized (job doesn't belong to user)
+        Response 404: Job not found
+      </signature>
+      <path>backend/app/api/v1/jobs.py (NEW - to be created in Task 1.3)</path>
+    </interface>
+
+    <!-- NEW: Issue Report Submission Endpoint -->
+    <interface>
+      <name>POST /api/v1/jobs/{job_id}/issues</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: POST /api/v1/jobs/{job_id}/issues
+        Headers: Authorization: Bearer {supabase_jwt}, Content-Type: application/json
+        Body: { "issue_type": "string", "page_number": number | null, "description": "required text", "screenshot_url": "string" | null }
+        Response 201: { "issue_id": "uuid", "created_at": "ISO8601" }
+        Response 400: Missing description or invalid fields
+        Response 403: Unauthorized (job doesn't belong to user)
+        Response 404: Job not found
+      </signature>
+      <path>backend/app/api/v1/jobs.py (NEW - to be created in Task 1.4)</path>
+    </interface>
+
+    <!-- Frontend Component Interface - FeedbackWidget -->
+    <interface>
+      <name>FeedbackWidget Component</name>
+      <kind>React component</kind>
+      <signature>
+        Props: { jobId: string, onFeedbackSubmitted?: (rating: 'positive' | 'negative') => void }
+        State: submitted (boolean), loading (boolean), error (string | null)
+        Events: onThumbsUp(), onThumbsDown(), onCommentSubmit()
+        API: Calls POST /api/v1/jobs/{job_id}/feedback
+      </signature>
+      <path>frontend/src/components/business/FeedbackWidget.tsx (NEW - Task 4)</path>
+    </interface>
+
+    <!-- Frontend Component Interface - IssueReportModal -->
+    <interface>
+      <name>IssueReportModal Component</name>
+      <kind>React component</kind>
+      <signature>
+        Props: { jobId: string, isOpen: boolean, onClose: () => void, onIssueSubmitted?: () => void }
+        Form Fields: issue_type (dropdown), page_number (number input), description (textarea), screenshot_url (file upload - future)
+        Validation: description required (Zod schema), page_number optional integer
+        API: Calls POST /api/v1/jobs/{job_id}/issues
+      </signature>
+      <path>frontend/src/components/business/IssueReportModal.tsx (NEW - Task 5)</path>
+    </interface>
+
+    <!-- Database Table Interface - job_feedback -->
+    <interface>
+      <name>job_feedback table</name>
+      <kind>Database table (Supabase PostgreSQL)</kind>
+      <signature>
+        Columns: id (UUID PK), job_id (UUID FK → conversion_jobs), user_id (UUID FK → auth.users), rating (VARCHAR CHECK 'positive'|'negative'), comment (TEXT nullable), created_at (TIMESTAMP)
+        RLS Policy: INSERT/SELECT allowed where auth.uid() = user_id
+        Indexes: (job_id, user_id) for quick lookups
+      </signature>
+      <path>Supabase SQL Editor - Create in Task 1.1</path>
+    </interface>
+
+    <!-- Database Table Interface - job_issues -->
+    <interface>
+      <name>job_issues table</name>
+      <kind>Database table (Supabase PostgreSQL)</kind>
+      <signature>
+        Columns: id (UUID PK), job_id (UUID FK), user_id (UUID FK), issue_type (VARCHAR 50), page_number (INT nullable), description (TEXT NOT NULL), screenshot_url (VARCHAR 500 nullable), created_at (TIMESTAMP)
+        RLS Policy: INSERT/SELECT allowed where auth.uid() = user_id
+        Indexes: (job_id, user_id) for admin dashboard queries
+      </signature>
+      <path>Supabase SQL Editor - Create in Task 1.2</path>
+    </interface>
+
+    <!-- Database Table Interface - conversion_events -->
+    <interface>
+      <name>conversion_events table</name>
+      <kind>Database table (Supabase PostgreSQL)</kind>
+      <signature>
+        Columns: id (UUID PK), job_id (UUID FK), user_id (UUID FK), event_type (VARCHAR 50: 'download'|'feedback_positive'|'feedback_negative'|'issue_reported'), event_data (JSONB nullable), created_at (TIMESTAMP)
+        RLS Policy: INSERT allowed where auth.uid() = user_id, SELECT for admins only
+        Purpose: Analytics tracking for aggregate metrics (downloads, feedback ratio, issue frequency)
+      </signature>
+      <path>Supabase SQL Editor - Create in Task 6.1</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Frontend Testing (Vitest + React Testing Library):
+      - Component tests focus on user interactions, not implementation details
+      - Mock API calls using vi.mock() or Mock Service Worker (MSW)
+      - Async testing with waitFor() for state updates
+      - Render helpers with providers (QueryClient, AuthContext)
+      - Coverage target: 70% minimum for new components
+      - Test file naming: ComponentName.test.tsx (colocated with components)
+      - Run: npm run test (watch mode), npm run test:coverage (CI)
+
+      Backend Testing (Pytest + FastAPI TestClient):
+      - Unit tests for services (FeedbackService, IssueService) with mocked Supabase
+      - Integration tests for API endpoints (test_api_feedback.py, test_api_issues.py)
+      - Test database with transaction rollback after each test
+      - Fixtures in conftest.py: test_client, test_db, authenticated_user
+      - Async tests use @pytest.mark.asyncio decorator
+      - Coverage target: 80% minimum for backend code
+      - Test file naming: test_*.py in tests/unit/ and tests/integration/
+      - Run: pytest (all), pytest tests/unit (fast), pytest --cov=app (coverage)
+
+      End-to-End Integration Tests (AC #8 - Critical):
+      - Test full pipeline: PDF Upload → AI Analysis → EPUB Generation → Download
+      - Use REAL AI APIs (GPT-4o, Claude 3 Haiku) - not mocked
+      - 5 test scenarios with different PDF complexities (simple, complex, multi-language, large, edge case)
+      - Validate EPUBs with epubcheck (EPUB 3.0 spec compliance)
+      - File size validation (≤ 120% of PDF size)
+      - Quality confidence validation (±5% of expected)
+      - Monthly GitHub Actions schedule (cost control: $50/month AI API budget)
+      - Test fixtures: tests/fixtures/epic-5-sample-pdfs/{1-5}/
+
+      Accessibility Testing:
+      - Keyboard navigation tests (Tab, Enter, Escape keys)
+      - Screen reader compatibility (test ARIA labels with jest-axe)
+      - Motion sensitivity tests (prefers-reduced-motion respected)
+      - Color contrast validation (4.5:1 minimum for WCAG AA)
+    </standards>
+
+    <locations>
+      Frontend Tests:
+      - frontend/src/components/business/FeedbackWidget.test.tsx - Component unit tests
+      - frontend/src/components/business/IssueReportModal.test.tsx - Modal component tests
+      - frontend/src/lib/confetti-utils.test.ts - Utility function tests
+      - frontend/src/__tests__/download-flow.test.tsx - Integration test (optional)
+
+      Backend Tests:
+      - backend/tests/unit/test_feedback_service.py - FeedbackService unit tests
+      - backend/tests/unit/test_issue_service.py - IssueService unit tests
+      - backend/tests/integration/test_api_feedback.py - Feedback API endpoint tests
+      - backend/tests/integration/test_api_issues.py - Issue API endpoint tests
+      - backend/tests/integration/test_full_pipeline.py - E2E pipeline tests (NEW - AC #8)
+
+      Test Fixtures:
+      - backend/tests/fixtures/epic-5-sample-pdfs/ - Sample PDFs for E2E tests (from Epic 4 Action 1.4)
+      - backend/tests/conftest.py - Shared pytest fixtures (test_client, authenticated_user, etc.)
+
+      CI/CD:
+      - .github/workflows/monthly-integration-tests.yml - E2E tests (monthly schedule)
+      - .github/workflows/ci.yml - Unit/integration tests (on every PR)
+    </locations>
+
+    <ideas>
+      Unit Tests (Component - FeedbackWidget):
+      - AC #4: Test 👍/👎 buttons render correctly
+      - AC #4: Test clicking 👍 calls API with rating="positive"
+      - AC #4: Test clicking 👎 shows optional comment textarea
+      - AC #4: Test thank you message displays after submission
+      - AC #4: Test widget disappears after feedback submitted
+      - AC #10: Test error handling when API fails (network error, 403, 500)
+      - AC #11: Test keyboard navigation (Tab to buttons, Enter to submit)
+      - AC #12: Test feedback submission is async (non-blocking)
+
+      Unit Tests (Component - IssueReportModal):
+      - AC #3: Test modal opens/closes correctly
+      - AC #3: Test form fields render (issue_type dropdown, page_number input, description textarea)
+      - AC #3: Test form validation (description required, page_number numeric)
+      - AC #3: Test submit calls API with correct data
+      - AC #3: Test success message displays and modal closes after submission
+      - AC #10: Test error handling (empty description, API failure, network timeout)
+      - AC #11: Test keyboard navigation (Escape to close, Tab through fields)
+      - AC #12: Test modal is lazy-loaded (dynamic import)
+
+      Unit Tests (Backend - Feedback API):
+      - AC #5: Test POST /api/v1/jobs/{job_id}/feedback creates database record
+      - AC #5: Test rating validation (must be 'positive' or 'negative')
+      - AC #5: Test authentication required (401 if no JWT)
+      - AC #5: Test job ownership validation (403 if job doesn't belong to user)
+      - AC #5: Test optional comment field (accepts null or text)
+      - AC #7: Test analytics event logged to conversion_events table
+
+      Unit Tests (Backend - Issues API):
+      - AC #5: Test POST /api/v1/jobs/{job_id}/issues creates database record
+      - AC #5: Test description validation (required, cannot be empty)
+      - AC #5: Test page_number validation (optional, integer if provided)
+      - AC #5: Test authentication and ownership validation
+      - AC #10: Test error cases (404 job not found, 400 invalid data)
+      - AC #7: Test analytics event logged
+
+      Integration Tests (Download Flow):
+      - AC #1: Test download button triggers GET /api/v1/jobs/{job_id}/download
+      - AC #1: Test download button disabled when job status != COMPLETED
+      - AC #1: Test loading spinner shows during download initiation
+      - AC #1: Test success message displays after download starts
+      - AC #10: Test error handling (404 EPUB deleted, 403 unauthorized, network timeout)
+      - AC #10: Test retry button appears on error
+      - AC #2: Test confetti animation plays on successful download (once only)
+      - AC #11: Test download button keyboard accessible
+
+      E2E Integration Tests (AC #8 - Full Pipeline):
+      - Test Scenario 1: Simple Text PDF (10-20 pages) → 99%+ confidence, <30s processing, valid EPUB
+      - Test Scenario 2: Complex Technical Book (50-100 pages, tables/equations) → 90-95% confidence, validate elements
+      - Test Scenario 3: Multi-Language Document (EN + CJK) → 95%+ confidence, fonts embedded, rendering correct
+      - Test Scenario 4: Large File (300+ pages) → <2 min conversion (FR35), EPUB size ≤ 120% PDF (FR37)
+      - Test Scenario 5: Edge Case (corrupted PDF) → <80% confidence, graceful degradation, no crash
+      - Test Pipeline Flow: Upload → AI Analysis → Structure → EPUB → Quality Report → Download → Validate
+      - Test EPUB validation: Run epubcheck on all generated EPUBs (must pass EPUB 3.0 spec)
+      - Test Budget Tracking: Log AI API costs per test run, alert if approaching $50/month limit
+
+      Accessibility Tests:
+      - AC #11: Test keyboard navigation for all interactive elements (axe-core library)
+      - AC #11: Test screen reader announcements (ARIA labels present and correct)
+      - AC #11: Test confetti animation respects prefers-reduced-motion (Jest mock matchMedia)
+      - AC #11: Test form inputs have proper labels and error messages announced
+
+      Performance Tests:
+      - AC #12: Test download initiates immediately (no artificial delays, <100ms)
+      - AC #12: Test confetti library size (<100KB) - bundle analysis
+      - AC #12: Test feedback submission async (UI doesn't freeze during API call)
+      - AC #12: Test issue modal lazy-loaded (not in initial bundle, Next.js dynamic import)
+      - AC #12: Test page load performance (<3s Time to Interactive)
+
+      Pre-Flight Checklist Tests (AC #9):
+      - Verify: All Supabase services accessible (PostgreSQL, Storage, Auth)
+      - Verify: Backend API endpoints respond (200/201/400/403/404 as expected)
+      - Verify: Data flow end-to-end (download → feedback → issue reporting)
+      - Verify: Error handling tested (404, 403, network errors, API failures)
+      - Verify: Unit tests pass (70%+ frontend, 80%+ backend coverage)
+      - Verify: Integration tests pass (E2E pipeline scenarios)
+      - Verify: Documentation updated (story context, API docs, checklist completed)
+    </ideas>
+  </tests>
+</story-context>

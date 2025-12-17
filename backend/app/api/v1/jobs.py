@@ -17,6 +17,8 @@ from app.schemas.job import (
     DownloadUrlResponse
 )
 from app.schemas.progress import ProgressUpdate, ElementsDetected
+from app.schemas.feedback import FeedbackSubmitRequest, FeedbackResponse
+from app.schemas.issue import IssueReportRequest, IssueReportResponse
 from app.core.supabase import get_supabase_client
 from app.core.redis_client import init_redis_client
 from app.services.storage.supabase_storage import SupabaseStorageService
@@ -229,6 +231,20 @@ async def get_job(
 
         return job
 
+    except PermissionError as e:
+        # Job exists but doesn't belong to user (403 Forbidden)
+        logger.warning(
+            "get_job_forbidden",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"detail": "You do not have permission to view this job", "code": "FORBIDDEN"}
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -642,4 +658,590 @@ async def download_job(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"detail": f"Storage error: {str(e)}", "code": "STORAGE_ERROR"}
+        )
+
+
+@router.get(
+    "/jobs/{job_id}/files/input",
+    status_code=status.HTTP_200_OK,
+    response_model=DownloadUrlResponse,
+    summary="Get signed URL for input PDF file",
+    description="""
+    Get signed URL for the original input PDF file (for preview comparison).
+
+    **Authentication Required:**
+    - Requires valid Supabase JWT token in Authorization header
+    - User must own the job (enforced by RLS)
+
+    **Returns:**
+    - 200 OK with signed URL (1-hour expiry)
+    - Includes expiration timestamp
+
+    **Error Codes:**
+    - `UNAUTHORIZED`: Missing or invalid JWT token
+    - `NOT_FOUND`: Job not found or input file missing
+    - `STORAGE_ERROR`: Failed to generate signed URL
+    """
+)
+async def get_input_file(
+    job_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> DownloadUrlResponse:
+    """
+    Get signed URL for input PDF file (for split-screen preview).
+
+    Args:
+        job_id: Job identifier (UUID)
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        DownloadUrlResponse: Signed URL with expiration
+
+    Raises:
+        HTTPException(401): Authentication failure
+        HTTPException(404): Job not found or input missing
+        HTTPException(500): Storage error
+    """
+    request_start = datetime.utcnow()
+    logger.info(
+        "get_input_file_request",
+        extra={
+            "user_id": current_user.user_id,
+            "job_id": job_id
+        }
+    )
+
+    try:
+        result = job_service.generate_input_file_url(job_id, current_user.user_id)
+
+        if not result:
+            logger.warning(
+                "get_input_file_not_found",
+                extra={
+                    "user_id": current_user.user_id,
+                    "job_id": job_id
+                }
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found or input file missing", "code": "NOT_FOUND"}
+            )
+
+        signed_url, expires_at = result
+
+        request_duration = (datetime.utcnow() - request_start).total_seconds() * 1000
+        logger.info(
+            "get_input_file_success",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "duration_ms": request_duration
+            }
+        )
+
+        return DownloadUrlResponse(
+            download_url=signed_url,
+            expires_at=expires_at
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "get_input_file_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Storage error: {str(e)}", "code": "STORAGE_ERROR"}
+        )
+
+@router.post(
+    "/jobs/{job_id}/feedback",
+    status_code=status.HTTP_200_OK,
+    response_model=FeedbackResponse,
+    summary="Submit feedback for a conversion job",
+    description="""
+    Submit user feedback (thumbs up/down) for a completed conversion job.
+
+    **Authentication Required:**
+    - Requires valid Supabase JWT token in Authorization header
+    - Format: `Bearer <token>`
+
+    **Request Body:**
+    - `rating`: "positive" (👍) or "negative" (👎)
+    - `comment`: Optional comment explaining the rating
+
+    **Authorization:**
+    - User can only submit feedback for their own jobs
+
+    **Returns:**
+    - 200 OK with feedback_id and confirmation
+    - Creates record in job_feedback table
+    - Logs analytics event to conversion_events table
+
+    **Error Codes:**
+    - `UNAUTHORIZED`: Missing or invalid JWT token
+    - `NOT_FOUND`: Job not found or doesn't belong to user
+    - `VALIDATION_ERROR`: Invalid feedback rating
+    - `DATABASE_ERROR`: Failed to create feedback record
+    """
+)
+async def submit_feedback(
+    job_id: str,
+    feedback: FeedbackSubmitRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> FeedbackResponse:
+    """
+    Submit user feedback for a conversion job.
+
+    Args:
+        job_id: UUID of the conversion job
+        feedback: Feedback data (rating and optional comment)
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        FeedbackResponse: Confirmation with feedback_id
+
+    Raises:
+        HTTPException(401): Authentication failure
+        HTTPException(404): Job not found
+        HTTPException(500): Database error
+    """
+    request_start = datetime.utcnow()
+    logger.info(
+        "submit_feedback_request",
+        extra={
+            "user_id": current_user.user_id,
+            "job_id": job_id,
+            "rating": feedback.rating
+        }
+    )
+
+    try:
+        # Verify job exists and belongs to user
+        job = job_service.get_job(job_id, current_user.user_id)
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "NOT_FOUND"}
+            )
+
+        # Get Supabase client
+        supabase = get_supabase_client()
+
+        # Create feedback record
+        feedback_data = {
+            "job_id": job_id,
+            "user_id": current_user.user_id,
+            "rating": feedback.rating,
+            "comment": feedback.comment
+        }
+
+        result = supabase.table("job_feedback").insert(feedback_data).execute()
+
+        if not result.data:
+            raise Exception("Failed to create feedback record")
+
+        feedback_record = result.data[0]
+
+        # Log analytics event
+        event_data = {
+            "job_id": job_id,
+            "user_id": current_user.user_id,
+            "event_type": f"feedback_{feedback.rating}",
+            "event_data": {"rating": feedback.rating, "has_comment": bool(feedback.comment)}
+        }
+        supabase.table("conversion_events").insert(event_data).execute()
+
+        request_duration = (datetime.utcnow() - request_start).total_seconds() * 1000
+        logger.info(
+            "submit_feedback_success",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "feedback_id": feedback_record["id"],
+                "rating": feedback.rating,
+                "duration_ms": request_duration
+            }
+        )
+
+        return FeedbackResponse(
+            feedback_id=feedback_record["id"],
+            job_id=job_id,
+            rating=feedback.rating,
+            created_at=feedback_record["created_at"]
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "submit_feedback_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to submit feedback: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+
+@router.post(
+    "/jobs/{job_id}/issues",
+    status_code=status.HTTP_201_CREATED,
+    response_model=IssueReportResponse,
+    summary="Report an issue with a conversion job",
+    description="""
+    Report a specific issue with a conversion output (e.g., table formatting, missing images).
+
+    **Authentication Required:**
+    - Requires valid Supabase JWT token in Authorization header
+    - Format: `Bearer <token>`
+
+    **Request Body:**
+    - `issue_type`: Category (table_formatting, missing_images, broken_chapters, incorrect_equations, font_issues, other)
+    - `page_number`: Optional page number where issue occurs
+    - `description`: Required detailed description (min 10 characters)
+    - `screenshot_url`: Optional URL to screenshot (future enhancement)
+
+    **Authorization:**
+    - User can only report issues for their own jobs
+
+    **Returns:**
+    - 201 Created with issue_id and confirmation
+    - Creates record in job_issues table
+    - Logs analytics event to conversion_events table
+
+    **Error Codes:**
+    - `UNAUTHORIZED`: Missing or invalid JWT token
+    - `NOT_FOUND`: Job not found or doesn't belong to user
+    - `VALIDATION_ERROR`: Invalid issue data (description too short, etc.)
+    - `DATABASE_ERROR`: Failed to create issue record
+    """
+)
+async def report_issue(
+    job_id: str,
+    issue: IssueReportRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> IssueReportResponse:
+    """
+    Report an issue with a conversion job.
+
+    Args:
+        job_id: UUID of the conversion job
+        issue: Issue report data (type, page, description)
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        IssueReportResponse: Confirmation with issue_id
+
+    Raises:
+        HTTPException(401): Authentication failure
+        HTTPException(404): Job not found
+        HTTPException(422): Validation error
+        HTTPException(500): Database error
+    """
+    request_start = datetime.utcnow()
+    logger.info(
+        "report_issue_request",
+        extra={
+            "user_id": current_user.user_id,
+            "job_id": job_id,
+            "issue_type": issue.issue_type
+        }
+    )
+
+    try:
+        # Verify job exists and belongs to user
+        job = job_service.get_job(job_id, current_user.user_id)
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "NOT_FOUND"}
+            )
+
+        # Get Supabase client
+        supabase = get_supabase_client()
+
+        # Create issue record
+        issue_data = {
+            "job_id": job_id,
+            "user_id": current_user.user_id,
+            "issue_type": issue.issue_type,
+            "page_number": issue.page_number,
+            "description": issue.description,
+            "screenshot_url": issue.screenshot_url
+        }
+
+        result = supabase.table("job_issues").insert(issue_data).execute()
+
+        if not result.data:
+            raise Exception("Failed to create issue record")
+
+        issue_record = result.data[0]
+
+        # Log analytics event
+        event_data = {
+            "job_id": job_id,
+            "user_id": current_user.user_id,
+            "event_type": "issue_reported",
+            "event_data": {
+                "issue_type": issue.issue_type,
+                "has_page_number": bool(issue.page_number),
+                "description_length": len(issue.description)
+            }
+        }
+        supabase.table("conversion_events").insert(event_data).execute()
+
+        request_duration = (datetime.utcnow() - request_start).total_seconds() * 1000
+        logger.info(
+            "report_issue_success",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "issue_id": issue_record["id"],
+                "issue_type": issue.issue_type,
+                "duration_ms": request_duration
+            }
+        )
+
+        return IssueReportResponse(
+            issue_id=issue_record["id"],
+            job_id=job_id,
+            issue_type=issue.issue_type,
+            created_at=issue_record["created_at"]
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "report_issue_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to report issue: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+
+@router.post(
+    "/{job_id}/events/download",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Download event logged successfully"},
+        403: {"description": "User does not have permission to access this job"},
+        404: {"description": "Job not found"},
+        500: {"description": "Failed to log download event"}
+    },
+    tags=["jobs"]
+)
+async def log_download_event(
+    job_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Log a download event for analytics (AC #7 - Story 5.4)
+
+    Creates an analytics event record when a user downloads an EPUB file.
+
+    **Authentication:** Required (JWT Bearer token)
+
+    **Authorization:** User must own the job being downloaded
+
+    **Analytics Event:** Logs to conversion_events table with:
+    - event_type: "download"
+    - event_data: {"timestamp": ISO8601}
+
+    **Story:** 5.4 - Download & Feedback Flow
+    **AC:** #7 - "Download events tracked (job_id, user_id, timestamp)"
+    """
+    request_start = datetime.now()
+
+    try:
+        logger.info(
+            "log_download_event_start",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "timestamp": request_start.isoformat()
+            }
+        )
+
+        # Verify job exists and belongs to user
+        job_query = supabase.table("conversion_jobs") \
+            .select("id, user_id, status") \
+            .eq("id", job_id) \
+            .execute()
+
+        if not job_query.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "JOB_NOT_FOUND"}
+            )
+
+        job = job_query.data[0]
+
+        if job["user_id"] != current_user.user_id:
+            logger.warning(
+                "log_download_event_unauthorized",
+                extra={
+                    "user_id": current_user.user_id,
+                    "job_id": job_id,
+                    "job_owner": job["user_id"]
+                }
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"detail": "Not authorized to access this job", "code": "FORBIDDEN"}
+            )
+
+        # Log download event to conversion_events table
+        event_data = {
+            "timestamp": datetime.now().isoformat()
+        }
+
+        event_record = supabase.table("conversion_events").insert({
+            "job_id": job_id,
+            "user_id": current_user.user_id,
+            "event_type": "download",
+            "event_data": event_data
+        }).execute()
+
+        request_duration = (datetime.now() - request_start).total_seconds() * 1000
+
+        logger.info(
+            "log_download_event_success",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "event_id": event_record.data[0]["id"],
+                "duration_ms": request_duration
+            }
+        )
+
+        return {"message": "Download event logged successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "log_download_event_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to log download event: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+
+@router.get(
+    "/{job_id}/feedback/check",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Feedback existence check completed"},
+        403: {"description": "User does not have permission to access this job"},
+        404: {"description": "Job not found"}
+    },
+    tags=["jobs"]
+)
+async def check_existing_feedback(
+    job_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Check if user has already submitted feedback for this job (AC #10 - Story 5.4)
+
+    Prevents duplicate feedback submissions by checking job_feedback table.
+
+    **Authentication:** Required (JWT Bearer token)
+
+    **Authorization:** User must own the job
+
+    **Returns:**
+    - has_feedback: boolean indicating if feedback already exists
+    - feedback_rating: "positive" | "negative" | null (if exists)
+
+    **Story:** 5.4 - Download & Feedback Flow
+    **AC:** #10 - "Duplicate feedback prevention (disable buttons after submission)"
+    """
+    supabase = get_supabase_client()
+
+    try:
+        # Verify job exists and belongs to user
+        job_query = supabase.table("conversion_jobs") \
+            .select("id, user_id") \
+            .eq("id", job_id) \
+            .execute()
+
+        if not job_query.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "JOB_NOT_FOUND"}
+            )
+
+        job = job_query.data[0]
+
+        if job["user_id"] != current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"detail": "Not authorized to access this job", "code": "FORBIDDEN"}
+            )
+
+        # Check for existing feedback
+        feedback_query = supabase.table("job_feedback") \
+            .select("id, rating") \
+            .eq("job_id", job_id) \
+            .eq("user_id", current_user.user_id) \
+            .execute()
+
+        has_feedback = len(feedback_query.data) > 0
+        feedback_rating = feedback_query.data[0]["rating"] if has_feedback else None
+
+        return {
+            "has_feedback": has_feedback,
+            "feedback_rating": feedback_rating
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "check_existing_feedback_error",
+            extra={
+                "user_id": current_user.user_id,
+                "job_id": job_id,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to check feedback: {str(e)}", "code": "DATABASE_ERROR"}
         )

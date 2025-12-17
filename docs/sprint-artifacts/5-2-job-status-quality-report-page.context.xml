@@ -1,0 +1,256 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>2</storyId>
+    <title>Job Status & Quality Report Page</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-2-job-status-quality-report-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to see a comprehensive summary of the conversion results with quality metrics</iWant>
+    <soThat>I can understand what was converted and make an informed decision about downloading the EPUB</soThat>
+    <tasks>
+- Task 1: Design Quality Report UI Components (AC: #2, #3, #4, #5)
+- Task 2: Implement Backend Quality Report Endpoint Enhancement (AC: #1, #2, #5)
+- Task 3: Create Job Status Page Route (AC: #1, #7, #8)
+- Task 4: Create QualityReportSummary Component (AC: #2, #3, #4, #5, #10)
+- Task 5: Integrate JobProgress Component for Processing State (AC: #7)
+- Task 6: Create Action Buttons Section (AC: #6)
+- Task 7: Implement Failed Job State Display (AC: #8)
+- Task 8: Testing (AC: #12)
+- Task 9: Apply Pre-Flight Checklist (AC: #12)
+- Task 10: Documentation and Code Review Preparation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Job Details Page Created: Route /jobs/{id} created, fetches job details from GET /api/v1/jobs/{id}, authentication required, RLS validation
+2. Success State - Quality Report Display (FR33): Quality metrics grid with pages, tables, images, equations, chapters
+3. Confidence Score Visual Indicator: Overall confidence score (0-100), color coding (green 95-100%, yellow 75-94%, red <75%)
+4. User-Friendly Quality Messaging: Technical scores mapped to plain English messages with emojis
+5. Estimated Cost Display: AI processing cost from quality_report.estimated_cost
+6. Call-to-Action Buttons: "Preview Comparison" and "Download EPUB" buttons
+7. Processing State Display: Shows JobProgress component when PROCESSING or QUEUED
+8. Failed State Display: Shows error message and troubleshooting guidance when FAILED
+9. Quality Report Data Schema: TypeScript interface matching backend QualityReport model
+10. Warning Messages Display: Shows warnings from quality_report.warnings array
+11. Responsive Design: Grid adapts to screen size (mobile, tablet, desktop)
+12. Pre-Flight Integration Checklist: Complete checklist before marking as review
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 5: Quality Preview & Download Experience</title>
+        <section>Story 5.2: Job Status & Quality Report Page</section>
+        <snippet>User-friendly quality messaging that maps technical confidence scores (95-100%: Excellent, 85-94%: Very Good, 75-84%: Good, 60-74%: Fair, &lt;60%: Review Required). Quality report includes estimated AI cost display and element-specific messages.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR33: Quality Report After Conversion</section>
+        <snippet>Users receive a quality report after conversion showing detected elements (tables, images, chapters). Quality indicators (FR32) displayed during conversion. Real-time progress updates (FR31) show conversion status.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>API Endpoints - GET /api/v1/jobs/{id}</section>
+        <snippet>Job details endpoint returns status (QUEUED, PROCESSING, COMPLETED, FAILED), progress (0-100), and quality_report JSONB field containing overall_confidence, elements (tables, images, equations, chapters), warnings, and fidelity_targets.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>API Endpoints - GET /api/v1/jobs/{id}/download</section>
+        <snippet>Download endpoint returns 302 redirect to presigned Supabase Storage URL. Signed URLs expire after 1 hour. Requires job status COMPLETED and authentication.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 6.2: Quality Preview Interface</section>
+        <snippet>Quality Dashboard footer displays large quality score (e.g., "98%"), metrics grid (tables, images, equations, chapters), and action buttons (Customize, Re-convert, Download EPUB). Color coding: Green (90%+), Amber (70-89%), Red (&lt;70%).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/5-1-real-time-progress-updates.md</path>
+        <title>Story 5.1: Real-time Progress Updates (COMPLETED)</title>
+        <section>Implementation Reference</section>
+        <snippet>JobProgress component implemented with real-time polling, TanStack Query setup, cost tracking integration, and shadcn/ui components. Pattern established for useJobProgress hook with 2-second polling interval.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/schemas/quality_report.py</path>
+        <kind>schema</kind>
+        <symbol>QualityReport</symbol>
+        <lines>41-131</lines>
+        <reason>Complete Pydantic schema for quality report structure. Defines overall_confidence (0-100), elements dict with metrics per type (tables, images, equations, chapters), warnings list, and fidelity_targets. Must match TypeScript interface in frontend.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api_endpoint</kind>
+        <symbol>get_job</symbol>
+        <lines>145-248</lines>
+        <reason>GET /api/v1/jobs/{job_id} endpoint that returns full job details including quality_report JSONB field. Supports include_quality_details query parameter. Enforces RLS via current_user.user_id validation.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api_endpoint</kind>
+        <symbol>download_job</symbol>
+        <lines>541-646</lines>
+        <reason>GET /api/v1/jobs/{job_id}/download endpoint for EPUB download. Returns DownloadUrlResponse with signed URL and expiration. Only works for COMPLETED jobs.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useJobProgress.ts</path>
+        <kind>hook</kind>
+        <symbol>useJobProgress</symbol>
+        <lines>1-127</lines>
+        <reason>Custom React hook for polling job progress. Pattern reference for creating useJob hook (non-polling version). Uses TanStack Query with 2-second refetchInterval and automatic retry logic. Shows authentication pattern with Supabase.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/business/JobProgress.tsx</path>
+        <kind>component</kind>
+        <symbol>JobProgress</symbol>
+        <lines>1-end</lines>
+        <reason>Reusable progress component for PROCESSING/QUEUED states. Import and use in job status page when job.status is not COMPLETED. Shows real-time updates, element counters, and cost display.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <framework>Next.js 15.5.7 (App Router)</framework>
+        <ui_library>shadcn/ui (Radix UI + Tailwind CSS)</ui_library>
+        <state_management>@tanstack/react-query 5.90.12</state_management>
+        <auth>@supabase/supabase-js 2.86.0, @supabase/ssr 0.8.0</auth>
+        <icons>lucide-react 0.555.0</icons>
+        <forms>react-hook-form 7.68.0, zod 4.1.13</forms>
+        <styling>tailwindcss 3.4.1, tailwind-merge 3.4.0, tailwindcss-animate 1.0.7</styling>
+        <testing>vitest 4.0.15, @testing-library/react 16.3.0</testing>
+        <utilities>class-variance-authority 0.7.1, clsx 2.1.1, date-fns 4.1.0</utilities>
+      </frontend>
+      <backend>
+        <framework>FastAPI 0.122.0</framework>
+        <database>SQLAlchemy 2.0.36, asyncpg 0.29.0</database>
+        <supabase>supabase 2.24.0</supabase>
+        <cache>redis 5.0.1</cache>
+        <queue>celery 5.5.3</queue>
+        <ai>langchain 0.3.0, langchain-openai 0.2.0, langchain-anthropic 0.3.0</ai>
+        <validation>pydantic 2.11.7+</validation>
+        <testing>pytest 8.3.0, pytest-asyncio 0.21.2, httpx 0.27.0</testing>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architecture>
+      <pattern>Service Pattern: Business logic in JobService, API endpoints delegate to service layer</pattern>
+      <pattern>RLS Enforcement: All job access validated via current_user.user_id, Supabase RLS policies active</pattern>
+      <pattern>JSONB Storage: quality_report and stage_metadata stored as JSONB in PostgreSQL</pattern>
+      <pattern>Authentication: Supabase JWT tokens in Authorization header (Bearer token)</pattern>
+      <pattern>Error Handling: Standardized HTTP exceptions with detail/code structure</pattern>
+    </architecture>
+    <ui_design>
+      <theme>Professional Blue: Primary #2563eb, Success #10b981, Warning #f59e0b, Error #ef4444</theme>
+      <color_coding>Quality scores: Green (90%+), Yellow (70-89%), Red (&lt;70%)</color_coding>
+      <responsive>Mobile-first: Grid adapts (1 col mobile, 2 col tablet, 3 col desktop)</responsive>
+      <accessibility>WCAG 2.1 AA compliance required, semantic HTML, ARIA labels, keyboard navigation</accessibility>
+      <components>Use shadcn/ui components exclusively (Card, Progress, Alert, Badge, Button, Tooltip)</components>
+    </ui_design>
+    <testing>
+      <unit_tests>Component tests with Vitest + React Testing Library for all new components</unit_tests>
+      <coverage>Test quality level mapping functions with edge cases (0, 50, 75, 85, 95, 100)</coverage>
+      <integration>Test job status page states (PROCESSING, COMPLETED, FAILED, 404, 403)</integration>
+      <manual>Use sample PDFs from Epic 4 Retrospective Action 1.4 for manual testing</manual>
+    </testing>
+    <development>
+      <reuse>DO NOT recreate JobProgress component or useJobProgress hook - import and reuse</reuse>
+      <reuse>DO NOT modify quality_report schema - frontend TypeScript interface must match backend</reuse>
+      <checklist>Complete pre-flight checklist (.bmad/bmm/templates/pre-flight-checklist.md) before marking review</checklist>
+      <messaging>Use Epic 4 Action 1.5 mapping rules for user-friendly quality messages</messaging>
+    </development>
+  </constraints>
+
+  <interfaces>
+    <api name="GET /api/v1/jobs/{job_id}">
+      <kind>REST endpoint</kind>
+      <signature>
+        Headers: Authorization: Bearer {supabase_jwt}
+        Query: include_quality_details=true (default)
+        Response 200: JobDetail { id, user_id, status, progress, quality_report, input_file_key, output_file_key, created_at, completed_at, error_message }
+        Response 404: { detail, code: "NOT_FOUND" }
+        Response 500: { detail, code: "DATABASE_ERROR" }
+      </signature>
+      <path>backend/app/api/v1/jobs.py:145-248</path>
+    </api>
+    <api name="GET /api/v1/jobs/{job_id}/download">
+      <kind>REST endpoint</kind>
+      <signature>
+        Headers: Authorization: Bearer {supabase_jwt}
+        Response 200: DownloadUrlResponse { download_url, expires_at }
+        Response 404: { detail, code: "NOT_READY" }
+        Response 500: { detail, code: "STORAGE_ERROR" }
+      </signature>
+      <path>backend/app/api/v1/jobs.py:541-646</path>
+    </api>
+    <component name="QualityReport TypeScript Interface">
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface QualityReport {
+          overall_confidence: number; // 0-100
+          elements: {
+            tables?: { count: number; avg_confidence: number; low_confidence_items: any[] };
+            images?: { count: number; avg_confidence: number; low_confidence_items: any[] };
+            equations?: { count: number; avg_confidence: number; low_confidence_items: any[] };
+            chapters?: { count: number; detected_toc?: boolean };
+            multi_column_pages?: { count: number; pages: number[] };
+          };
+          warnings: string[];
+          fidelity_targets: { [key: string]: { target: number; actual: number; met: boolean } };
+          estimated_cost?: number; // Added in Story 5.1
+        }
+      </signature>
+      <path>frontend/src/types/quality-report.ts (TO BE CREATED)</path>
+    </component>
+    <component name="JobProgress Component">
+      <kind>React component</kind>
+      <signature>
+        Props: { jobId: string }
+        Usage: &lt;JobProgress jobId={jobId} /&gt;
+        Features: Real-time polling, progress bar, element counters, cost display
+      </signature>
+      <path>frontend/src/components/business/JobProgress.tsx (REUSE - DO NOT RECREATE)</path>
+    </component>
+  </interfaces>
+  <tests>
+    <standards>
+Frontend: Vitest 4.0.15 + React Testing Library 16.3.0 for component tests. Test file pattern: ComponentName.test.tsx co-located with component. Mock Supabase auth with createClient mock. Mock API responses with MSW or fetch mocks. Use @testing-library/user-event for interaction testing.
+
+Backend: pytest 8.3.0 with pytest-asyncio 0.21.2 for async tests. Test file pattern: test_*.py in tests/ directory. Use httpx.AsyncClient for API testing. Mock Supabase client and storage service with pytest fixtures. Test both success and error paths.
+
+Integration: End-to-end tests with Playwright (optional for Epic 5). Manual testing with sample PDFs from Epic 4 Retrospective Action 1.4.
+    </standards>
+    <locations>
+frontend/src/components/business/__tests__/ - Component unit tests
+frontend/src/lib/__tests__/ - Utility function tests (quality-utils.ts)
+tests/integration/ - E2E integration tests (Playwright)
+backend/tests/ - Backend API and service tests
+    </locations>
+    <ideas>
+1. Test QualityReportSummary component with varying confidence scores (95%, 85%, 75%, 60%, 40%) to verify correct color coding and messaging
+2. Test quality level mapping functions (getQualityLevelMessage, getElementMessage, getQualityEmoji) with edge cases (0, 100, boundary values 75, 85, 95)
+3. Test job status page rendering for all states: PROCESSING (shows JobProgress), COMPLETED (shows QualityReportSummary), FAILED (shows error message)
+4. Test authentication redirect when user not logged in (useEffect check for session)
+5. Test 404 error handling when job not found (verify error message and "Go to Dashboard" button)
+6. Test 403 error handling when user doesn't own job (verify unauthorized message)
+7. Test download button click triggers correct API call and handles loading state
+8. Test warnings display with 0 warnings (hidden), 1 warning (shown), and multiple warnings (collapsible list)
+9. Test responsive grid layout at different breakpoints (mobile: 1 col, tablet: 2 col, desktop: 3 col) using window.matchMedia mocks
+10. Test cost formatting with various values ($0.00, $0.15, $1.23, $12.34) to ensure 2 decimal places
+11. Manual test with Sample PDF 1 (Simple Text) - expect high confidence (95-100%), minimal warnings
+12. Manual test with Sample PDF 2 (Complex Technical Book) - expect moderate confidence (85-95%), verify table/equation metrics
+13. Manual test with Sample PDF 5 (Edge Case) - expect low confidence (&lt;75%), verify warnings displayed correctly
+    </ideas>
+  </tests>
+</story-context>

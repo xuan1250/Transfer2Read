@@ -75,9 +75,9 @@ development_status:
 
   epic-5: backlog
   5-1-real-time-progress-updates: done
-  5-2-job-status-quality-report-page: backlog
-  5-3-split-screen-comparison-ui: backlog
-  5-4-download-feedback-flow: backlog
+  5-2-job-status-quality-report-page: done
+  5-3-split-screen-comparison-ui: done
+  5-4-download-feedback-flow: done
   epic-5-retrospective: optional
 
   epic-6: backlog
@@ -86,3 +86,4 @@ development_status:
   6-3-upgrade-prompts-paywall-ui: backlog
   6-4-basic-admin-dashboard: backlog
   epic-6-retrospective: optional
+

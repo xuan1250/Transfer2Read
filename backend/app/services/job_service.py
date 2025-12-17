@@ -70,8 +70,8 @@ class JobService:
         """
         logger.info(f"Listing jobs for user {user_id}, limit={limit}, offset={offset}, status={status}")
 
-        # Build query - RLS automatically filters by user_id
-        query = self.supabase.table("conversion_jobs").select("*", count="exact")
+        # Build query with explicit user_id filter for authorization
+        query = self.supabase.table("conversion_jobs").select("*", count="exact").eq("user_id", user_id)
 
         # Apply status filter if provided
         if status:
@@ -142,6 +142,12 @@ class JobService:
                     logger.info(f"Cache hit for job {job_id}")
                     job_dict = json.loads(cached_data)
 
+                    # Verify user_id from cache matches requested user_id (authorization check)
+                    if job_dict.get("user_id") != user_id:
+                        logger.warning(f"Job {job_id} user_id mismatch: cached {job_dict.get('user_id')} != requested {user_id}")
+                        # Job exists but doesn't belong to user - raise PermissionError for 403
+                        raise PermissionError(f"Job {job_id} does not belong to user {user_id}")
+
                     # Return cached JobDetail (quality_report is already a dict)
                     return JobDetail(
                         id=job_dict["id"],
@@ -163,10 +169,25 @@ class JobService:
         # Cache miss or Redis unavailable - fetch from database
         logger.info(f"Cache miss for job {job_id}, fetching from database")
 
-        # Query job - RLS automatically enforces user ownership
-        response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).execute()
+        # First, check if job exists at all (without user filter)
+        job_exists_response = self.supabase.table("conversion_jobs").select("id, user_id").eq("id", job_id).execute()
+
+        if not job_exists_response.data or len(job_exists_response.data) == 0:
+            # Job doesn't exist at all
+            logger.warning(f"Job {job_id} does not exist")
+            return None
+
+        # Job exists - check if it belongs to the user
+        if job_exists_response.data[0]["user_id"] != user_id:
+            # Job exists but doesn't belong to user - this is a 403 Forbidden case
+            logger.warning(f"Job {job_id} exists but doesn't belong to user {user_id}")
+            raise PermissionError(f"Job {job_id} does not belong to user {user_id}")
+
+        # Query full job data with explicit user_id filter for authorization
+        response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).eq("user_id", user_id).execute()
 
         if not response.data or len(response.data) == 0:
+            # This shouldn't happen since we already verified above, but just in case
             logger.warning(f"Job {job_id} not found for user {user_id}")
             return None
 
@@ -235,7 +256,8 @@ class JobService:
         logger.info(f"Deleting job {job_id} for user {user_id}, async={async_cleanup}")
 
         # First, get job details to retrieve file paths before deletion
-        response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).execute()
+        # IMPORTANT: Filter by user_id to ensure user owns the job
+        response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).eq("user_id", user_id).execute()
 
         if not response.data or len(response.data) == 0:
             logger.warning(f"Job {job_id} not found for user {user_id}")
@@ -245,8 +267,8 @@ class JobService:
         input_path = job_data.get("input_path")
         output_path = job_data.get("output_path")
 
-        # Hard delete: Permanently remove from database
-        delete_response = self.supabase.table("conversion_jobs").delete().eq("id", job_id).execute()
+        # Hard delete: Permanently remove from database (with user_id filter for security)
+        delete_response = self.supabase.table("conversion_jobs").delete().eq("id", job_id).eq("user_id", user_id).execute()
 
         if not delete_response.data or len(delete_response.data) == 0:
             logger.warning(f"Failed to delete job {job_id}")
@@ -343,6 +365,50 @@ class JobService:
         expires_at = datetime.utcnow() + timedelta(seconds=3600)
 
         logger.info(f"Generated download URL for job {job_id}, expires at {expires_at}")
+
+        return signed_url, expires_at
+
+    def generate_input_file_url(self, job_id: str, user_id: str) -> Optional[Tuple[str, datetime]]:
+        """
+        Generate signed URL for input PDF file (for preview).
+
+        Args:
+            job_id: Job UUID
+            user_id: User's UUID (for logging)
+
+        Returns:
+            Tuple of (signed_url, expires_at) if successful, None if job not found
+
+        Raises:
+            Exception: If storage operations fail
+        """
+        logger.info(f"Generating input file URL for job {job_id}, user {user_id}")
+
+        # Query job - RLS automatically enforces user ownership
+        response = self.supabase.table("conversion_jobs").select("*").eq("id", job_id).execute()
+
+        if not response.data or len(response.data) == 0:
+            logger.warning(f"Job {job_id} not found for user {user_id}")
+            return None
+
+        job_data = response.data[0]
+        input_path = job_data.get("input_path")
+
+        # Verify input file exists
+        if not input_path:
+            logger.error(f"Job {job_id} has no input file")
+            return None
+
+        # Generate signed URL (1-hour expiry)
+        signed_url = self.storage.generate_signed_url(
+            bucket="uploads",
+            path=input_path,
+            expires_in=3600  # 1 hour
+        )
+
+        expires_at = datetime.utcnow() + timedelta(seconds=3600)
+
+        logger.info(f"Generated input file URL for job {job_id}, expires at {expires_at}")
 
         return signed_url, expires_at
 

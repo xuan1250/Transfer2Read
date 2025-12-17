@@ -1,0 +1,753 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>3</storyId>
+    <title>Split-Screen Comparison UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-3-split-screen-comparison-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to compare the original PDF side-by-side with the converted EPUB in a split-screen view</iWant>
+    <soThat>I can visually verify the layout and formatting fidelity before downloading</soThat>
+    <tasks>
+- Task 1: Research and Evaluate PDF/EPUB Rendering Libraries (AC: #2, #3)
+  - 1.1: Benchmark `react-pdf` performance with test PDFs (10-page, 50-page, 300-page)
+  - 1.2: Measure memory usage and scrolling FPS for `react-pdf`
+  - 1.3: Evaluate `react-reader` for EPUB rendering (fidelity vs. e-readers)
+  - 1.4: Test alternative: Backend EPUB → HTML conversion approach
+  - 1.5: Document chosen libraries with performance benchmarks
+
+- Task 2: Create Split-Screen Layout Component (AC: #1, #6)
+  - 2.1: Create route `/jobs/[id]/preview/page.tsx`
+  - 2.2: Implement authentication guard
+  - 2.3: Design responsive grid layout (desktop/tablet/mobile)
+  - 2.4: Implement tab switching for mobile view
+
+- Task 3: Implement PDF Viewer Pane (AC: #2, #7)
+  - 3.1: Integrate `react-pdf` library
+  - 3.2: Fetch PDF from Supabase Storage signed URL
+  - 3.3: Implement page navigation controls (Prev/Next)
+  - 3.4: Implement zoom controls (Fit Width, Fit Page, custom zoom)
+  - 3.5: Add current page indicator
+  - 3.6: Implement lazy loading for large PDFs
+
+- Task 4: Implement EPUB Viewer Pane (AC: #3)
+  - 4.1: Integrate chosen EPUB rendering library (`react-reader` or backend conversion)
+  - 4.2: Fetch EPUB from Supabase Storage signed URL
+  - 4.3: Render EPUB content with formatting (tables, images, equations, chapters)
+  - 4.4: Verify TOC functionality
+  - 4.5: Test with sample EPUBs (simple, complex, multi-language, large)
+
+- Task 5: Implement Synchronized Scrolling (AC: #4)
+  - 5.1: Create scroll event listeners for both panes
+  - 5.2: Implement page-to-chapter mapping logic (use quality_report metadata)
+  - 5.3: Calculate scroll position correlation (PDF page N → EPUB section)
+  - 5.4: Implement smooth scroll animation
+  - 5.5: Add sync toggle button
+  - 5.6: Debounce scroll events for performance
+
+- Task 6: Create Navigation Toolbar (AC: #7)
+  - 6.1: Design toolbar layout with shadcn/ui components
+  - 6.2: Add job title/filename display
+  - 6.3: Add sync toggle button
+  - 6.4: Add zoom controls (PDF pane)
+  - 6.5: Add "Back to Results" and "Download EPUB" buttons
+  - 6.6: Implement keyboard shortcuts
+
+- Task 7: Implement Loading and Error States (AC: #8)
+  - 7.1: Create loading skeleton for split-screen
+  - 7.2: Add progress indicators for file downloads
+  - 7.3: Implement error handling for 404, 403, corrupted files
+  - 7.4: Create user-friendly error messages with retry actions
+
+- Task 8: Performance Optimization (AC: #9, #10)
+  - 8.1: Implement virtualization for long documents
+  - 8.2: Optimize scroll synchronization (debounce, throttle)
+  - 8.3: Run performance benchmarks with 300-page PDF
+  - 8.4: Verify 60fps scrolling and &lt;500MB memory usage
+  - 8.5: Test with all sample PDFs from Action 1.4
+
+- Task 9: Accessibility Implementation (AC: #11)
+  - 9.1: Add keyboard navigation support
+  - 9.2: Add ARIA labels to all controls
+  - 9.3: Ensure focus indicators visible
+  - 9.4: Test with screen reader
+  - 9.5: Verify color contrast (WCAG 2.1 AA)
+
+- Task 10: Testing and Quality Assurance (AC: #10, #12)
+  - 10.1: Unit tests for sync logic and rendering components
+  - 10.2: Integration tests for PDF/EPUB loading
+  - 10.3: Performance tests with large files (300+ pages)
+  - 10.4: Visual regression tests with sample EPUBs
+  - 10.5: Cross-browser testing (Chrome, Firefox, Safari, Edge)
+  - 10.6: Mobile device testing (iOS, Android)
+  - 10.7: Complete pre-flight checklist (AC #12)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Split-Screen Component Created:
+   - Split-screen layout component created with two synchronized panes
+   - Left pane: PDF Viewer displaying original uploaded PDF
+   - Right pane: EPUB/HTML Viewer displaying converted EPUB content
+   - Component route created at `/jobs/{id}/preview`
+   - Authentication required (redirects to `/login` if not authenticated)
+   - Job ownership validated (403 if not user's job)
+   - Only accessible when job status is COMPLETED
+
+2. PDF Viewer Implementation:
+   - PDF rendered using `react-pdf` library
+   - Performance tested with sample PDFs (10-page <2s, 50-page <3s, 300-page <5s)
+   - Memory usage <500MB for large PDFs (300+ pages)
+   - Smooth scrolling at 60fps maintained
+   - Page navigation controls (Previous/Next Page buttons)
+   - Current page indicator (e.g., "Page 5 of 50")
+   - Zoom controls (Fit Width, Fit Page, 100%, 150%, 200%)
+   - PDF file fetched from Supabase Storage via signed URL
+
+3. EPUB Rendering Strategy:
+   - Option A Evaluated: `react-reader` library for native EPUB rendering
+   - Option B Evaluated: Backend EPUB → HTML preview conversion (fallback)
+   - Final Implementation documented with rationale
+   - EPUB content displays with proper formatting (text reflow, tables, images, equations, chapters)
+   - EPUB file fetched from Supabase Storage via signed URL
+
+4. Synchronized Scrolling:
+   - Scrolling left pane (PDF) auto-scrolls right pane (EPUB) to corresponding page
+   - Scrolling right pane (EPUB) auto-scrolls left pane (PDF) to corresponding page
+   - Scroll synchronization based on page number mapping (quality_report metadata)
+   - Smooth scroll animation (no jarring jumps)
+   - Synchronization toggle button (enable/disable sync)
+   - Visual indicator when sync is active
+
+5. Highlight Differences Toggle (Optional for MVP):
+   - "Highlight Differences" toggle button in UI
+   - When enabled, visually marks areas with formatting differences
+   - Difference detection heuristics (text content, table structure, image placement)
+   - Highlighting uses color overlay (e.g., yellow background)
+   - Note: Optional for MVP, can be deferred to future enhancement
+
+6. Mobile Responsive Adaptation:
+   - Desktop (≥1024px): Side-by-side split-screen layout
+   - Tablet (768px-1023px): Vertical stack or tabbed view
+   - Mobile (<768px): Tabbed view with "PDF" and "EPUB" tabs
+   - Tab switching maintains scroll position
+   - Touch gestures supported on mobile (pinch-to-zoom, swipe)
+   - Layout adapts smoothly with Tailwind breakpoints (sm:, md:, lg:)
+
+7. Navigation and Controls:
+   - Top toolbar with job title/filename display, sync toggle, zoom controls, page navigation
+   - "Back to Results" button → returns to `/jobs/{id}`
+   - "Download EPUB" button → triggers download
+   - Keyboard shortcuts (Arrow keys, +/-, S, Esc)
+
+8. Loading and Error States:
+   - Loading skeleton displayed while PDF/EPUB files load
+   - Progress indicator for large file downloads
+   - Error handling for 404, 403, corrupted files, network timeout
+   - User-friendly error messages with recovery actions
+   - Retry button for transient failures
+
+9. Performance Optimization:
+   - Lazy loading for PDF pages (render only visible pages)
+   - Virtualization for long documents
+   - Debounced scroll synchronization
+   - 300-page PDF + EPUB loads in <10 seconds total
+   - Scrolling maintains 60fps
+   - Memory usage <500MB for large files
+
+10. Test Data Integration:
+    - Use sample PDFs from `tests/fixtures/epic-5-sample-pdfs/`
+    - All sample EPUBs pre-generated for development
+    - Visual regression tests against expected outputs
+
+11. Accessibility:
+    - Keyboard navigation fully supported
+    - ARIA labels for all interactive controls
+    - Focus indicators visible for keyboard users
+    - Screen reader announces page changes
+    - Color contrast meets WCAG 2.1 AA standards
+
+12. Pre-Flight Integration Checklist:
+    - Complete pre-flight checklist before marking story as "review"
+    - Use template from `.bmad/bmm/templates/pre-flight-checklist.md`
+    - Verify all integration points (Backend API, Supabase Storage, Data Flow, Error Handling, Testing, Documentation)
+    - Include completed checklist in code review PR
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Conversion Process & Feedback</section>
+        <snippet>FR34: Users can preview before/after comparison of converted content. FR35: System completes conversion of 300-page technical book in under 2 minutes.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>User Experience Principles</section>
+        <snippet>Transparency Through Feedback - Users see what's happening and why. Trust Through Preview - Before committing to download, users can preview the conversion quality.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>API Contracts</section>
+        <snippet>GET /api/v1/jobs/{job_id} - Returns job with storage paths. GET /api/v1/jobs/{job_id}/download - Returns Supabase Storage signed URL (1-hour expiry). Backend generates Supabase Storage signed URLs.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture</section>
+        <snippet>File Security: Uploads and downloads are private Supabase Storage objects. Access via signed URLs with configurable expiration (default 1 hour).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Novel UX Pattern: Pre-Download Quality Verification</section>
+        <snippet>Split-screen comparison view: Left pane: Original PDF pages (key sections). Right pane: Converted EPUB preview (same sections). Controls: Zoom, navigate, toggle between sections. This is the Core Differentiator - needs high polish.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Design Direction: Preview Focused</section>
+        <snippet>Split-Screen Preview 50/50 layout (PDF left, EPUB right) dominates viewport. Quality Dashboard Footer with persistent metrics bar. Desktop (1280px+): Split-screen 50/50, Tablet: Vertical stack or tabbed, Mobile: Tabbed view only.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Visual Foundation</section>
+        <snippet>Professional Blue theme: Primary #2563eb, Secondary #64748b, Success #10b981. System fonts for performance. shadcn/ui component library (Radix UI + Tailwind CSS).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 5: Quality Preview & Download Experience - Story 5.3</section>
+        <snippet>Split-Screen Comparison UI. Novel pattern: Pre-Download Quality Verification. Left: PDF Viewer (react-pdf), Right: EPUB/HTML Viewer (react-reader or HTML iframe). Synchronized scrolling. Mobile responsive adaptation (Stack vertically or show tabs). This is the CORE DIFFERENTIATOR.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/5-2-job-status-quality-report-page.md</path>
+        <title>Story 5.2: Job Status & Quality Report Page</title>
+        <section>Learnings from Previous Story (Story 5-2)</section>
+        <snippet>Job Fetching Pattern: useJob hook with TanStack Query. Supabase Storage Pattern: Backend generates signed URLs (1-hour expiry). Quality Report Schema: quality_report JSONB with pages_processed, chapters.count, page-to-chapter mapping. Authentication Guard: Check user auth, redirect to /login if unauthenticated. shadcn/ui Components: Button, Card, Badge, Alert, Skeleton, Tooltip, Progress (Professional Blue theme). Pre-Flight Checklist Template: .bmad/bmm/templates/pre-flight-checklist.md</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/hooks/useJob.ts</path>
+        <kind>hook</kind>
+        <symbol>useJob</symbol>
+        <lines>18-57</lines>
+        <reason>Reusable hook for fetching job details with TanStack Query. Handles authentication, API calls, and error states. Use same pattern to fetch job and storage paths for preview route.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types/job.ts</path>
+        <kind>types</kind>
+        <symbol>Job, QualityReport, JobStatus</symbol>
+        <lines>1-56</lines>
+        <reason>Job interface with quality_report JSONB field containing page-to-chapter mapping metadata. Use quality_report.elements.chapters for scroll synchronization. Interface already includes input_path and output_path for file fetching.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/jobs/[id]/page.tsx</path>
+        <kind>page</kind>
+        <symbol>JobStatusPage</symbol>
+        <lines>34-46</lines>
+        <reason>Authentication guard pattern: Check session, redirect to /login if unauthenticated. Reuse exact same pattern for /jobs/[id]/preview route (AC #1).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/jobs/[id]/page.tsx</path>
+        <kind>page</kind>
+        <symbol>handleDownload</symbol>
+        <lines>49-88</lines>
+        <reason>Download pattern: Fetch signed URL from GET /jobs/{id}/download, open in new tab. Reuse for "Download EPUB" button in preview toolbar (AC #7).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api</kind>
+        <symbol>get_job</symbol>
+        <lines>145-247</lines>
+        <reason>GET /jobs/{id} endpoint returns job with quality_report, input_path, output_path. Use to fetch job metadata and file paths for preview route. RLS enforces ownership validation (AC #1: 403 if not user's job).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api</kind>
+        <symbol>download_job</symbol>
+        <lines>541-646</lines>
+        <reason>GET /jobs/{id}/download returns Supabase Storage signed URL (1-hour expiry). Use to fetch PDF and EPUB files for preview panes. Validates job is COMPLETED before generating URL.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui Button component with Professional Blue theme. Use for toolbar actions: "Back to Results", "Download EPUB", sync toggle, zoom controls (AC #7).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/skeleton.tsx</path>
+        <kind>component</kind>
+        <symbol>Skeleton</symbol>
+        <lines>all</lines>
+        <reason>Loading skeleton component for split-screen while PDF/EPUB files load. Use for AC #8 (Loading and Error States).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/progress.tsx</path>
+        <kind>component</kind>
+        <symbol>Progress</symbol>
+        <lines>all</lines>
+        <reason>Progress indicator component for large file downloads. Use for AC #8 (Progress indicator for large file downloads).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/tooltip.tsx</path>
+        <kind>component</kind>
+        <symbol>Tooltip</symbol>
+        <lines>all</lines>
+        <reason>Tooltip component for accessibility (AC #11). Add tooltips to toolbar controls to help keyboard users understand functionality.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/business/QualityReportSummary.tsx</path>
+        <kind>component</kind>
+        <symbol>QualityReportSummary</symbol>
+        <lines>116</lines>
+        <reason>Responsive design pattern using Tailwind breakpoints (sm:, md:, lg:). Reuse for split-screen responsive adaptation (AC #6: Desktop side-by-side, Tablet vertical stack, Mobile tabbed view).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/business/FailedJobState.tsx</path>
+        <kind>component</kind>
+        <symbol>FailedJobState</symbol>
+        <lines>all</lines>
+        <reason>Error handling pattern for user-friendly error messages. Extend for AC #8: Error handling for 404, 403, corrupted files, network timeout with retry actions.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="react-pdf" version="latest" note="PDF rendering library for left pane (AC #2). Configure worker with pdfjs.GlobalWorkerOptions.workerSrc. Lazy load pages for performance (AC #9)." />
+        <package name="pdfjs-dist" version="latest" note="PDF.js worker for react-pdf. Required peer dependency." />
+        <package name="react-reader" version="latest" note="EPUB rendering library for right pane (AC #3, Option A). Evaluate fidelity vs. Apple Books/Calibre. Fallback to backend HTML conversion if quality insufficient (AC #3, Option B)." />
+        <package name="epubjs" version="latest" note="EPUB parser used by react-reader. Provides CFI (Canonical Fragment Identifier) for precise location tracking (scroll synchronization AC #4)." />
+        <package name="@tanstack/react-query" version="^5.90.12" note="Already installed. Use for fetching job details and signed URLs (reuse useJob pattern)." />
+        <package name="@supabase/supabase-js" version="^2.86.0" note="Already installed. Use for authentication in preview route (AC #1)." />
+        <package name="@radix-ui/react-progress" version="^1.1.8" note="Already installed. Used by shadcn/ui Progress component (AC #8: Progress indicators)." />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" note="Already installed. Used by shadcn/ui Tooltip component (AC #11: Accessibility)." />
+        <package name="lucide-react" version="^0.555.0" note="Already installed. Use for toolbar icons: Eye, Download, ArrowLeft, ZoomIn, ZoomOut, Maximize, Minimize, ToggleLeft/Right (AC #7)." />
+        <package name="next" version="^15.5.7" note="Already installed. Next.js 15 App Router for /jobs/[id]/preview route (AC #1)." />
+        <package name="react" version="^19.2.1" note="Already installed. React 19 for component development." />
+        <package name="tailwindcss" version="^3.4.1" note="Already installed. Use breakpoints for responsive adaptation (AC #6): sm:, md:, lg:." />
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+## Development Constraints
+
+**Architecture Pattern Compliance:**
+- **Service Pattern:** Reuse existing useJob hook for data fetching. DO NOT create redundant API calls. Fetch job details ONCE, cache with TanStack Query.
+- **Authentication Flow:** MUST use same auth guard pattern as frontend/src/app/jobs/[id]/page.tsx:34-46. Check session, redirect to /login if unauthenticated, pass returnUrl.
+- **File Access:** MUST fetch PDF and EPUB via GET /jobs/{id}/download signed URLs (1-hour expiry). DO NOT attempt to access Supabase Storage directly from frontend.
+- **Component Organization:** Create business components in frontend/src/components/business/. DO NOT modify existing shadcn/ui components in frontend/src/components/ui/.
+- **Styling:** MUST use Professional Blue theme (#2563eb primary, #64748b secondary). Use Tailwind CSS classes, NO inline styles. Follow UX Spec Section 4.1 color system.
+
+**Technical Constraints:**
+- **PDF Rendering:** MUST use react-pdf library. Configure worker: `pdfjs.GlobalWorkerOptions.workerSrc = //unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`. Lazy load pages (render only visible ±2 pages buffer) for performance (AC #9).
+- **EPUB Rendering:** Evaluate react-reader (Option A) vs. backend HTML conversion (Option B). Document chosen approach with rationale (AC #3). If using react-reader, handle CFI location tracking for scroll sync.
+- **Performance Targets:** 300-page PDF + EPUB load <10 seconds total. Scrolling maintains 60fps. Memory <500MB for large files (AC #9). Use Chrome DevTools Performance tab to verify.
+- **Scroll Synchronization:** Use quality_report.elements.chapters metadata for page-to-chapter mapping (AC #4). Algorithm: PDF page N → Find chapter → Calculate relative progress → Scroll EPUB to same progress. Debounce scroll events to 200ms (AC #4, Task 5.6).
+- **Responsive Breakpoints:** Desktop ≥1024px (side-by-side), Tablet 768-1023px (vertical stack or tabs), Mobile <768px (tabs only). Use Tailwind breakpoints: `lg:flex-row md:flex-col sm:hidden` (AC #6).
+- **Error Handling:** Handle 404 (job not found), 403 (not user's job), corrupted PDF/EPUB, network timeout. Display user-friendly messages with retry button (AC #8). Reuse FailedJobState pattern.
+- **Accessibility:** Keyboard navigation: Arrow keys (scroll/navigate pages), +/- (zoom), S (toggle sync), Esc (back to results). ARIA labels on all controls. Focus indicators visible (2px blue ring). Screen reader announces page changes (AC #11).
+
+**Testing Requirements:**
+- **Unit Tests:** Test scroll sync logic (pdfPageToEpubLocation mapping). Test PDF/EPUB viewer rendering (mock libraries). Test zoom controls, page navigation, sync toggle (AC #10, Task 10.1).
+- **Integration Tests:** Test full preview route with auth guard. Test PDF/EPUB file loading from signed URLs. Test error states (404, 403, corrupted files). Use sample PDFs from tests/fixtures/epic-5-sample-pdfs/ (AC #10, Task 10.2).
+- **Performance Tests:** Benchmark 300-page PDF load time, memory usage, scrolling FPS. Use Chrome DevTools Performance profiler (AC #10, Task 10.3).
+- **Visual Regression:** Capture screenshots of split-screen with sample EPUBs. Compare against expected outputs from Story 5.2 test data (AC #10, Task 10.4).
+- **Cross-Browser:** Test Chrome, Firefox, Safari, Edge (latest versions). Test iOS Safari, Android Chrome on mobile devices (AC #10, Task 10.5-10.6).
+- **Pre-Flight Checklist:** Complete .bmad/bmm/templates/pre-flight-checklist.md before marking story as "review". Include in PR (AC #12, Task 10.7).
+
+**Files to Reuse (DO NOT RECREATE):**
+- frontend/src/hooks/useJob.ts - Job fetching hook
+- frontend/src/types/job.ts - Job and QualityReport interfaces
+- frontend/src/components/ui/* - shadcn/ui components (Button, Card, Skeleton, Progress, Tooltip)
+- backend/app/api/v1/jobs.py - GET /jobs/{id}, GET /jobs/{id}/download endpoints
+- frontend/src/lib/supabase/client.ts - Supabase client initialization
+
+**Security Constraints:**
+- **Authentication:** MUST validate user session on preview route. Redirect to /login if unauthenticated (AC #1).
+- **Authorization:** Backend GET /jobs/{id}/download endpoint enforces RLS (only user's jobs). Frontend receives signed URLs only for owned jobs (AC #1: 403 if not user's job).
+- **File Access:** Signed URLs expire in 1 hour. DO NOT store or cache URLs beyond expiration. Fetch fresh URLs if needed.
+- **XSS Prevention:** When rendering EPUB HTML content (if using Option B backend conversion), use `sandbox="allow-same-origin"` on iframe. DO NOT use `dangerouslySetInnerHTML` without sanitization.
+  </constraints>
+
+  <interfaces>
+## API Interfaces
+
+**GET /api/v1/jobs/{job_id}**
+- **Purpose:** Fetch job details including quality report with page-to-chapter mapping
+- **Authentication:** Required (Supabase JWT in Authorization header)
+- **Request:** `GET /api/v1/jobs/{job_id}?include_quality_details=true`
+- **Response:**
+```json
+{
+  "id": "uuid",
+  "status": "COMPLETED",
+  "input_path": "uploads/{user_id}/{job_id}/input.pdf",
+  "output_path": "downloads/{user_id}/{job_id}/output.epub",
+  "original_filename": "book.pdf",
+  "quality_report": {
+    "overall_confidence": 95,
+    "pages_processed": 300,
+    "elements": {
+      "chapters": {
+        "count": 12,
+        "mapping": [
+          { "chapter_id": 1, "title": "Introduction", "pdf_page_start": 1, "pdf_page_end": 5 },
+          { "chapter_id": 2, "title": "Chapter 1", "pdf_page_start": 6, "pdf_page_end": 25 }
+        ]
+      },
+      "tables": { "count": 12, "avg_confidence": 93 },
+      "images": { "count": 8 },
+      "equations": { "count": 5, "avg_confidence": 97 }
+    }
+  }
+}
+```
+- **Error Codes:** 401 (Unauthorized), 403 (Forbidden - not user's job), 404 (Not Found)
+- **Usage:** Call on preview page load to get job metadata and quality_report for scroll sync mapping (AC #4)
+- **Implementation:** backend/app/api/v1/jobs.py:145-247
+
+**GET /api/v1/jobs/{job_id}/download**
+- **Purpose:** Get Supabase Storage signed URL for EPUB download (1-hour expiry)
+- **Authentication:** Required (Supabase JWT in Authorization header)
+- **Request:** `GET /api/v1/jobs/{job_id}/download`
+- **Response:**
+```json
+{
+  "download_url": "https://xxx.supabase.co/storage/v1/object/sign/downloads/{user_id}/{job_id}/output.epub?token=...",
+  "expires_at": "2025-12-14T12:00:00Z"
+}
+```
+- **Error Codes:** 401 (Unauthorized), 404 (Not Ready - job not completed or output missing), 500 (Storage Error)
+- **Usage:** Fetch signed URLs for both PDF (input_path) and EPUB (output_path) files for preview panes (AC #2, #3)
+- **Implementation:** backend/app/api/v1/jobs.py:541-646
+- **Note:** Same endpoint used for PDF and EPUB. Modify endpoint to accept file_type query param if needed, OR derive from input_path vs output_path in job object.
+
+## Frontend Interfaces
+
+**useJob Hook:**
+```typescript
+import { useJob } from '@/hooks/useJob';
+
+// Usage in preview page
+const { data: job, isLoading, error } = useJob(jobId);
+// Returns: Job object with quality_report, input_path, output_path
+```
+- **Path:** frontend/src/hooks/useJob.ts
+- **Purpose:** Fetch job details with TanStack Query (handles auth, caching, error states)
+- **Usage:** Reuse in /jobs/[id]/preview/page.tsx to fetch job metadata (AC #1)
+
+**Job Interface:**
+```typescript
+export interface Job {
+  id: string;
+  user_id: string;
+  status: JobStatus; // COMPLETED required for preview access
+  input_path: string | null; // Supabase Storage path to PDF
+  output_path: string | null; // Supabase Storage path to EPUB
+  original_filename?: string | null; // Display in toolbar
+  quality_report?: QualityReport; // Page-to-chapter mapping for sync
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface QualityReport {
+  overall_confidence?: number;
+  pages_processed?: number;
+  elements?: {
+    chapters?: {
+      count: number;
+      detected_toc?: boolean;
+      mapping?: Array<{
+        chapter_id: number;
+        title: string;
+        pdf_page_start: number;
+        pdf_page_end: number;
+      }>;
+    };
+    tables?: ElementMetrics;
+    images?: ElementMetrics;
+    equations?: ElementMetrics;
+  };
+}
+```
+- **Path:** frontend/src/types/job.ts
+- **Purpose:** Type-safe job data structure
+- **Usage:** Use quality_report.elements.chapters.mapping for scroll synchronization algorithm (AC #4, Task 5.2)
+
+## Component Interfaces
+
+**react-pdf (PDF Viewer):**
+```typescript
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Configure worker (REQUIRED)
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+<Document
+  file={pdfSignedUrl}
+  loading={<Skeleton />}
+  error={<ErrorMessage />}
+  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+>
+  <Page
+    pageNumber={currentPage}
+    width={containerWidth}
+    renderTextLayer={true}
+    renderAnnotationLayer={true}
+  />
+</Document>
+```
+- **Library:** react-pdf 9.x
+- **Documentation:** https://github.com/wojtekmaj/react-pdf
+- **Usage:** Render PDF in left pane (AC #2, Task 3)
+- **Performance:** Lazy load pages (render only visible pages), disable text layer for zoomed-out view, cache rendered pages
+
+**react-reader (EPUB Viewer - Option A):**
+```typescript
+import { ReactReader, Rendition } from 'react-reader';
+
+<ReactReader
+  url={epubSignedUrl}
+  location={currentLocation}
+  locationChanged={(epubcfi: string) => setCurrentLocation(epubcfi)}
+  getRendition={(rendition: Rendition) => {
+    // Customize rendering
+    rendition.themes.default({ 'font-family': 'sans-serif' });
+  }}
+/>
+```
+- **Library:** react-reader 2.x
+- **Documentation:** https://github.com/gerhardsletten/react-reader
+- **Usage:** Render EPUB in right pane (AC #3, Option A, Task 4)
+- **Pros:** Native EPUB rendering, built-in TOC support, CFI for precise location tracking
+- **Cons:** May have fidelity differences vs. e-readers, performance issues with large EPUBs
+- **Evaluation:** Test rendering fidelity vs. Apple Books/Calibre, measure load time (<3s target), verify TOC functionality, assess 95% visual match
+
+**EPUB HTML Conversion (Option B - Fallback):**
+```typescript
+// Backend conversion: EPUB → HTML preview
+// Store HTML preview alongside EPUB in Supabase Storage
+
+<iframe
+  srcDoc={htmlPreview}
+  className="w-full h-full"
+  sandbox="allow-same-origin"
+/>
+```
+- **Approach:** Backend service converts EPUB → HTML during conversion process
+- **Usage:** If Option A (react-reader) fails fidelity/performance criteria, use this fallback (AC #3, Option B, Task 1.4)
+- **Pros:** Full control over rendering, consistent with browser HTML rendering
+- **Cons:** Loses EPUB semantic structure (chapters, TOC), requires additional backend processing
+  </interfaces>
+
+  <tests>
+    <standards>
+**Testing Frameworks:**
+- Frontend: Vitest + React Testing Library (configured in frontend/package.json)
+- Integration: Playwright or Cypress for E2E testing
+- Performance: Chrome DevTools Performance profiler, Lighthouse
+
+**Test Organization:**
+```
+frontend/
+  src/
+    components/
+      business/
+        SplitScreenComparison.tsx
+        SplitScreenComparison.test.tsx  # Colocated with component
+        PDFViewer.tsx
+        PDFViewer.test.tsx
+        EPUBViewer.tsx
+        EPUBViewer.test.tsx
+        PreviewToolbar.tsx
+        PreviewToolbar.test.tsx
+    lib/
+      scroll-utils.ts
+      scroll-utils.test.ts  # Scroll sync logic unit tests
+tests/
+  integration/
+    test_split_screen_preview.spec.ts  # E2E test for preview
+  fixtures/
+    epic-5-sample-pdfs/
+      1-simple-text/
+        input.pdf
+        output.epub
+        quality_report.json
+      2-complex-technical/
+        input.pdf
+        output.epub
+        quality_report.json
+      3-multi-language/
+        input.pdf
+        output.epub
+      4-large-file/
+        input.pdf
+        output.epub
+      5-edge-case/
+        input.pdf
+        output.epub
+```
+
+**Testing Patterns:**
+- Component Tests: Test user interactions, not implementation details. Use `render()` from @testing-library/react. Mock API calls with `vi.mock()` or MSW.
+- Async Testing: Use `waitFor()` for async state updates. Use `findBy` queries for elements that appear asynchronously.
+- Performance Tests: Use Chrome DevTools Performance tab to record timeline during PDF load and scrolling. Verify 60fps scrolling, <500MB memory, <10s total load time.
+- Visual Regression: Use Playwright or Percy to capture screenshots of split-screen with sample EPUBs. Compare against expected outputs.
+- Accessibility Tests: Use axe-core or Lighthouse accessibility audit. Verify keyboard navigation, ARIA labels, focus indicators, color contrast.
+
+**Test Commands:**
+```bash
+# Frontend unit tests
+npm run test  # Watch mode
+npm run test:coverage  # Coverage report
+
+# Frontend integration tests (E2E)
+npx playwright test  # Run Playwright E2E tests
+
+# Performance profiling
+# Manual: Open Chrome DevTools → Performance tab → Record → Load preview page → Stop
+# Verify: 60fps scrolling, <500MB memory, <10s load time
+
+# Visual regression
+npx playwright test --update-snapshots  # Update baseline screenshots
+npx playwright test  # Compare against baselines
+```
+
+**Coverage Target:** 80% minimum for business logic (scroll sync, file loading, error handling). 70% for UI components.
+    </standards>
+    <locations>
+**Test Locations:**
+- `frontend/src/components/business/*.test.tsx` - Component unit tests (colocated)
+- `frontend/src/lib/*.test.ts` - Utility function tests (scroll-utils.ts)
+- `tests/integration/test_split_screen_preview.spec.ts` - E2E preview flow test
+- `tests/fixtures/epic-5-sample-pdfs/` - Sample PDFs and EPUBs for testing (MUST be created before Story 5.3 implementation - see AC #10)
+    </locations>
+    <ideas>
+**Unit Test Ideas (AC #10, Task 10.1):**
+- [ ] **Scroll Sync Logic (frontend/src/lib/scroll-utils.test.ts):**
+  - Test `pdfPageToEpubLocation(pdfPage, chapterMapping)` function
+    - Given PDF page 15, chapters mapping: [{"chapter_id": 1, "pdf_page_start": 1, "pdf_page_end": 10}, {"chapter_id": 2, "pdf_page_start": 11, "pdf_page_end": 25}]
+    - Expect: `{ chapterId: 2, progress: 0.266 }` (page 15 is 4 pages into 15-page chapter 2)
+  - Test edge cases: Page 1 (first page), Page N (last page), Page not in mapping (fallback to chapter 1)
+  - Test reverse mapping: `epubLocationToPdfPage(chapterId, progress, chapterMapping)`
+
+- [ ] **PDFViewer Component (frontend/src/components/business/PDFViewer.test.tsx):**
+  - Mock react-pdf Document/Page components
+  - Test page navigation: Click "Next Page" → `currentPage` increments
+  - Test zoom controls: Click "Fit Width" → Page width matches container
+  - Test loading state: Display Skeleton while PDF loads
+  - Test error state: Display error message if PDF fails to load
+
+- [ ] **EPUBViewer Component (frontend/src/components/business/EPUBViewer.test.tsx):**
+  - Mock react-reader or HTML iframe rendering
+  - Test EPUB content renders (verify DOM contains expected text)
+  - Test TOC functionality (if using react-reader)
+  - Test loading/error states
+
+- [ ] **PreviewToolbar Component (frontend/src/components/business/PreviewToolbar.test.tsx):**
+  - Test sync toggle: Click → `isSyncEnabled` state flips, visual indicator changes
+  - Test zoom controls: Click "+/-" → Zoom level changes
+  - Test "Back to Results" button: Click → Router navigates to `/jobs/{id}`
+  - Test "Download EPUB" button: Click → Calls download API, opens signed URL
+
+- [ ] **SplitScreenComparison Component (frontend/src/components/business/SplitScreenComparison.test.tsx):**
+  - Test responsive layout: Render at desktop width → Verify side-by-side layout. Render at mobile width → Verify tabbed layout
+  - Test synchronized scrolling: Scroll left pane → Right pane scrolls to corresponding position (mock scroll sync logic)
+  - Test tab switching (mobile): Click "EPUB" tab → Right pane visible, left pane hidden
+
+**Integration Test Ideas (AC #10, Task 10.2):**
+- [ ] **Full Preview Flow (tests/integration/test_split_screen_preview.spec.ts):**
+  - Precondition: Job with status COMPLETED exists, PDF and EPUB uploaded to Supabase Storage
+  - Navigate to `/jobs/{id}/preview`
+  - Verify: Authentication guard redirects to /login if unauthenticated
+  - Login, navigate to preview
+  - Verify: PDF pane renders (check for react-pdf Document component)
+  - Verify: EPUB pane renders (check for react-reader or iframe)
+  - Verify: Toolbar displays job filename, sync toggle, zoom controls, "Download EPUB" button
+  - Action: Scroll PDF pane
+  - Verify: EPUB pane scrolls to corresponding chapter (verify scroll position changed)
+  - Action: Click "Download EPUB" button
+  - Verify: GET /jobs/{id}/download API called, signed URL opened in new tab
+  - Action: Click "Back to Results" button
+  - Verify: Navigated to `/jobs/{id}`
+
+- [ ] **Error Handling Tests:**
+  - Test 404: Navigate to `/jobs/nonexistent-id/preview` → Verify error message "Job not found"
+  - Test 403: Login as user A, navigate to `/jobs/{user_b_job_id}/preview` → Verify error message "You do not have permission to view this job"
+  - Test corrupted PDF: Mock PDF file returns invalid data → Verify error message "Unable to load PDF. Please try refreshing." with retry button
+  - Test network timeout: Mock API call timeout → Verify error message with retry action
+
+**Performance Test Ideas (AC #10, Task 10.3):**
+- [ ] **Load Time Benchmarks (Chrome DevTools Performance):**
+  - Test 10-page PDF: Load preview page → Measure time to interactive <2 seconds (AC #2)
+  - Test 50-page PDF: Load preview page → Measure time to interactive <3 seconds (AC #2)
+  - Test 300-page PDF: Load preview page → Measure time to interactive <5 seconds (AC #2)
+  - Test 300-page PDF + EPUB: Total load time <10 seconds (AC #9)
+
+- [ ] **Memory Usage (Chrome Task Manager):**
+  - Load 300-page PDF preview
+  - Scroll through entire document
+  - Verify memory usage <500MB (AC #2, AC #9)
+
+- [ ] **Scrolling FPS (Chrome DevTools Performance):**
+  - Load preview page with 300-page PDF
+  - Record performance timeline while scrolling rapidly
+  - Verify: 60fps maintained (no dropped frames) (AC #2, AC #9)
+
+**Visual Regression Test Ideas (AC #10, Task 10.4):**
+- [ ] **Split-Screen Layout Screenshots (Playwright/Percy):**
+  - Capture screenshot: Desktop (1280px) with simple text PDF/EPUB (baseline)
+  - Capture screenshot: Desktop with complex technical book PDF/EPUB (tables, equations)
+  - Capture screenshot: Tablet (800px) vertical stack layout
+  - Capture screenshot: Mobile (375px) tabbed view
+  - Compare: Against expected outputs from tests/fixtures/epic-5-sample-pdfs/X/screenshots/
+  - Verify: 95% visual match to e-readers (Apple Books, Calibre)
+
+**Cross-Browser Test Ideas (AC #10, Task 10.5-10.6):**
+- [ ] **Desktop Browsers:**
+  - Test Chrome: Verify PDF/EPUB rendering, scroll sync, toolbar controls
+  - Test Firefox: Verify same functionality
+  - Test Safari: Verify same functionality
+  - Test Edge: Verify same functionality
+
+- [ ] **Mobile Devices:**
+  - Test iOS Safari (iPhone 14): Verify tabbed view, touch gestures (pinch-to-zoom, swipe)
+  - Test Android Chrome (Pixel 7): Verify same functionality
+  - Verify: Tab switching maintains scroll position (AC #6)
+
+**Accessibility Test Ideas (AC #11, Task 9):**
+- [ ] **Keyboard Navigation:**
+  - Test: Tab through toolbar controls → Verify focus indicators visible (2px blue ring)
+  - Test: Arrow Up/Down → Scroll panes
+  - Test: Arrow Left/Right → Navigate PDF pages
+  - Test: +/- keys → Zoom in/out
+  - Test: S key → Toggle sync
+  - Test: Esc key → Return to job results
+
+- [ ] **Screen Reader (NVDA/VoiceOver):**
+  - Test: Navigate to preview page → Verify screen reader announces "Preview Comparison for {filename}"
+  - Test: Navigate to PDF pane → Verify announces "PDF Viewer, Page 5 of 50"
+  - Test: Navigate to EPUB pane → Verify announces "EPUB Viewer, Chapter 2"
+  - Test: Zoom controls → Verify ARIA labels read aloud ("Zoom in", "Zoom out", "Fit width")
+
+- [ ] **Color Contrast (axe-core):**
+  - Test: Run axe-core accessibility audit
+  - Verify: All text meets WCAG 2.1 AA contrast ratio (4.5:1 for body, 3:1 for large text)
+  - Verify: Primary Blue (#2563eb) on white background: 7:1 (passes AA)
+    </ideas>
+  </tests>
+</story-context>
