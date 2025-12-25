@@ -1,0 +1,622 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>4</storyId>
+    <title>Basic Admin Dashboard</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-4-basic-admin-dashboard.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Admin</asA>
+    <iWant>to view system stats and user activity</iWant>
+    <soThat>I can monitor the health of the application and manage users effectively.</soThat>
+    <tasks>
+- Task 1: Create Backend Admin API Endpoints (AC: #5)
+  - 1.1: Create `backend/app/api/v1/admin.py` router
+  - 1.2: Implement `GET /admin/stats` endpoint (total users, conversions, active jobs)
+  - 1.3: Implement `GET /admin/users` endpoint with pagination, search, and filters
+  - 1.4: Implement `PATCH /admin/users/{user_id}/tier` endpoint to update tier
+  - 1.5: Create admin-only dependency: `require_superuser()` checks `user_metadata.is_superuser`
+  - 1.6: Apply `require_superuser()` dependency to all admin routes
+  - 1.7: Write unit tests for admin endpoints with superuser and non-superuser scenarios
+
+- Task 2: Create Admin Dashboard Frontend Page (AC: #2, #3)
+  - 2.1: Create `frontend/src/app/admin/page.tsx` route
+  - 2.2: Create `AdminStatsCard` component to display system metrics
+  - 2.3: Fetch stats from `GET /admin/stats` with React Query
+  - 2.4: Create `UserManagementTable` component with shadcn/ui DataTable
+  - 2.5: Implement pagination controls (previous/next buttons, page numbers)
+  - 2.6: Implement search input with debounce (search by email)
+  - 2.7: Implement tier filter dropdown (All, FREE, PRO, PREMIUM)
+  - 2.8: Implement column sorting (clickable headers)
+  - 2.9: Display loading skeleton while fetching data
+  - 2.10: Handle error states gracefully
+
+- Task 3: Implement Manual Tier Upgrade Feature (AC: #4)
+  - 3.1: Add "Upgrade Tier" button to each user row in table
+  - 3.2: Create `UpgradeTierModal` component with shadcn/ui Dialog
+  - 3.3: Modal shows user email and current tier
+  - 3.4: Dropdown to select new tier (FREE, PRO, PREMIUM)
+  - 3.5: Confirmation dialog before submitting change
+  - 3.6: Call `PATCH /admin/users/{user_id}/tier` on confirm
+  - 3.7: Show success toast on successful tier change
+  - 3.8: Show error toast on failure with error message
+  - 3.9: Refresh user list after successful tier change
+
+- Task 4: Implement Admin Route Protection (AC: #1)
+  - 4.1: Create middleware or HOC to check `is_superuser` flag
+  - 4.2: Redirect non-admin users to 403 Forbidden page
+  - 4.3: Display 403 page with message: "Admin access required"
+  - 4.4: Add "Admin" link to TopBar navigation (only visible to superusers)
+  - 4.5: Test with non-admin user: Verify redirect to 403
+  - 4.6: Test with admin user: Verify access to dashboard
+
+- Task 5: Testing and Validation (AC: #6)
+  - 5.1: Write unit tests for `GET /admin/stats` endpoint
+  - 5.2: Write unit tests for `GET /admin/users` endpoint
+  - 5.3: Write unit tests for `PATCH /admin/users/{user_id}/tier` endpoint
+  - 5.4: Test access control: Non-superuser receives 403 on admin endpoints
+  - 5.5: Integration test: Admin fetches stats and user list successfully
+  - 5.6: Manual testing: Upgrade a user from FREE to PRO via admin dashboard
+  - 5.7: Verify tier change reflected in Supabase `user_metadata`
+  - 5.8: Verify upgraded user sees PRO features in frontend
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Admin Route Protection:**
+   - Create protected `/admin` route accessible only to users with `is_superuser` flag
+   - Redirect non-admin users to 403 Forbidden page
+   - Check `is_superuser` flag from Supabase `user_metadata`
+   - Backend middleware validates superuser status on admin API endpoints
+
+2. **System Statistics Dashboard:**
+   - Display key metrics cards:
+     - **Total Users:** Count of registered users
+     - **Total Conversions:** All-time conversion count across all users
+     - **Active Jobs:** Count of jobs in "processing" or "pending" status
+     - **Monthly Conversions:** Conversions completed in current month
+   - Fetch data from backend admin API endpoints
+   - Real-time or near-real-time updates (polling or SSE)
+   - Professional Blue theme with visual hierarchy
+
+3. **User Management Table:**
+   - List of users with columns: Email, Tier (FREE/PRO/PREMIUM), Total Conversions, Last Login Date, Created Date, Actions (View Details, Upgrade Tier)
+   - Pagination (20 users per page)
+   - Search by email functionality
+   - Filter by tier (dropdown: All, FREE, PRO, PREMIUM)
+   - Sort by columns (email, tier, conversions, last login, created date)
+
+4. **Manual Tier Upgrade Functionality:**
+   - "Upgrade Tier" button on each user row
+   - Opens modal with tier selection dropdown (FREE/PRO/PREMIUM)
+   - Confirmation prompt before applying change
+   - Backend endpoint `PATCH /admin/users/{user_id}/tier` updates `user_metadata.tier`
+   - Success/error toast notification after action
+   - Audit log entry created for tier changes (optional but recommended)
+
+5. **Backend Admin API Endpoints:**
+   - `GET /admin/stats` - Returns system statistics (total users, conversions, active jobs)
+   - `GET /admin/users` - Returns paginated user list with filters
+   - `PATCH /admin/users/{user_id}/tier` - Updates user tier
+   - All endpoints require `is_superuser=true` (enforced by middleware)
+   - Return 403 Forbidden for non-admin requests
+
+6. **Testing and Validation:**
+   - Unit tests for admin API endpoints (verify access control)
+   - Integration tests: Non-admin user blocked from `/admin` route
+   - Integration tests: Admin user can fetch stats and user list
+   - Manual testing: Upgrade user tier and verify change in Supabase
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD - Product Requirements -->
+      <doc path="docs/prd.md" title="Transfer2Read PRD">
+        <section name="Functional Requirements (FR41-FR47)">
+          FR41-FR47 define usage tiers and limits: FREE tier (5 conversions/month, 50MB limit), PRO/PREMIUM (unlimited). Admin functionality implied for tier management during Private Beta phase.
+        </section>
+      </doc>
+
+      <!-- Architecture - Technical Design -->
+      <doc path="docs/architecture.md" title="System Architecture">
+        <section name="Backend (FastAPI 0.122.0)">
+          FastAPI with Supabase authentication (JWT validation), admin dependency patterns using Depends(), async route handlers, Pydantic schemas for validation.
+        </section>
+        <section name="Frontend (Next.js 15.5.7)">
+          Next.js App Router, shadcn/ui components, React Query for data fetching, client-side authentication check via useUser hook, TypeScript 5.x.
+        </section>
+        <section name="Supabase Integration">
+          Supabase Auth for user management, user_metadata stores tier and is_superuser flags, Supabase Admin API for updating user metadata from backend.
+        </section>
+      </doc>
+
+      <!-- UX Design Specification -->
+      <doc path="docs/ux-design-specification.md" title="UX Design Spec">
+        <section name="Design System (shadcn/ui)">
+          Professional Blue theme (#2563eb primary, #64748b secondary), shadcn/ui components (DataTable, Dialog, Select, Badge, Card), system fonts, 4px spacing scale.
+        </section>
+        <section name="Component Patterns">
+          AdminStatsCard for metrics display, UserManagementTable with pagination/search/filters, UpgradeTierModal with confirmation dialog, WCAG 2.1 AA accessible.
+        </section>
+      </doc>
+
+      <!-- Epic 6 Context -->
+      <doc path="docs/epics.md" title="Epic 6: Usage Tiers & Limits Enforcement">
+        <section name="Story 6.4 Requirements">
+          Admin route protection with is_superuser flag, system stats dashboard (total users, conversions, active jobs), user management table with tier upgrade, backend admin API endpoints.
+        </section>
+      </doc>
+
+      <!-- Related Stories -->
+      <doc path="docs/sprint-artifacts/6-1-usage-tracking-supabase-postgresql.md" title="Story 6.1: Usage Tracking">
+        <section name="UsageTracker Service">
+          UsageTracker class provides get_usage() and increment_usage() methods, queries user_usage table for conversion counts, fetches tier from Supabase Auth user_metadata.
+        </section>
+      </doc>
+
+      <doc path="docs/sprint-artifacts/6-3-upgrade-prompts-paywall-ui.md" title="Story 6.3: Upgrade Prompts UI">
+        <section name="Type-Safe Patterns">
+          Created frontend/src/types/usage.ts for shared types, Professional Blue theme applied consistently, component structure in frontend/src/components/business/, testing approach with 57 tests passing.
+        </section>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Authentication & Authorization -->
+      <artifact path="backend/app/core/auth.py" kind="service" symbol="get_current_user" lines="18-84">
+        <reason>Existing authentication dependency that validates Supabase JWT, extracts user_id, email, and tier from user_metadata. Admin dependency will extend this pattern to check is_superuser flag.</reason>
+      </artifact>
+
+      <artifact path="backend/app/schemas/auth.py" kind="schema">
+        <reason>Defines AuthenticatedUser and SubscriptionTier types. Admin endpoints will reuse these schemas and potentially extend with superuser field.</reason>
+      </artifact>
+
+      <!-- Usage Tracking Service -->
+      <artifact path="backend/app/services/usage_tracker.py" kind="service" symbol="UsageTracker" lines="18-219">
+        <reason>UsageTracker service provides get_usage() for querying user conversion stats, fetches tier from Supabase Auth. Admin endpoints will leverage this service to aggregate total conversions across all users.</reason>
+      </artifact>
+
+      <artifact path="backend/app/api/v1/usage.py" kind="controller" symbol="get_current_usage" lines="22-79">
+        <reason>Example of protected API endpoint using get_current_user dependency. Admin endpoints will follow same pattern with require_superuser dependency.</reason>
+      </artifact>
+
+      <!-- Tier Limits Configuration -->
+      <artifact path="backend/app/core/limits.py" kind="config">
+        <reason>TIER_LIMITS dictionary defines conversion and file size limits for FREE/PRO/PREMIUM tiers. Admin dashboard displays these limits, tier upgrade endpoint modifies user tier.</reason>
+      </artifact>
+
+      <!-- Frontend Components -->
+      <artifact path="frontend/src/components/layout/TopBar.tsx" kind="component" lines="19-128">
+        <reason>Navigation bar with user dropdown, tier badge display. Admin link will be added here (visible only to superusers). Uses useUser hook, Badge component, and DropdownMenu from shadcn/ui.</reason>
+      </artifact>
+
+      <artifact path="frontend/src/app/dashboard/page.tsx" kind="page" lines="1-100">
+        <reason>Example authenticated page using AuthGuard, Card components, and React Query patterns. Admin dashboard will follow similar structure with stats cards and user table.</reason>
+      </artifact>
+
+      <artifact path="frontend/src/components/business/UsageProgressBar.tsx" kind="component">
+        <reason>Example business component from Story 6.3 showing usage metrics display pattern. Admin stats cards will use similar design with Progress component.</reason>
+      </artifact>
+
+      <artifact path="frontend/src/types/usage.ts" kind="types">
+        <reason>Shared TypeScript types for usage tracking from Story 6.3. Admin dashboard will create similar frontend/src/types/admin.ts for SystemStats and AdminUser interfaces.</reason>
+      </artifact>
+
+      <!-- Supabase Client -->
+      <artifact path="backend/app/core/supabase.py" kind="config">
+        <reason>Supabase client initialization with service key for admin operations. Admin endpoints will use Supabase Admin API to update user_metadata.tier via supabase.auth.admin.update_user_by_id().</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <!-- Backend (Python) -->
+      <backend>
+        <package name="fastapi" version="0.122.0">FastAPI framework for admin API endpoints</package>
+        <package name="supabase" version="2.24.0">Supabase Python client for user management and database queries</package>
+        <package name="pydantic" version="2.x">Schema validation for admin request/response models</package>
+        <package name="sqlalchemy" version="2.0.36">ORM for querying conversion jobs and usage statistics</package>
+        <package name="python-jose" version="3.x">JWT validation (already used in auth.py)</package>
+      </backend>
+
+      <!-- Frontend (Node.js/TypeScript) -->
+      <frontend>
+        <package name="next" version="15.5.7">Next.js framework with App Router</package>
+        <package name="react" version="19.2.1">React for UI components</package>
+        <package name="@supabase/supabase-js" version="2.86.0">Supabase client for frontend auth checks</package>
+        <package name="@tanstack/react-query" version="5.90.12">Data fetching and caching for admin API calls</package>
+        <package name="@radix-ui/react-dialog" version="1.1.15">Dialog component for UpgradeTierModal (shadcn/ui primitive)</package>
+        <package name="@radix-ui/react-select" version="2.2.6">Select dropdown for tier selection</package>
+        <package name="@radix-ui/react-toast" version="1.2.15">Toast notifications for success/error messages</package>
+        <package name="lucide-react" version="0.555.0">Icons for admin dashboard UI</package>
+        <package name="axios" version="1.13.2">HTTP client for backend API calls</package>
+      </frontend>
+
+      <!-- Testing -->
+      <testing>
+        <package name="pytest" version="8.x">Backend unit and integration tests</package>
+        <package name="vitest" version="4.0.15">Frontend component and integration tests</package>
+        <package name="@testing-library/react" version="16.3.0">React component testing utilities</package>
+      </testing>
+
+      <!-- shadcn/ui Components (copy-paste, no npm install needed) -->
+      <shadcn-ui>
+        <component>table (for UserManagementTable with DataTable pattern)</component>
+        <component>dialog (for UpgradeTierModal)</component>
+        <component>select (for tier filter dropdown)</component>
+        <component>badge (for tier badges)</component>
+        <component>card (for stats cards)</component>
+        <component>button (for actions)</component>
+        <component>toast (for notifications)</component>
+      </shadcn-ui>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Security Constraints -->
+    <constraint type="security" priority="critical">
+      **Superuser Enforcement:** ALL admin endpoints MUST validate is_superuser=true via require_superuser() dependency. Frontend protection is UX-only; backend MUST enforce authorization.
+    </constraint>
+
+    <constraint type="security" priority="critical">
+      **Authentication Required:** All admin endpoints require valid Supabase JWT token in Authorization header. Non-authenticated requests return 401 Unauthorized.
+    </constraint>
+
+    <constraint type="security" priority="high">
+      **User Metadata Validation:** Tier upgrade endpoint MUST validate new tier is one of: FREE, PRO, PREMIUM. Invalid tiers are rejected with 400 Bad Request.
+    </constraint>
+
+    <constraint type="security" priority="high">
+      **Audit Trail (Optional but Recommended):** Log all tier change actions to admin_audit_log table with admin_user_id, target_user_id, action, old_value, new_value, timestamp for compliance and debugging.
+    </constraint>
+
+    <!-- Architecture Constraints -->
+    <constraint type="architecture" priority="high">
+      **Service Layer Pattern:** Business logic (user stats aggregation, tier updates) MUST exist in backend/app/services/, NOT in API routes. Routes handle request/response only.
+    </constraint>
+
+    <constraint type="architecture" priority="high">
+      **Supabase Admin API:** Tier upgrades MUST use supabase.auth.admin.update_user_by_id() to modify user_metadata.tier. Direct database updates bypass Supabase Auth system.
+    </constraint>
+
+    <constraint type="architecture" priority="medium">
+      **Dependency Pattern:** Admin routes use require_superuser() dependency which internally calls get_current_user(). Follow existing FastAPI dependency injection pattern from backend/app/core/auth.py.
+    </constraint>
+
+    <!-- UI/UX Constraints -->
+    <constraint type="ux" priority="high">
+      **Professional Blue Theme:** Admin dashboard MUST use Professional Blue theme consistently (#2563eb primary, #64748b secondary, #10b981 success, #ef4444 error). Match existing frontend theme from Story 6.3.
+    </constraint>
+
+    <constraint type="ux" priority="high">
+      **shadcn/ui Components:** Use shadcn/ui primitives (DataTable, Dialog, Select, Badge, Card) for admin dashboard. Follow component patterns from frontend/src/components/business/.
+    </constraint>
+
+    <constraint type="ux" priority="medium">
+      **Responsive Design:** Admin dashboard optimized for desktop (primary use case), but support tablet/mobile with stacked layouts. Minimum viewport: 768px.
+    </constraint>
+
+    <constraint type="ux" priority="medium">
+      **Accessibility (WCAG 2.1 AA):** Keyboard navigation, screen reader labels, 4.5:1 color contrast, focus indicators on interactive elements.
+    </constraint>
+
+    <!-- Data Constraints -->
+    <constraint type="data" priority="high">
+      **Pagination:** User list endpoint returns max 20 users per page. Use query params: page (1-indexed), page_size (default 20), search (email filter), tier_filter (ALL, FREE, PRO, PREMIUM).
+    </constraint>
+
+    <constraint type="data" priority="medium">
+      **Real-Time Updates:** System stats (total users, conversions, active jobs) updated via polling (every 30s) or manual refresh. SSE for real-time is optional enhancement.
+    </constraint>
+
+    <!-- Testing Constraints -->
+    <constraint type="testing" priority="high">
+      **Access Control Tests:** Unit tests MUST verify non-superuser receives 403 Forbidden on all admin endpoints. Integration tests verify superuser access granted.
+    </constraint>
+
+    <constraint type="testing" priority="high">
+      **Tier Upgrade Tests:** Unit tests MUST verify tier update reflected in Supabase user_metadata. Manual test: verify upgraded user sees PRO features in frontend (bypass limits).
+    </constraint>
+
+    <constraint type="testing" priority="medium">
+      **Component Tests:** Frontend components (AdminStatsCard, UserManagementTable, UpgradeTierModal) tested with Vitest + React Testing Library. Mock API responses with MSW or vi.mock().
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Backend Admin API Endpoints -->
+    <interface name="GET /api/v1/admin/stats" kind="REST endpoint">
+      <signature>
+        GET /api/v1/admin/stats
+        Authorization: Bearer {supabase_jwt_token}
+        Requires: is_superuser=true
+
+        Response 200 OK:
+        {
+          "total_users": 150,
+          "total_conversions": 1234,
+          "active_jobs": 5,
+          "monthly_conversions": 89
+        }
+
+        Response 401 Unauthorized: Invalid or missing token
+        Response 403 Forbidden: User is not superuser
+      </signature>
+      <path>backend/app/api/v1/admin.py (to be created)</path>
+    </interface>
+
+    <interface name="GET /api/v1/admin/users" kind="REST endpoint">
+      <signature>
+        GET /api/v1/admin/users?page=1&amp;page_size=20&amp;search=user@example.com&amp;tier_filter=FREE
+        Authorization: Bearer {supabase_jwt_token}
+        Requires: is_superuser=true
+
+        Query Parameters:
+        - page (int, default 1): Page number (1-indexed)
+        - page_size (int, default 20): Users per page
+        - search (string, optional): Filter by email (case-insensitive)
+        - tier_filter (string, optional): Filter by tier (ALL, FREE, PRO, PREMIUM)
+        - sort_by (string, optional): Column to sort (email, tier, conversions, last_login, created_at)
+        - sort_order (string, optional): asc or desc (default: desc)
+
+        Response 200 OK:
+        {
+          "users": [
+            {
+              "id": "uuid",
+              "email": "user@example.com",
+              "tier": "FREE",
+              "total_conversions": 3,
+              "last_login": "2025-12-25T10:30:00Z",
+              "created_at": "2025-01-01T00:00:00Z"
+            }
+          ],
+          "total": 150,
+          "page": 1,
+          "page_size": 20,
+          "total_pages": 8
+        }
+
+        Response 401/403: Authentication/authorization errors
+      </signature>
+      <path>backend/app/api/v1/admin.py (to be created)</path>
+    </interface>
+
+    <interface name="PATCH /api/v1/admin/users/{user_id}/tier" kind="REST endpoint">
+      <signature>
+        PATCH /api/v1/admin/users/{user_id}/tier
+        Authorization: Bearer {supabase_jwt_token}
+        Requires: is_superuser=true
+
+        Request Body:
+        {
+          "tier": "PRO"  // One of: FREE, PRO, PREMIUM
+        }
+
+        Response 200 OK:
+        {
+          "user_id": "uuid",
+          "old_tier": "FREE",
+          "new_tier": "PRO",
+          "updated_at": "2025-12-25T10:30:00Z"
+        }
+
+        Response 400 Bad Request: Invalid tier value
+        Response 401/403: Authentication/authorization errors
+        Response 404 Not Found: User not found
+      </signature>
+      <path>backend/app/api/v1/admin.py (to be created)</path>
+    </interface>
+
+    <!-- Frontend API Client -->
+    <interface name="adminApiClient" kind="TypeScript module">
+      <signature>
+        // frontend/src/lib/api-client.ts (extend existing)
+
+        export async function getAdminStats(token: string): Promise&lt;SystemStats&gt;
+        export async function getAdminUsers(params: UserListParams, token: string): Promise&lt;UserListResponse&gt;
+        export async function updateUserTier(userId: string, newTier: string, token: string): Promise&lt;TierUpdateResponse&gt;
+
+        // Types in frontend/src/types/admin.ts
+        interface SystemStats {
+          total_users: number;
+          total_conversions: number;
+          active_jobs: number;
+          monthly_conversions: number;
+        }
+
+        interface AdminUser {
+          id: string;
+          email: string;
+          tier: 'FREE' | 'PRO' | 'PREMIUM';
+          total_conversions: number;
+          last_login: string;
+          created_at: string;
+        }
+
+        interface UserListParams {
+          page?: number;
+          page_size?: number;
+          search?: string;
+          tier_filter?: 'ALL' | 'FREE' | 'PRO' | 'PREMIUM';
+          sort_by?: string;
+          sort_order?: 'asc' | 'desc';
+        }
+      </signature>
+      <path>frontend/src/lib/api-client.ts</path>
+    </interface>
+
+    <!-- Supabase Admin Operations -->
+    <interface name="Supabase Auth Admin API" kind="External API">
+      <signature>
+        // Backend usage in admin service
+        from supabase import Client
+
+        async def update_user_tier(supabase: Client, user_id: str, new_tier: str):
+            response = supabase.auth.admin.update_user_by_id(
+                user_id,
+                {
+                    "user_metadata": {
+                        "tier": new_tier
+                    }
+                }
+            )
+            return response.user
+
+        # Query Supabase Auth users for user list
+        response = supabase.auth.admin.list_users(page=1, per_page=20)
+      </signature>
+      <path>backend/app/services/admin_service.py (to be created)</path>
+    </interface>
+
+    <!-- Backend Dependency -->
+    <interface name="require_superuser" kind="FastAPI dependency">
+      <signature>
+        # backend/app/dependencies/admin.py (to be created)
+        from fastapi import Depends, HTTPException, status
+        from app.core.auth import get_current_user
+        from app.schemas.auth import AuthenticatedUser
+
+        async def require_superuser(
+            user: AuthenticatedUser = Depends(get_current_user)
+        ) -> AuthenticatedUser:
+            """
+            Dependency to enforce superuser access.
+            Checks user_metadata.is_superuser flag from Supabase JWT.
+            Raises 403 Forbidden if user is not superuser.
+            """
+            # Note: is_superuser not in current AuthenticatedUser schema
+            # Will need to extend schema or fetch from Supabase Auth metadata
+            is_superuser = user.user_metadata.get('is_superuser', False)
+            if not is_superuser:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required"
+                )
+            return user
+      </signature>
+      <path>backend/app/dependencies/admin.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Backend Testing (Pytest + FastAPI TestClient):**
+      - Test organization: backend/tests/unit/ (isolated logic tests), backend/tests/integration/ (API + DB tests)
+      - Fixtures in conftest.py: test_client (FastAPI TestClient), authenticated_user (with superuser flag), test_db (separate test database)
+      - Dependency overrides: app.dependency_overrides to mock Supabase, Celery, external services
+      - Async tests: Use pytest-asyncio with @pytest.mark.asyncio decorator
+      - Coverage target: 80% minimum (run pytest --cov=app --cov-report=html)
+
+      **Frontend Testing (Vitest + React Testing Library):**
+      - Test colocated with components: AdminStatsCard.test.tsx next to AdminStatsCard.tsx
+      - Integration tests in frontend/src/__tests__/
+      - Mock API calls: Use vi.mock() or MSW (Mock Service Worker)
+      - Render helpers: Custom render() with QueryClientProvider, AuthContext
+      - Async testing: Use waitFor() for async state updates
+      - Coverage target: 70% minimum (run npm run test:coverage)
+
+      **Test Commands:**
+      - Backend: pytest (all), pytest tests/unit (fast), pytest --cov=app
+      - Frontend: npm run test (watch), npm run test:coverage
+    </standards>
+
+    <locations>
+      <!-- Backend Test Locations -->
+      <location>backend/tests/unit/api/test_admin.py - Unit tests for admin endpoint logic (stats aggregation, user list filtering)</location>
+      <location>backend/tests/unit/dependencies/test_admin.py - Unit tests for require_superuser dependency</location>
+      <location>backend/tests/integration/test_admin_api.py - Integration tests for admin API endpoints with authentication</location>
+
+      <!-- Frontend Test Locations -->
+      <location>frontend/src/components/business/AdminStatsCard.test.tsx - Unit tests for stats card rendering and data display</location>
+      <location>frontend/src/components/business/UserManagementTable.test.tsx - Unit tests for table pagination, search, filter, sort</location>
+      <location>frontend/src/components/business/UpgradeTierModal.test.tsx - Unit tests for modal interactions, tier selection, confirmation</location>
+      <location>frontend/src/app/admin/page.test.tsx - Page-level tests for admin dashboard with mocked API calls</location>
+
+      <!-- Existing Test Patterns to Reference -->
+      <location>backend/tests/integration/test_api_usage.py - Example authenticated endpoint tests from Story 6.1</location>
+      <location>backend/tests/unit/middleware/test_limits.py - Example authorization tests from Story 6.2</location>
+    </locations>
+
+    <ideas>
+      <!-- Backend Tests -->
+      <test id="AC5.1" ac="5" description="Unit test: GET /admin/stats returns correct counts">
+        Test that getAdminStats service aggregates total users (from Supabase Auth), total conversions (from user_usage table), active jobs (from conversion_jobs with status=PROCESSING/PENDING), and monthly conversions. Mock Supabase responses.
+      </test>
+
+      <test id="AC5.2" ac="5" description="Unit test: GET /admin/users returns paginated, filtered user list">
+        Test pagination (page=2, page_size=20), email search (case-insensitive), tier filter (FREE only), sort by conversions (desc). Verify response includes users array, total, page metadata.
+      </test>
+
+      <test id="AC5.3" ac="5" description="Unit test: PATCH /admin/users/{user_id}/tier updates user_metadata.tier">
+        Test tier upgrade from FREE to PRO, verify Supabase Admin API called with correct parameters, verify response includes old_tier and new_tier.
+      </test>
+
+      <test id="AC1.1" ac="1" description="Integration test: Non-superuser receives 403 on admin endpoints">
+        Create test user without is_superuser flag, authenticate, attempt GET /admin/stats, verify 403 Forbidden response with detail="Admin access required".
+      </test>
+
+      <test id="AC1.2" ac="1" description="Integration test: Superuser can access admin endpoints">
+        Create test user with is_superuser=true, authenticate, call GET /admin/stats, verify 200 OK response with stats data.
+      </test>
+
+      <test id="AC4.1" ac="4" description="Integration test: Tier upgrade reflected in Supabase">
+        Create test user (tier=FREE), admin upgrades to PRO via PATCH endpoint, query Supabase Auth user_metadata, verify tier="PRO".
+      </test>
+
+      <test id="AC4.2" ac="4" description="Integration test: Invalid tier rejected with 400 Bad Request">
+        Attempt PATCH /admin/users/{user_id}/tier with tier="INVALID", verify 400 Bad Request response.
+      </test>
+
+      <!-- Frontend Tests -->
+      <test id="AC2.1" ac="2" description="Component test: AdminStatsCard displays metrics">
+        Render AdminStatsCard with mock stats data {total_users: 150, total_conversions: 1234}, verify cards display correct numbers and labels.
+      </test>
+
+      <test id="AC3.1" ac="3" description="Component test: UserManagementTable renders user rows">
+        Render UserManagementTable with mock user data, verify table displays email, tier badges, conversions, dates, and action buttons.
+      </test>
+
+      <test id="AC3.2" ac="3" description="Component test: Table pagination works">
+        Render table with 50 users (page_size=20), click "Next Page", verify API called with page=2, verify new rows rendered.
+      </test>
+
+      <test id="AC3.3" ac="3" description="Component test: Search filters by email">
+        Type "user@example.com" in search input, wait for debounce (300ms), verify API called with search param, verify filtered results displayed.
+      </test>
+
+      <test id="AC3.4" ac="3" description="Component test: Tier filter dropdown works">
+        Select "FREE" from tier filter dropdown, verify API called with tier_filter=FREE, verify only FREE tier users displayed.
+      </test>
+
+      <test id="AC4.3" ac="4" description="Component test: UpgradeTierModal opens and submits">
+        Click "Upgrade Tier" button, verify modal opens with user email and current tier, select "PRO" from dropdown, click "Confirm", verify API called with new tier, verify success toast shown.
+      </test>
+
+      <test id="AC1.3" ac="1" description="Page test: Non-admin redirected to 403">
+        Mock useUser hook to return user without is_superuser, render /admin page, verify redirect to /403 or "Access Denied" message.
+      </test>
+
+      <test id="AC1.4" ac="1" description="Page test: Admin link visible only to superusers">
+        Render TopBar with is_superuser=true user, verify "Admin" link visible in navigation. Render with regular user, verify "Admin" link hidden.
+      </test>
+
+      <!-- Manual Tests -->
+      <test id="AC6.1" ac="6" description="Manual test: Upgrade user tier and verify in frontend">
+        1. Login as admin, navigate to /admin
+        2. Find test user (tier=FREE) in user table
+        3. Click "Upgrade Tier", select "PRO", confirm
+        4. Verify success toast shown, user table refreshes with PRO badge
+        5. Login as test user, attempt 6th conversion (exceeds FREE limit)
+        6. Verify conversion succeeds (PRO tier bypasses limit)
+      </test>
+
+      <test id="AC6.2" ac="6" description="Manual test: Verify tier change in Supabase dashboard">
+        After tier upgrade, open Supabase dashboard → Authentication → Users → Find user → View Raw User Meta Data → Verify tier="PRO".
+      </test>
+    </ideas>
+  </tests>
+</story-context>

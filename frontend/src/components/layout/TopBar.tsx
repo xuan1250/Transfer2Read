@@ -22,6 +22,7 @@ export function TopBar() {
 
   // Extract user tier
   const userTier = (user?.user_metadata?.tier as SubscriptionTier) || 'FREE';
+  const isSuperuser = user?.user_metadata?.is_superuser === true;
 
   const handleSignOut = async () => {
     await signOut();
@@ -46,6 +47,16 @@ export function TopBar() {
               <Link href="/history">
                 <Button variant="ghost">History</Button>
               </Link>
+              <Link href="/pricing">
+                <Button variant="ghost">Pricing</Button>
+              </Link>
+              {isSuperuser && (
+                <Link href="/admin">
+                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 hover:bg-purple-50">
+                    Admin
+                  </Button>
+                </Link>
+              )}
 
               {/* User Dropdown Menu */}
               <DropdownMenu>

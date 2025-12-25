@@ -5,6 +5,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { UsageProgressBar } from '@/components/business/UsageProgressBar';
+import { UpgradeBanner } from '@/components/business/UpgradeBanner';
 
 export default function DashboardPage() {
   const { user, signOut } = useUser();
@@ -20,6 +22,9 @@ export default function DashboardPage() {
     <AuthGuard>
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Upgrade Banner (FREE tier only) */}
+          <UpgradeBanner />
+
           {/* Welcome Card */}
           <Card className="shadow-md">
             <CardHeader>
@@ -66,6 +71,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Usage Progress Bar */}
+          <UsageProgressBar />
+
           {/* Quick Actions */}
           <Card className="shadow-md">
             <CardHeader>
@@ -95,6 +103,14 @@ export default function DashboardPage() {
                 size="lg"
               >
                 ⚙️ Account Settings
+              </Button>
+              <Button
+                onClick={() => router.push('/pricing')}
+                variant="outline"
+                className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+                size="lg"
+              >
+                ✨ View Pricing Plans
               </Button>
             </CardContent>
           </Card>

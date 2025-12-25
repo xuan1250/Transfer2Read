@@ -46,7 +46,7 @@ class TestGetUsageEndpoint:
         # Make request without auth token
         response = await client.get("/api/v1/usage")
 
-        assert response.status_code == 403  # FastAPI HTTPBearer returns 403
+        assert response.status_code == 401  # Should return 401 Unauthorized for missing auth
         assert 'detail' in response.json()
 
     @pytest.mark.asyncio

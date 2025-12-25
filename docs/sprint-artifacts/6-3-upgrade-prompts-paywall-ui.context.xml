@@ -1,0 +1,510 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>3</storyId>
+    <title>Upgrade Prompts & Paywall UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-3-upgrade-prompts-paywall-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>User</asA>
+    <iWant>to be notified when I hit a limit and easily upgrade</iWant>
+    <soThat>I can continue using the service without interruption</soThat>
+    <tasks>
+- Task 1: Create Limit Reached Modal Component
+  - 1.1: Create `LimitReachedModal.tsx` component in `frontend/src/components/business/`
+  - 1.2: Use shadcn/ui Dialog component as base
+  - 1.3: Implement props interface: `{ isOpen, onClose, errorData: LimitExceededError }`
+  - 1.4: Parse error code to determine limit type (file size vs. conversion count)
+  - 1.5: Render headline, message, usage stats, reset date (if applicable)
+  - 1.6: Add tier comparison table or feature highlights
+  - 1.7: Implement "Upgrade to Pro" primary button (links to `/pricing`)
+  - 1.8: Implement "Maybe Later" / "Close" secondary action
+  - 1.9: Apply Professional Blue theme styling
+  - 1.10: Make modal dismissible but persistent (reappears on next limit hit)
+  - 1.11: Ensure mobile-responsive design
+
+- Task 2: Create Usage Progress Bar Component
+  - 2.1: Create `UsageProgressBar.tsx` in `frontend/src/components/business/`
+  - 2.2: Create or use existing API endpoint `GET /api/v1/usage` to fetch usage data
+  - 2.3: Implement data fetching with React Query or SWR
+  - 2.4: Display format: "X/Y Free Conversions Used This Month"
+  - 2.5: Render progress bar with color coding (green, yellow, red based on %)
+  - 2.6: Show remaining conversions text
+  - 2.7: Conditional rendering: Show "Unlimited" badge for PRO/PREMIUM users
+  - 2.8: Position component on Dashboard (non-intrusive placement)
+  - 2.9: Implement real-time updates after conversion completion
+  - 2.10: Add loading and error states
+
+- Task 3: Create Upgrade Banner Component
+  - 3.1: Create `UpgradeBanner.tsx` in `frontend/src/components/business/`
+  - 3.2: Implement banner content: headline, subtext, CTA button
+  - 3.3: Add dismissal functionality with localStorage persistence (7-day expiry)
+  - 3.4: Conditional rendering: Only show for FREE tier users
+  - 3.5: Link CTA button to `/pricing` route
+  - 3.6: Apply Professional Blue theme with gradient or accent
+  - 3.7: Add icon or illustration (optional enhancement)
+  - 3.8: Ensure mobile-responsive design
+
+- Task 4: Create Pricing Page
+  - 4.1: Create `/pricing` route in `frontend/src/app/pricing/page.tsx`
+  - 4.2: Create `PricingPage` component or page structure
+  - 4.3: Define tier data structure (FREE, PRO, PREMIUM with features)
+  - 4.4: Implement tier comparison table or cards layout
+  - 4.5: List features for each tier (conversions, file size, speed, support, advanced features)
+  - 4.6: Add "Choose Plan" buttons for each tier
+  - 4.7: Implement button logic (disabled for current tier, trigger upgrade flow)
+  - 4.8: Make responsive (cards stack on mobile)
+  - 4.9: Add FAQ section (optional but recommended)
+  - 4.10: Apply Professional Blue theme consistently
+
+- Task 5: Implement Stripe Checkout Integration or Placeholder
+  - 5.1: Decide approach: Option A (Placeholder) or Option B (Full Integration)
+  - 5.2: If Option A (MVP Placeholder): Show toast/modal "Payment integration coming soon!"
+  - 5.3: If Option B (Full Integration): Create backend endpoint, Stripe session, webhook handling
+  - 5.4: Handle edge cases: already subscribed, payment failure
+  - 5.5: Ensure authentication required for upgrade flow
+
+- Task 6: Implement Error Handling and User Feedback
+  - 6.1: Create or update API client to intercept 403 responses
+  - 6.2: Add error interceptor in `frontend/src/lib/api-client.ts`
+  - 6.3: Parse error response JSON to extract code and details
+  - 6.4: Trigger `LimitReachedModal` based on error code
+  - 6.5: Pass error data to modal component (type-safe)
+  - 6.6: Log upgrade prompt impressions (optional analytics)
+  - 6.7: Provide support link or contact info in error messages
+
+- Task 7: Integrate Components into Frontend
+  - 7.1: Add `UsageProgressBar` to Dashboard page
+  - 7.2: Add `UpgradeBanner` to Dashboard with conditional rendering
+  - 7.3: Integrate `LimitReachedModal` at app level or upload flow level
+  - 7.4: Ensure modal triggers on upload errors from `POST /api/v1/upload`
+  - 7.5: Update TopBar or footer navigation to include "Pricing" link
+  - 7.6: Test complete user flow: Upload → Hit limit → See modal → Navigate to pricing
+
+- Task 8: Testing and Validation
+  - 8.1: Write unit tests for `LimitReachedModal` component
+  - 8.2: Write unit tests for `UsageProgressBar` component
+  - 8.3: Write unit tests for `UpgradeBanner` component
+  - 8.4: Write unit tests for `PricingPage` component
+  - 8.5: Create integration test: Upload at limit → Modal appears
+  - 8.6: Create integration test: Dashboard shows correct usage stats
+  - 8.7: Create integration test: Pricing page displays all tiers
+  - 8.8: Manual testing scenarios (FREE user at various usage levels)
+  - 8.9: Accessibility testing (keyboard navigation, screen reader compatibility)
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **"Limit Reached" Modal Component:**
+   - Create `LimitReachedModal` component that triggers on API 403 with `LIMIT_EXCEEDED` error code
+   - Parse error response to determine limit type (FILE_SIZE_LIMIT_EXCEEDED or CONVERSION_LIMIT_EXCEEDED)
+   - Display: headline, contextual message, usage stats, reset date, tier comparison, upgrade CTA, close button
+   - Use Professional Blue theme (shadcn/ui Dialog component)
+   - Modal is dismissible but reappears on next limit-triggering action
+   - Mobile-responsive design
+
+2. **Usage Progress Indicator in Dashboard:**
+   - Create `UsageProgressBar` component showing current usage
+   - Display format: "X/Y Free Conversions Used This Month" with visual progress bar
+   - Fetch usage data from backend `GET /api/v1/usage` endpoint
+   - Color coding: Green (0-60%), Yellow (61-90%), Red (91-100%)
+   - Show remaining conversions
+   - Display "Unlimited" badge for PRO/PREMIUM tiers
+   - Position on Dashboard (non-intrusive)
+   - Real-time updates after successful conversion
+
+3. **"Upgrade to Pro" Banner:**
+   - Create `UpgradeBanner` component for FREE tier users only
+   - Banner content: headline, subtext, CTA button linking to `/pricing`
+   - Dismissible (localStorage state, 7-day expiry)
+   - Professional Blue theme with gradient or accent color
+
+4. **Pricing Page (Static for MVP):**
+   - Create `/pricing` route with tier comparison table
+   - Display tiers: FREE (5 conversions/month, 50MB), PRO (unlimited), PREMIUM (unlimited + advanced)
+   - Features list for each tier (conversions, file size, speed, support, advanced features)
+   - "Choose Plan" buttons with proper state handling
+   - Responsive design (mobile-friendly cards)
+   - FAQ section (optional)
+
+5. **Stripe Checkout Integration (or Placeholder):**
+   - Option A (MVP): Show "Payment integration coming soon" message
+   - Option B (Full): Backend endpoint for Stripe checkout session, webhook handling, tier updates
+   - Handle edge cases: already subscribed, payment failure
+   - Authentication required for upgrade flow
+
+6. **Error Handling and User Feedback:**
+   - Intercept `403 Forbidden` responses from upload endpoint
+   - Parse error response JSON to extract error code and details
+   - Display appropriate UI based on error code
+   - Log upgrade prompt impressions (optional)
+   - Provide support link
+
+7. **Integration with Existing Frontend:**
+   - Integrate `UsageProgressBar` into Dashboard page
+   - Add `UpgradeBanner` to Dashboard (conditional for FREE users)
+   - Ensure modal triggers on upload errors
+   - Update navigation to include "Pricing" link
+   - Test complete flow: Upload → Hit limit → Modal → Pricing
+
+8. **Testing and Validation:**
+   - Unit tests for all components (LimitReachedModal, UsageProgressBar, UpgradeBanner, PricingPage)
+   - Integration tests (upload at limit, usage stats display, pricing page)
+   - Manual testing (FREE user at various usage levels, file size rejection)
+   - Accessibility testing (keyboard navigation, screen reader compatibility)
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document - Usage Tiers</title>
+        <section>Functional Requirements (FR41-FR47)</section>
+        <snippet>FR41: Free tier users can convert up to 5 PDFs per month. FR42: Free tier users can upload files up to 50MB. FR43: Pro/Premium tier users have unlimited conversions. FR44: Pro/Premium tier users have no file size limits. FR45: System tracks user's monthly conversion count for Free tier. FR46: System notifies users when approaching tier limits. FR47: System prevents conversions that exceed tier limits and prompts upgrade.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 6: Usage Tiers & Limits Enforcement</title>
+        <section>Story 6.3: Upgrade Prompts & Paywall UI</section>
+        <snippet>User wants to be notified when hitting a limit and easily upgrade to continue using the service. Acceptance Criteria: "Limit Reached" modal triggered by LIMIT_EXCEEDED error, progress bar in Dashboard showing usage (3/5 Free Conversions), "Upgrade to Pro" banner on Dashboard, pricing page listing features, upgrade button redirects to Stripe Checkout or placeholder.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Professional Blue Theme</title>
+        <section>4.1 Color System</section>
+        <snippet>Professional Blue theme chosen for trustworthiness and technical excellence. Primary: Blue 600 (#2563eb) for main CTAs and key UI elements. Secondary: Slate 600 (#64748b) for supportive actions. Accent: Sky 500 (#0ea5e9) for highlights and interactive elements. Success: Green 500 (#10b981) for quality metrics. Warning: Amber 500 (#f59e0b). Error: Red 500 (#ef4444).</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Design System</title>
+        <section>3.3 Core Design Principles</section>
+        <snippet>Trust Through Transparency: Show users exactly what they're getting (quality metrics, before/after previews). Clarity Over Complexity: Radically simple interfaces that guide attention to what matters. Speed Meets Thoroughness: Fast processing without sacrificing quality verification. Visual Clarity: Clean, uncluttered interface with Professional Blue color tokens, 6px border radius, consistent spacing (4px base unit), system font stack.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture - Frontend Stack</title>
+        <section>Frontend Architecture</section>
+        <snippet>Next.js 15.0.3 with App Router, TypeScript 5, Tailwind CSS for styling. Supabase JS client (@supabase/supabase-js 2.46.1) for authentication and user tier management. shadcn/ui components (Radix UI based) for UI primitives including Dialog, Button, Progress, Card, Badge. React Query or SWR for server state management. Professional Blue theme implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/6-2-limit-enforcement-middleware.md</path>
+        <title>Story 6.2 - Limit Enforcement Backend Implementation</title>
+        <section>Error Response Schema</section>
+        <snippet>Backend returns HTTP 403 Forbidden with structured error response: LimitExceededError schema with fields: detail (string), code (FILE_SIZE_LIMIT_EXCEEDED or CONVERSION_LIMIT_EXCEEDED), tier (FREE/PRO/PREMIUM), upgrade_url (/pricing), contextual fields (current_count, limit, current_size_mb, max_size_mb, reset_date). Middleware at backend/app/middleware/limit_enforcement.py. Error schemas at backend/app/schemas/errors.py.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/6-1-usage-tracking-supabase-postgresql.md</path>
+        <title>Story 6.1 - Usage Tracking Service</title>
+        <section>Usage Tracking Implementation</section>
+        <snippet>UsageTracker service at backend/app/services/usage_tracker.py tracks monthly conversion counts. GET /api/v1/usage endpoint returns current usage stats. user_usage table in Supabase PostgreSQL with columns: user_id, month, conversion_count, updated_at. Atomic increment operations. Redis caching for fast lookups.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/schemas/errors.py</path>
+        <kind>schema</kind>
+        <symbol>LimitExceededError</symbol>
+        <lines>10-84</lines>
+        <reason>Backend error response schema that frontend must parse. Contains error codes FILE_SIZE_LIMIT_EXCEEDED and CONVERSION_LIMIT_EXCEEDED with contextual fields (current_count, limit, reset_date, current_size_mb, max_size_mb, tier, upgrade_url).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/limits.py</path>
+        <kind>config</kind>
+        <symbol>TIER_LIMITS</symbol>
+        <lines>10-23</lines>
+        <reason>Tier limits configuration. FREE: 5 conversions/month, 50MB file size. PRO/PREMIUM: unlimited. Frontend components must display these limits in UI (pricing page, progress bar, modals).</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/usage_tracker.py</path>
+        <kind>service</kind>
+        <symbol>UsageTracker</symbol>
+        <lines>18-50</lines>
+        <reason>Usage tracking service with get_usage method. Frontend needs to call GET /api/v1/usage endpoint to fetch usage stats for UsageProgressBar component.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/upload.py</path>
+        <kind>endpoint</kind>
+        <symbol>POST /upload</symbol>
+        <lines>51-60</lines>
+        <reason>Upload endpoint protected by check_tier_limits middleware. Returns 403 with LimitExceededError on limit violations. Frontend error interceptor must catch these 403 responses and trigger LimitReachedModal.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/api-client.ts</path>
+        <kind>client</kind>
+        <symbol>getErrorMessage</symbol>
+        <lines>8-25</lines>
+        <reason>Existing API client with error handling pattern. Needs enhancement to add 403 error interceptor that detects LIMIT_EXCEEDED error codes and triggers modal.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/supabase/client.ts</path>
+        <kind>client</kind>
+        <symbol>createClient</symbol>
+        <lines>8-13</lines>
+        <reason>Supabase browser client for authentication. Use to get current user and tier from user.user_metadata.tier for conditional rendering of upgrade banner and usage progress bar.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/tierUtils.ts</path>
+        <kind>utility</kind>
+        <symbol>getTierBenefits</symbol>
+        <lines>27-74</lines>
+        <reason>Existing tier benefits utility with conversion limits and features. Reuse this data structure for pricing page tier comparison and modal feature highlights.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/dashboard/page.tsx</path>
+        <kind>page</kind>
+        <symbol>DashboardPage</symbol>
+        <lines>9-50</lines>
+        <reason>Main dashboard page where UsageProgressBar and UpgradeBanner components will be integrated. Current structure uses Card components from shadcn/ui.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/dialog.tsx</path>
+        <kind>component</kind>
+        <symbol>Dialog</symbol>
+        <lines>1-50</lines>
+        <reason>shadcn/ui Dialog component (Radix UI based). Use as base for LimitReachedModal with Professional Blue theme styling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/progress.tsx</path>
+        <kind>component</kind>
+        <symbol>Progress</symbol>
+        <lines>1-20</lines>
+        <reason>shadcn/ui Progress component. Use for UsageProgressBar with color coding (green 0-60%, yellow 61-90%, red 91-100%).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/badge.tsx</path>
+        <kind>component</kind>
+        <symbol>Badge</symbol>
+        <lines>1-30</lines>
+        <reason>shadcn/ui Badge component. Use for tier indicators (FREE/PRO/PREMIUM) and "Unlimited" badge in UsageProgressBar for PRO/PREMIUM users.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <framework>next@15.5.7</framework>
+        <framework>react@19.2.1</framework>
+        <framework>typescript@5.x</framework>
+        <ui>@radix-ui/react-dialog@1.1.15</ui>
+        <ui>@radix-ui/react-progress@1.1.8</ui>
+        <ui>@radix-ui/react-toast@1.2.15</ui>
+        <ui>@radix-ui/react-tabs@1.1.13</ui>
+        <ui>lucide-react@0.555.0 (for icons)</ui>
+        <styling>tailwindcss@3.4.1</styling>
+        <styling>tailwind-merge@3.4.0</styling>
+        <styling>tailwindcss-animate@1.0.7</styling>
+        <auth>@supabase/supabase-js@2.86.0</auth>
+        <auth>@supabase/ssr@0.8.0</auth>
+        <http>axios@1.13.2</http>
+        <state>@tanstack/react-query@5.90.12</state>
+        <forms>react-hook-form@7.68.0</forms>
+        <forms>zod@4.1.13</forms>
+        <testing>vitest@4.0.15</testing>
+        <testing>@testing-library/react@16.3.0</testing>
+        <testing>@testing-library/jest-dom@6.9.1</testing>
+        <testing>@testing-library/user-event@14.6.1</testing>
+      </frontend>
+      <backend>
+        <note>Backend dependencies are for reference only - this story is frontend-only</note>
+        <framework>fastapi@0.122.0 (backend API framework)</framework>
+        <db>supabase@2.24.0 (authentication, storage, PostgreSQL)</db>
+        <cache>redis@5.0.1 (usage caching)</cache>
+        <validation>pydantic@2.11.7+ (error schema validation)</validation>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Frontend-only story: No backend implementation required (backend limit enforcement already complete in Story 6.2)
+    - Must use Professional Blue theme (#2563eb primary, #64748b secondary, #0ea5e9 accent)
+    - Must reuse existing shadcn/ui components (Dialog, Progress, Badge, Button, Card)
+    - Modal must parse exact error response schema from backend/app/schemas/errors.py
+    - Cannot trust client-side tier checks alone - backend enforces limits (frontend checks are for UX only)
+    - Must maintain consistency with existing component patterns (see frontend/src/components/business/)
+    - TypeScript strict mode - all types must be explicitly defined
+    - Mobile-responsive design required (Tailwind CSS breakpoints: sm, md, lg)
+    - Accessibility required: ARIA labels, keyboard navigation (Tab, Enter, Esc), focus management
+    - Use React Query or SWR for server state management (consistent with project patterns)
+    - Error handling must gracefully degrade if usage API unavailable
+    - localStorage for banner dismissal state (7-day expiry)
+    - Pricing page is static for MVP (no Stripe integration required initially)
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>LimitExceededError API Response</name>
+      <kind>REST Error Response (HTTP 403)</kind>
+      <signature>
+{
+  "detail": string,
+  "code": "FILE_SIZE_LIMIT_EXCEEDED" | "CONVERSION_LIMIT_EXCEEDED",
+  "tier": "FREE" | "PRO" | "PREMIUM",
+  "upgrade_url": string,
+  "current_size_mb"?: number,
+  "max_size_mb"?: number,
+  "current_count"?: number,
+  "limit"?: number,
+  "reset_date"?: string
+}
+      </signature>
+      <path>backend/app/schemas/errors.py:10-84</path>
+    </interface>
+    <interface>
+      <name>GET /api/v1/usage</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+Request: GET /api/v1/usage
+Headers: { Authorization: "Bearer {token}" }
+Response: {
+  "month": string,
+  "conversion_count": number,
+  "tier": "FREE" | "PRO" | "PREMIUM",
+  "tier_limit": number | null,
+  "remaining": number | null
+}
+      </signature>
+      <path>backend/app/services/usage_tracker.py (implied endpoint)</path>
+    </interface>
+    <interface>
+      <name>POST /api/v1/upload</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+Request: POST /api/v1/upload
+Headers: { Authorization: "Bearer {token}" }
+Body: FormData with "file" field
+Response (Success): { "job_id": string, "status": "queued" }
+Response (Limit Error): HTTP 403 with LimitExceededError schema
+      </signature>
+      <path>backend/app/api/v1/upload.py:51-60</path>
+    </interface>
+    <interface>
+      <name>Supabase Auth User Object</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface User {
+  id: string;
+  email: string;
+  user_metadata: {
+    tier?: "FREE" | "PRO" | "PREMIUM";
+    [key: string]: any;
+  };
+}
+      </signature>
+      <path>frontend/src/lib/supabase/client.ts (Supabase SDK)</path>
+    </interface>
+    <interface>
+      <name>getTierBenefits(tier)</name>
+      <kind>Function Signature</kind>
+      <signature>
+function getTierBenefits(tier: SubscriptionTier): TierBenefits
+
+Returns:
+{
+  features: string[],
+  conversionsPerMonth: number | 'unlimited',
+  maxFileSize: number | 'unlimited',
+  support: string
+}
+      </signature>
+      <path>frontend/src/lib/tierUtils.ts:27-74</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Frontend Testing with Vitest and React Testing Library:
+- Unit tests for all React components using Vitest + @testing-library/react
+- Mock Supabase client for authentication/user tier checks (use vi.mock pattern)
+- Mock axios/API client for HTTP requests and error responses
+- Mock next/navigation for router interactions
+- Test component rendering, props handling, user interactions, and error states
+- Use @testing-library/user-event for realistic user interactions
+- Accessibility testing: verify ARIA labels, keyboard navigation, focus management
+- Coverage target: All components must have unit tests covering happy path and error scenarios
+- Test file naming: ComponentName.test.tsx co-located with component files
+- Example pattern from existing codebase: frontend/src/components/business/UploadZone.test.tsx
+</standards>
+    <locations>
+      - frontend/src/components/business/*.test.tsx (unit tests for business components)
+      - frontend/src/components/ui/*.test.tsx (unit tests for UI primitives if needed)
+      - frontend/src/app/**/*.test.tsx (integration tests for pages)
+      - vitest.config.ts (test configuration at frontend root)
+    </locations>
+    <ideas>
+      <test id="AC1" for="LimitReachedModal Component">
+        Unit Tests:
+        - Renders modal when isOpen=true with correct error message
+        - Displays file size limit message for FILE_SIZE_LIMIT_EXCEEDED error code
+        - Displays conversion limit message for CONVERSION_LIMIT_EXCEEDED error code
+        - Shows current usage stats (e.g., "5/5 conversions used")
+        - Shows reset date when provided in error response
+        - Renders tier comparison table with correct features
+        - "Upgrade to Pro" button links to /pricing route
+        - "Close" button dismisses modal (calls onClose)
+        - Modal is keyboard accessible (Esc key closes, Tab navigates)
+        - Mobile responsive (content stacks vertically)
+      </test>
+      <test id="AC2" for="UsageProgressBar Component">
+        Unit Tests:
+        - Fetches usage data from mocked GET /api/v1/usage endpoint
+        - Displays "X/Y Free Conversions Used" format correctly
+        - Renders progress bar with correct percentage
+        - Color coding: green (0-60%), yellow (61-90%), red (91-100%)
+        - Shows "2 conversions remaining" text
+        - Displays "Unlimited" badge for PRO/PREMIUM tiers
+        - Handles loading state (shows skeleton or spinner)
+        - Handles error state gracefully (shows error message or empty state)
+        - Real-time update test: refetch after conversion completion
+      </test>
+      <test id="AC3" for="UpgradeBanner Component">
+        Unit Tests:
+        - Renders banner for FREE tier users
+        - Does NOT render for PRO/PREMIUM users
+        - Displays headline, subtext, and CTA button
+        - CTA button links to /pricing route
+        - Dismissal functionality: clicking close button hides banner
+        - localStorage persistence: banner stays hidden for 7 days after dismissal
+        - Banner reappears after 7-day expiry
+        - Mobile responsive design
+      </test>
+      <test id="AC4" for="PricingPage Component">
+        Unit Tests:
+        - Renders all three tiers (FREE, PRO, PREMIUM)
+        - Displays correct features for each tier (conversions, file size, support)
+        - Shows pricing information (monthly cost)
+        - "Choose Plan" button for FREE tier is disabled if user is FREE
+        - "Choose Plan" button for PRO/PREMIUM triggers upgrade flow
+        - Mobile responsive (cards stack vertically)
+        - Optional: FAQ section renders if present
+      </test>
+      <test id="AC6" for="API Error Interceptor">
+        Integration Tests:
+        - Mock 403 response from POST /api/v1/upload with FILE_SIZE_LIMIT_EXCEEDED code
+        - Verify LimitReachedModal opens with correct error data
+        - Mock 403 response with CONVERSION_LIMIT_EXCEEDED code
+        - Verify modal shows monthly limit message with reset date
+        - Non-403 errors do NOT trigger limit modal
+        - Error interceptor passes error data to modal component correctly
+      </test>
+      <test id="AC7" for="Dashboard Integration">
+        Integration Tests:
+        - UsageProgressBar renders on Dashboard page
+        - UpgradeBanner renders for FREE users, hidden for PRO/PREMIUM
+        - LimitReachedModal appears when upload triggers 403 error
+        - Navigation includes "Pricing" link
+        - Complete flow test: Upload → Hit limit → See modal → Click "Upgrade" → Navigate to /pricing
+      </test>
+      <test id="AC8" for="Accessibility">
+        Accessibility Tests:
+        - Modal: Keyboard navigation (Tab, Shift+Tab, Enter, Esc)
+        - Modal: Focus trap (focus stays within modal when open)
+        - Modal: Focus restoration (focus returns to trigger element when closed)
+        - Modal: ARIA labels present (aria-labelledby, aria-describedby)
+        - Progress bar: Accessible label (aria-label or aria-labelledby)
+        - Banner: Dismiss button has accessible label
+        - All interactive elements keyboard accessible
+        - Screen reader compatibility (test with @testing-library/jest-dom assertions)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

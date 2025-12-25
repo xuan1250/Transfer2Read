@@ -66,6 +66,10 @@ app.include_router(jobs_router, prefix="/api/v1", tags=["jobs"])
 from app.api.v1.usage import router as usage_router
 app.include_router(usage_router, prefix="/api/v1", tags=["usage"])
 
+# Register admin routes
+from app.api.v1.admin import router as admin_router
+app.include_router(admin_router, prefix="/api/v1", tags=["admin"])
+
 
 # Global Exception Handlers
 from fastapi import Request

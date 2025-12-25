@@ -142,7 +142,7 @@ class UsageTracker:
             Never rely solely on RLS policies - always filter by user_id in application code.
         """
         month = self._get_current_month()
-        count = 0
+        count = None  # Initialize as None to trigger database query if Redis unavailable
 
         # Try Redis cache first
         if self.redis:

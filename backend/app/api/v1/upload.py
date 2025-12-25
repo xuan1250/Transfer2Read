@@ -9,6 +9,7 @@ import uuid
 import logging
 
 from app.core.auth import get_current_user
+from app.middleware.limits import check_tier_limits
 from app.schemas.auth import AuthenticatedUser
 from app.schemas.upload import UploadResponse
 from app.services.validation import (
@@ -59,11 +60,15 @@ def get_storage_service() -> SupabaseStorageService:
     - Requires valid Supabase JWT token in Authorization header
     - Format: `Bearer <token>`
 
+    **Tier Limits (Enforced BEFORE Processing):**
+    - FREE tier: 
+      - File size: 50MB maximum
+      - Conversions: 5 per month
+    - PRO/PREMIUM tier: Unlimited file size and conversions
+
     **File Validation:**
     - File must be valid PDF (verified by magic bytes, not extension)
-    - File size limits based on subscription tier:
-      - FREE tier: 50MB maximum
-      - PRO/PREMIUM tier: 500MB maximum
+    - Limits checked before file processing begins
 
     **Returns:**
     - 202 Accepted with job_id for tracking conversion status
@@ -71,30 +76,37 @@ def get_storage_service() -> SupabaseStorageService:
     - Use `/jobs/{job_id}` endpoint to poll conversion progress
 
     **Error Codes:**
-    - `INVALID_FILE_TYPE`: File is not a PDF
-    - `FILE_TOO_LARGE`: File exceeds tier limit
-    - `UNAUTHORIZED`: Missing or invalid JWT token
-    - `STORAGE_ERROR`: Failed to upload to storage
-    - `DATABASE_ERROR`: Failed to create job record
+    - `FILE_SIZE_LIMIT_EXCEEDED`: File exceeds tier limit (403 Forbidden)
+    - `CONVERSION_LIMIT_EXCEEDED`: Monthly conversion limit reached (403 Forbidden)
+    - `INVALID_FILE_TYPE`: File is not a PDF (400 Bad Request)
+    - `FILE_TOO_LARGE`: File exceeds tier limit (413 Request Entity Too Large)
+    - `UNAUTHORIZED`: Missing or invalid JWT token (401 Unauthorized)
+    - `STORAGE_ERROR`: Failed to upload to storage (500 Internal Server Error)
+    - `DATABASE_ERROR`: Failed to create job record (500 Internal Server Error)
     """
 )
 async def upload_pdf(
     file: UploadFile = File(..., description="PDF file to upload"),
     current_user: AuthenticatedUser = Depends(get_current_user),
-    storage_service: SupabaseStorageService = Depends(get_storage_service)
+    storage_service: SupabaseStorageService = Depends(get_storage_service),
+    _: None = Depends(check_tier_limits)  # Limit check runs BEFORE file processing
 ) -> UploadResponse:
     """
     Upload PDF file and create conversion job.
+    
+    Tier limits are enforced BEFORE file processing via check_tier_limits dependency.
 
     Args:
         file: Uploaded PDF file (multipart/form-data)
         current_user: Authenticated user from JWT token
         storage_service: Supabase storage service
+        _: Limit enforcement dependency (runs automatically)
 
     Returns:
         UploadResponse: Job information with job_id, status, and timestamp
 
     Raises:
+        HTTPException(403): Tier limit exceeded (file size or conversion count)
         HTTPException(400): Invalid file type
         HTTPException(401): Authentication failure
         HTTPException(413): File too large for user's tier

@@ -60,11 +60,13 @@ class TestUsageTrackerIncrementUsage:
         count = tracker.increment_usage('user-456')
 
         assert count == 4
-        mock_redis.set.assert_called_with(
-            pytest.helpers.any_string_containing('usage:user-456:'),
-            4,
-            ex=3600
-        )
+        # Verify Redis cache was updated with correct pattern
+        mock_redis.set.assert_called_once()
+        call_args = mock_redis.set.call_args
+        redis_key = call_args[0][0]
+        assert 'usage:user-456:' in redis_key
+        assert call_args[0][1] == 4  # Count value
+        assert call_args[1]['ex'] == 3600  # TTL
 
     def test_increment_continues_when_redis_fails(self):
         """Test that increment_usage continues even if Redis cache update fails."""
@@ -317,8 +319,3 @@ class TestUsageTrackerHelperMethods:
 
         # Should strip day and use only YYYY-MM
         assert key == 'usage:user-456:2025-11'
-
-
-# Helper for pytest (if available)
-if hasattr(pytest, 'helpers'):
-    pytest.helpers.register(lambda s: lambda x: s in x, name='any_string_containing')
