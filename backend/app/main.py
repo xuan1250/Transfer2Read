@@ -62,6 +62,10 @@ app.include_router(upload_router, prefix="/api/v1", tags=["upload"])
 from app.api.v1.jobs import router as jobs_router
 app.include_router(jobs_router, prefix="/api/v1", tags=["jobs"])
 
+# Register usage routes
+from app.api.v1.usage import router as usage_router
+app.include_router(usage_router, prefix="/api/v1", tags=["usage"])
+
 
 # Global Exception Handlers
 from fastapi import Request

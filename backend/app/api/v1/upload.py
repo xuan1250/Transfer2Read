@@ -21,6 +21,8 @@ from app.services.storage.supabase_storage import (
     StorageUploadError
 )
 from app.core.supabase import get_supabase_client
+from app.core.redis_client import get_cached_redis_client
+from app.services.usage_tracker import UsageTracker
 from celery import chain
 from app.tasks.conversion_pipeline import (
     analyze_layout,
@@ -164,6 +166,18 @@ async def upload_pdf(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"detail": f"Database error: {str(e)}", "code": "DATABASE_ERROR"}
         )
+
+    # Increment usage count (after successful job creation)
+    # IMPORTANT: Increment failures should NOT block conversion
+    try:
+        redis_client = get_cached_redis_client()
+        usage_tracker = UsageTracker(supabase, redis_client)
+        new_count = usage_tracker.increment_usage(current_user.user_id)
+        logger.info(f"Incremented usage for user {current_user.user_id} to {new_count}")
+    except Exception as e:
+        # Log error but don't fail the request - usage tracking is non-critical
+        logger.error(f"Failed to increment usage for user {current_user.user_id}: {str(e)}", exc_info=True)
+        # Continue with conversion even if usage tracking fails
 
     # Dispatch Celery pipeline for async conversion
     try:

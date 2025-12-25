@@ -78,10 +78,10 @@ development_status:
   5-2-job-status-quality-report-page: done
   5-3-split-screen-comparison-ui: done
   5-4-download-feedback-flow: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: completed
 
   epic-6: backlog
-  6-1-usage-tracking-supabase-postgresql: backlog
+  6-1-usage-tracking-supabase-postgresql: in-progress
   6-2-limit-enforcement-middleware: backlog
   6-3-upgrade-prompts-paywall-ui: backlog
   6-4-basic-admin-dashboard: backlog

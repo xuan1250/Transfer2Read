@@ -1,0 +1,339 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>1</storyId>
+    <title>Usage Tracking with Supabase PostgreSQL</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-1-usage-tracking-supabase-postgresql.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to track conversion usage per user in Supabase PostgreSQL</iWant>
+    <soThat>tier limits are enforced fairly and users can see their monthly usage</soThat>
+    <tasks>
+- Task 1: Database Schema and Migration (AC: #1)
+  - 1.1: Create migration file `009_user_usage_table.sql` in `backend/supabase/migrations/`
+  - 1.2: Define `user_usage` table schema (user_id, month, conversion_count, updated_at)
+  - 1.3: Add composite unique constraint on (user_id, month)
+  - 1.4: Add indexes on user_id and month columns
+  - 1.5: Enable Row Level Security (RLS) on table
+  - 1.6: Create RLS policy: Users can SELECT their own usage (`auth.uid() = user_id`)
+  - 1.7: Test migration locally (apply to dev Supabase project)
+  - 1.8: Document migration in `backend/run_migrations.py`
+
+- Task 2: Backend Usage Tracker Service (AC: #2, #5)
+  - 2.1: Create `backend/app/services/usage_tracker.py` file
+  - 2.2: Implement `UsageTracker` class with Supabase and Redis clients
+  - 2.3: Implement `increment_usage(user_id)` method
+  - 2.4: Implement `get_usage(user_id)` method
+  - 2.5: Add timezone handling (UTC month calculation)
+  - 2.6: Add error handling and logging
+  - 2.7: Create Pydantic schemas at `backend/app/schemas/usage.py`
+  - 2.8: Unit tests for UsageTracker service
+
+- Task 3: Usage Query API Endpoint (AC: #3)
+  - 3.1: Add `GET /api/v1/usage` endpoint in `backend/app/api/v1/usage.py`
+  - 3.2: Add authentication dependency (`get_current_user`)
+  - 3.3: Call `UsageTracker.get_usage(user.id)` and return structured response
+  - 3.4: Add error handling (401, 500 status codes)
+  - 3.5: Register router in `backend/app/main.py`
+  - 3.6: Integration tests for endpoint
+
+- Task 4: Integration with Upload Endpoint (AC: #6)
+  - 4.1: Import `UsageTracker` in `backend/app/api/v1/jobs.py` (upload endpoint)
+  - 4.2: Call `increment_usage(user.id)` after successful job creation
+  - 4.3: Add try/except around increment (don't block conversion on failure)
+  - 4.4: Log increment success/failure
+  - 4.5: Manual test: Upload PDF → Verify usage count increments
+
+- Task 5: Monthly Reset Strategy Implementation (AC: #4)
+  - 5.1: Choose reset strategy (Celery Beat / pg_cron / GitHub Actions)
+  - 5.2: If Celery Beat: Create periodic task in `backend/app/core/celery_app.py`
+  - 5.3: If pg_cron: Write SQL function + cron schedule in Supabase
+  - 5.4: If GitHub Actions: Create workflow file `.github/workflows/monthly-reset.yml`
+  - 5.5: Document chosen strategy in dev notes
+  - 5.6: Test reset job manually (run and verify logs)
+  - 5.7: Note: Old usage records NOT deleted (kept for analytics)
+
+- Task 6: Error Handling and Edge Cases (AC: #7)
+  - 6.1: Test concurrent increments (load test with multiple requests)
+  - 6.2: Test month boundary transitions (mock system time to 23:59 UTC)
+  - 6.3: Test Redis failure scenario (stop Redis, verify database fallback)
+  - 6.4: Test database failure scenario (verify 500 error + logging)
+  - 6.5: Test new user first conversion (auto-create usage row)
+  - 6.6: Add validation: Check user exists in auth.users before increment
+
+- Task 7: Testing and Documentation (AC: #8)
+  - 7.1: Write unit tests for `UsageTracker.increment_usage()`
+  - 7.2: Write unit tests for `UsageTracker.get_usage()`
+  - 7.3: Write integration tests for `GET /api/v1/usage` endpoint
+  - 7.4: Write load test for concurrent increment scenarios
+  - 7.5: Perform manual end-to-end test (upload → increment → query)
+  - 7.6: Update API documentation with usage endpoint
+  - 7.7: Add usage tracking to architecture documentation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **`user_usage` Table Created in Supabase:**
+   - Table schema includes columns: `user_id` (UUID, FK to auth.users), `month` (DATE, YYYY-MM-01 format), `conversion_count` (INTEGER, DEFAULT 0), `updated_at` (TIMESTAMP WITH TIME ZONE)
+   - Composite unique constraint on `(user_id, month)` to prevent duplicates
+   - Indexes on `user_id` and `month` for fast lookups
+   - Row Level Security (RLS) enabled with policy: Users can SELECT their own usage (`auth.uid() = user_id`)
+   - Database migration file created in `backend/supabase/migrations/`
+
+2. **Backend Usage Tracking Service:**
+   - Service class created at `backend/app/services/usage_tracker.py`
+   - `increment_usage(user_id: str) -> int` method with UPSERT behavior, atomic operation, returns new count
+   - `get_usage(user_id: str) -> dict` method returns count, limit, remaining, tier
+   - Timezone handling (UTC for month calculation)
+   - Error handling for database failures
+   - Unit tests validate increment logic and get_usage calculations
+
+3. **API Endpoint for Usage Query:**
+   - `GET /api/v1/usage` endpoint created with authentication required
+   - Returns current usage for authenticated user
+   - Response includes: month, conversion_count, tier, tier_limit, remaining
+   - Returns 200 OK, 401 Unauthorized, or 500 Internal Server Error appropriately
+
+4. **Monthly Reset Mechanism:**
+   - Scheduled job strategy determined (Celery Beat / pg_cron / GitHub Actions)
+   - Reset job runs on 1st of every month at 00:00 UTC
+   - Old records kept for analytics (no delete)
+   - New months auto-handled by UPSERT logic
+
+5. **Redis Caching for Performance:**
+   - Usage count cached in Redis with key format: `usage:{user_id}:{month}`
+   - Cache TTL: 1 hour (3600 seconds)
+   - `increment_usage()` updates both Redis and Supabase
+   - `get_usage()` reads from Redis first, falls back to database
+   - Cache failures don't break functionality (graceful degradation)
+
+6. **Integration with Conversion Flow:**
+   - Upload endpoint calls `increment_usage(user_id)` after successful conversion start
+   - Increment happens AFTER job created in database
+   - Error handling: If increment fails, still allow conversion (log error)
+
+7. **Error Handling and Edge Cases:**
+   - Handle concurrent increments (PostgreSQL atomicity)
+   - Handle month boundary transitions
+   - Handle missing user_id (auto-create)
+   - Handle Redis and database connection failures
+   - Validate user exists before incrementing
+
+8. **Testing and Validation:**
+   - Unit tests for UsageTracker service (increment, get_usage, month boundaries)
+   - Integration tests for API endpoint (authenticated requests, missing data)
+   - Load testing for concurrent increments
+   - Manual end-to-end test (upload → increment → query)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Usage Limits & Tier Management (FR41-FR47)</section>
+        <snippet>Free tier users can convert up to 5 PDFs per month (FR41). System tracks user's monthly conversion count (FR45). System notifies users when approaching tier limits (FR46). System prevents conversions that exceed tier limits and prompts upgrade (FR47).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Core Models - ConversionJob</section>
+        <snippet>ConversionJob table includes: id (UUID), user_id (FK to auth.users), status (enum), input_path, output_path, quality_report (JSONB), created_at, completed_at. Row Level Security (RLS) enforces user isolation via auth.uid() = user_id pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Security Architecture - Row Level Security</section>
+        <snippet>Supabase RLS policies ensure users only access their own data. Backend validates Supabase JWT tokens on protected endpoints. All queries filter by user_id extracted from JWT for defense-in-depth security.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 6: Usage Tiers & Limits Enforcement - Story 6.1</section>
+        <snippet>Story 6.1 creates user_usage table in Supabase PostgreSQL with RLS policies, implements UsageTracker service with Redis caching, provides GET /api/v1/usage endpoint, integrates with upload flow, and implements monthly reset mechanism via Celery Beat or pg_cron.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/5-4-download-feedback-flow.md</path>
+        <title>Story 5.4 Dev Notes</title>
+        <section>Learnings from Previous Story - Security Patterns</section>
+        <snippet>CRITICAL: All database queries MUST filter by user_id explicitly as defense-in-depth (even with RLS). Story 5.4 found authorization bug where queries didn't filter by user_id, allowing cross-user data access. Pattern: supabase.table('table').select('*').eq('user_id', user_id) is mandatory.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/core/supabase.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client</symbol>
+        <lines>full file</lines>
+        <reason>Supabase client initialization pattern - REUSE for UsageTracker service to connect to PostgreSQL</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/redis_client.py</path>
+        <kind>service</kind>
+        <symbol>get_redis_client</symbol>
+        <lines>full file</lines>
+        <reason>Redis client initialization with graceful fallback - REUSE for UsageTracker caching layer</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/services/job_service.py</path>
+        <kind>service</kind>
+        <symbol>JobService</symbol>
+        <lines>full file</lines>
+        <reason>Service class pattern with Redis caching (cache_key format, TTL, JSON serialization) - REUSE pattern for UsageTracker.get_usage() caching</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/job.py</path>
+        <kind>schema</kind>
+        <symbol>JobSummary, JobDetail</symbol>
+        <lines>full file</lines>
+        <reason>Pydantic schema pattern with ConfigDict - REUSE for UsageResponse schema in backend/app/schemas/usage.py</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/schemas/auth.py</path>
+        <kind>schema</kind>
+        <symbol>SubscriptionTier, AuthenticatedUser</symbol>
+        <lines>full file</lines>
+        <reason>User tier enum (FREE, PRO, PREMIUM) - REUSE in UsageTracker.get_usage() for tier limit calculation</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>controller</kind>
+        <symbol>list_jobs, get_job</symbol>
+        <lines>794-886</lines>
+        <reason>FastAPI endpoint pattern with authentication (Depends(get_current_user)), error handling (HTTPException), structured responses - REUSE for GET /api/v1/usage endpoint</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/auth.py</path>
+        <kind>middleware</kind>
+        <symbol>get_current_user</symbol>
+        <lines>full file</lines>
+        <reason>JWT authentication dependency - REUSE in usage endpoint to extract user_id from token</reason>
+      </artifact>
+      <artifact>
+        <path>backend/supabase/migrations/002_conversion_jobs_table.sql</path>
+        <kind>migration</kind>
+        <symbol>CREATE TABLE conversion_jobs</symbol>
+        <lines>full file</lines>
+        <reason>Table creation pattern with UUID, FK to auth.users, timestamps - REUSE structure for 009_user_usage_table.sql</reason>
+      </artifact>
+      <artifact>
+        <path>backend/supabase/migrations/003_conversion_jobs_rls.sql</path>
+        <kind>migration</kind>
+        <symbol>RLS policies</symbol>
+        <lines>full file</lines>
+        <reason>Row Level Security policy pattern (auth.uid() = user_id) - REUSE exact pattern for user_usage table RLS</reason>
+      </artifact>
+      <artifact>
+        <path>backend/supabase/migrations/008_feedback_and_issues_tables.sql</path>
+        <kind>migration</kind>
+        <symbol>CREATE TABLE feedback</symbol>
+        <lines>27-36</lines>
+        <reason>Recent RLS policy examples from Story 5.4 - REUSE for user_usage RLS policies</reason>
+      </artifact>
+      <artifact>
+        <path>backend/tests/conftest.py</path>
+        <kind>test</kind>
+        <symbol>valid_jwt_token, client</symbol>
+        <lines>full file</lines>
+        <reason>Pytest fixtures for JWT tokens and AsyncClient - REUSE for integration tests of GET /api/v1/usage endpoint</reason>
+      </artifact>
+      <artifact>
+        <path>backend/tests/unit/services/test_supabase_storage.py</path>
+        <kind>test</kind>
+        <symbol>TestUploadFile</symbol>
+        <lines>full file</lines>
+        <reason>Unit test pattern with MagicMock for Supabase client - REUSE pattern for test_usage_tracker.py</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="supabase" version="2.24.0">Supabase Python client for PostgreSQL operations (table queries, RPC calls)</package>
+        <package name="redis" version="5.0.1">Redis client for usage count caching (get, set, TTL management)</package>
+        <package name="fastapi" version="0.122.0">Web framework for GET /api/v1/usage endpoint</package>
+        <package name="pydantic" version="2.x">Schema validation for UsageResponse model</package>
+        <package name="celery" version="5.5.3">Task queue for monthly reset job (if using Celery Beat option)</package>
+        <package name="pytest" version="8.x">Testing framework for unit and integration tests</package>
+        <package name="pytest-asyncio" version="latest">Async test support for API endpoint tests</package>
+      </python>
+      <database>
+        <system name="Supabase PostgreSQL" version="15.x">Managed PostgreSQL for user_usage table storage with ACID guarantees</system>
+        <system name="Redis" version="8.4.0">In-memory cache for usage count performance optimization</system>
+      </database>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint priority="CRITICAL">DEFENSE-IN-DEPTH SECURITY: All database queries MUST explicitly filter by user_id even with RLS enabled. Pattern: supabase.table('user_usage').select('*').eq('user_id', user_id). Story 5.4 found critical bug where missing user_id filter allowed cross-user data access.</constraint>
+    <constraint priority="CRITICAL">ATOMIC OPERATIONS: Use PostgreSQL UPSERT (INSERT ... ON CONFLICT DO UPDATE) for increment_usage() to prevent race conditions during concurrent requests. Composite unique constraint on (user_id, month) enforces atomicity.</constraint>
+    <constraint priority="HIGH">TIMEZONE CONSISTENCY: All month calculations MUST use UTC timezone. Format: YYYY-MM-01 (first day of month). Use date_trunc('month', now() AT TIME ZONE 'UTC') for PostgreSQL queries.</constraint>
+    <constraint priority="HIGH">GRACEFUL DEGRADATION: Redis cache failures MUST NOT break functionality. UsageTracker must fall back to direct Supabase queries if Redis unavailable (pattern from JobService.get_job()).</constraint>
+    <constraint priority="MEDIUM">MONTHLY RESET STRATEGY: Choose ONE strategy (Celery Beat, pg_cron, or GitHub Actions). Document choice in dev notes. Old usage records MUST be preserved (no DELETE), new months auto-created via UPSERT.</constraint>
+    <constraint priority="MEDIUM">CACHE INVALIDATION: increment_usage() MUST invalidate Redis cache after database update to maintain consistency between cache and PostgreSQL.</constraint>
+    <constraint priority="MEDIUM">ERROR HANDLING: Increment failures SHOULD log errors but NOT block conversion jobs. Use try/except in upload endpoint integration to ensure user experience isn't degraded.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>UsageTracker.increment_usage</name>
+      <kind>function signature</kind>
+      <signature>def increment_usage(self, user_id: str) -> int</signature>
+      <path>backend/app/services/usage_tracker.py</path>
+      <description>Increments conversion count for current month (UTC), creates new row if needed via UPSERT, updates Redis cache, returns new count. MUST filter by user_id explicitly.</description>
+    </interface>
+    <interface>
+      <name>UsageTracker.get_usage</name>
+      <kind>function signature</kind>
+      <signature>def get_usage(self, user_id: str) -> dict</signature>
+      <path>backend/app/services/usage_tracker.py</path>
+      <description>Returns usage stats: {"month": "2025-12-01", "conversion_count": 3, "tier": "FREE", "tier_limit": 5, "remaining": 2}. Checks Redis cache first, falls back to Supabase, fetches tier from auth.users metadata.</description>
+    </interface>
+    <interface>
+      <name>GET /api/v1/usage</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/v1/usage -> UsageResponse (200 OK | 401 Unauthorized | 500 Internal Server Error)</signature>
+      <path>backend/app/api/v1/usage.py</path>
+      <description>Returns current month usage for authenticated user. Requires JWT authentication via Depends(get_current_user). Response matches UsageResponse Pydantic schema.</description>
+    </interface>
+    <interface>
+      <name>user_usage table</name>
+      <kind>database schema</kind>
+      <signature>CREATE TABLE user_usage (user_id UUID FK, month DATE, conversion_count INTEGER, updated_at TIMESTAMPTZ, PRIMARY KEY (user_id, month))</signature>
+      <path>backend/supabase/migrations/009_user_usage_table.sql</path>
+      <description>PostgreSQL table with composite unique key (user_id, month), indexes on user_id and month, RLS policy: SELECT allowed where auth.uid() = user_id</description>
+    </interface>
+    <interface>
+      <name>Redis cache key format</name>
+      <kind>data structure</kind>
+      <signature>usage:{user_id}:{YYYY-MM} -> conversion_count (integer string)</signature>
+      <path>Redis database</path>
+      <description>Cache key pattern for usage counts. TTL: 3600 seconds (1 hour). Invalidated on increment. Graceful fallback to Supabase if cache miss or Redis unavailable.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend testing uses pytest 8.x with async support (pytest-asyncio). Unit tests mock external dependencies (Supabase client, Redis client) using MagicMock. Integration tests use FastAPI TestClient with real JWT tokens from conftest fixtures. All database operations tested for user_id filtering to prevent cross-user data access (security regression from Story 5.4). Coverage target: 80% minimum.</standards>
+    <locations>
+      <location>backend/tests/unit/services/test_usage_tracker.py</location>
+      <location>backend/tests/integration/test_api_usage.py</location>
+      <location>backend/tests/conftest.py (fixtures: valid_jwt_token, client)</location>
+    </locations>
+    <ideas>
+      <test id="AC2.1" type="unit">Test increment_usage creates new row for first conversion (user_id + month not in table). Mock Supabase upsert to return conversion_count=1. Assert Redis cache updated with key usage:{user_id}:{month}.</test>
+      <test id="AC2.2" type="unit">Test increment_usage updates existing row (user_id + month exists). Mock Supabase to return conversion_count=4. Assert cache invalidated and updated with new count.</test>
+      <test id="AC2.3" type="unit">Test get_usage returns correct remaining conversions for FREE tier (limit=5, count=3, remaining=2). Mock Redis cache hit with count=3, mock auth.users tier=FREE.</test>
+      <test id="AC2.4" type="unit">Test get_usage falls back to Supabase when Redis unavailable (cache miss). Mock Redis.get() raises exception, mock Supabase query returns count=2.</test>
+      <test id="AC2.5" type="unit">Test month boundary handling (Dec 31 23:59 UTC -> Jan 1 00:01 UTC). Mock datetime to verify new month row created with conversion_count=1.</test>
+      <test id="AC3.1" type="integration">Test GET /api/v1/usage returns 200 OK with authenticated JWT token. Assert response matches UsageResponse schema with correct user data.</test>
+      <test id="AC3.2" type="integration">Test GET /api/v1/usage returns 401 Unauthorized when JWT token missing or invalid. Assert error message matches authentication failure.</test>
+      <test id="AC3.3" type="integration">Test GET /api/v1/usage handles new user with no usage data (returns count=0). Assert tier_limit and remaining calculated correctly.</test>
+      <test id="AC7.1" type="load">Test concurrent increments (10 parallel requests) maintain count accuracy. Use threading to simulate race conditions, assert final count = 10 (no lost updates).</test>
+      <test id="AC7.2" type="integration">Test Redis connection failure graceful degradation. Stop Redis container, call get_usage(), assert response still returns data from Supabase (fallback works).</test>
+    </ideas>
+  </tests>
+</story-context>
