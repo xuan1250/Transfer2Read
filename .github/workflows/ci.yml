@@ -35,6 +35,7 @@ jobs:
           # Mock environment variables for testing
           SUPABASE_URL: https://test.supabase.co
           SUPABASE_SERVICE_KEY: test-key
+          SUPABASE_JWT_SECRET: test-jwt-secret
           REDIS_URL: redis://localhost:6379
           OPENAI_API_KEY: test-key
           ANTHROPIC_API_KEY: test-key
