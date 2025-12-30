@@ -1,4 +1,4 @@
-# generated: 2025-12-01
+# generated: 2025-12-26
 # project: transfer_app
 # project_key: transfer_app
 # tracking_system: file-system
@@ -34,7 +34,7 @@
 # - Statuses preserved from previous sprint-status.yaml where applicable
 # - Story 1.1: Updated from "monorepo-setup" to "supabase-setup" (status preserved: in-progress)
 
-generated: 2025-12-01
+generated: 2025-12-26
 project: transfer_app
 project_key: transfer_app
 tracking_system: file-system
@@ -80,10 +80,20 @@ development_status:
   5-4-download-feedback-flow: done
   epic-5-retrospective: completed
 
-  epic-6: backlog
+  epic-6: contexted
   6-1-usage-tracking-supabase-postgresql: done
   6-2-limit-enforcement-middleware: done
   6-3-upgrade-prompts-paywall-ui: done
   6-4-basic-admin-dashboard: done
-  epic-6-retrospective: optional
+  epic-6-retrospective: completed
+  quick-wins-launch-prep: completed
+  production-soft-launch: completed
+
+  epic-7: contexted
+  7-1-production-environment-verification: backlog
+  7-2-load-and-performance-testing: backlog
+  7-3-security-audit-and-penetration-testing: backlog
+  7-4-user-acceptance-testing-uat: backlog
+  7-5-monitoring-and-incident-response-setup: backlog
+  epic-7-retrospective: optional
 
