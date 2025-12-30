@@ -378,14 +378,14 @@ export default function JobDetailPage() {
                   <div className="flex items-center gap-4">
                     <div className="flex-1 bg-gray-200 rounded-full h-3">
                       <div
-                        className={`h-3 rounded-full transition-all ${'${'}
+                        className={`h-3 rounded-full transition-all ${
                           job.quality_report.overall_confidence >= 80
                             ? 'bg-green-600'
                             : job.quality_report.overall_confidence >= 60
                             ? 'bg-yellow-600'
                             : 'bg-red-600'
-                        ${'}'}`}
-                        style={{'{{'}{ width: `${'${'}job.quality_report.overall_confidence{'}'}%` {'}}'}}}
+                        }`}
+                        style={{ width: `${job.quality_report.overall_confidence}%` }}
                       />
                     </div>
                     <span className="text-lg font-semibold text-slate-900">
