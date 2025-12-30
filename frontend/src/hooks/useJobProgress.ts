@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 /**
@@ -49,6 +49,7 @@ export interface ProgressUpdate {
  */
 export function useJobProgress(jobId: string) {
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const completedAtRef = useRef<number | null>(null);
 
@@ -116,6 +117,15 @@ export function useJobProgress(jobId: string) {
     // Keep failed queries in cache for error display
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Invalidate parent useJob query when job completes or fails
+  // This ensures the job status page updates to show download button
+  useEffect(() => {
+    if (progress?.status === 'COMPLETED' || progress?.status === 'FAILED') {
+      // Invalidate the job query to trigger refetch with final job data
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
+    }
+  }, [progress?.status, jobId, queryClient]);
 
   return {
     progress,
