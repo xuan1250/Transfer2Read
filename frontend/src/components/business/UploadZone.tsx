@@ -228,6 +228,7 @@ export default function UploadZone({
         } else if (axiosError.response?.status === 403) {
           // Limit exceeded - show modal if it's a limit error
           const errorData = axiosError.response.data;
+          console.log('403 Error Response:', errorData);
           if (errorData?.code === 'FILE_SIZE_LIMIT_EXCEEDED') {
             // Show the limit modal
             showLimitModal(errorData);
