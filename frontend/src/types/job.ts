@@ -46,6 +46,8 @@ export interface Job {
   error_message?: string;
   created_at: string;
   completed_at?: string;
+  progress?: number; // 0-100
+  stage_metadata?: Record<string, unknown>; // Current pipeline stage info
 }
 
 export interface JobListResponse {
@@ -58,4 +60,40 @@ export interface JobListResponse {
 export interface DownloadUrlResponse {
   download_url: string;
   expires_at: string;
+}
+
+export type FeedbackRating = 'positive' | 'negative';
+
+export interface FeedbackItem {
+  id: string;
+  rating: FeedbackRating;
+  comment?: string | null;
+  created_at: string;
+}
+
+export interface FeedbackListResponse {
+  feedback: FeedbackItem[];
+  total: number;
+}
+
+export type IssueType =
+  | 'table_formatting'
+  | 'missing_images'
+  | 'broken_chapters'
+  | 'incorrect_equations'
+  | 'font_issues'
+  | 'other';
+
+export interface IssueItem {
+  id: string;
+  issue_type: IssueType;
+  page_number?: number | null;
+  description: string;
+  screenshot_url?: string | null;
+  created_at: string;
+}
+
+export interface IssueListResponse {
+  issues: IssueItem[];
+  total: number;
 }

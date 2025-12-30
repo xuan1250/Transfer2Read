@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Job } from '@/types/job';
-import { fetchJob, getDownloadUrl } from '@/lib/api-client';
+import { Job, FeedbackItem, IssueItem } from '@/types/job';
+import { fetchJob, getDownloadUrl, getJobFeedback, getJobIssues } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,10 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
-  Clock
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -69,6 +72,8 @@ export default function JobDetailPage() {
   const { toast } = useToast();
 
   const [job, setJob] = useState<Job | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [issues, setIssues] = useState<IssueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
@@ -93,6 +98,15 @@ export default function JobDetailPage() {
       setIsLoading(true);
       const jobData = await fetchJob(token, jobId);
       setJob(jobData);
+
+      // Load feedback and issues in parallel
+      const [feedbackData, issuesData] = await Promise.all([
+        getJobFeedback(token, jobId).catch(() => ({ feedback: [], total: 0 })),
+        getJobIssues(token, jobId).catch(() => ({ issues: [], total: 0 }))
+      ]);
+
+      setFeedback(feedbackData.feedback);
+      setIssues(issuesData.issues);
 
       const inProgressStatuses = ['PROCESSING', 'ANALYZING', 'EXTRACTING', 'STRUCTURING', 'GENERATING', 'QUEUED'];
       if (inProgressStatuses.includes(jobData.status)) {
@@ -438,6 +452,102 @@ export default function JobDetailPage() {
                   <p className="text-base text-slate-900 mt-1">${job.quality_report.estimated_cost.toFixed(4)}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Progress Indicator for In-Progress Jobs */}
+        {job.progress !== undefined && job.status !== 'COMPLETED' && job.status !== 'FAILED' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Processing Progress</CardTitle>
+              <CardDescription>Current status: {job.status}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-slate-600">Progress</p>
+                  <span className="text-sm font-semibold text-slate-900">{job.progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className="h-3 rounded-full bg-blue-600 transition-all"
+                    style={{ width: `${job.progress}%` }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Feedback Section */}
+        {feedback.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                User Feedback ({feedback.length})
+              </CardTitle>
+              <CardDescription>Ratings and comments for this conversion</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {feedback.map((item) => (
+                  <div key={item.id} className="border-l-4 pl-4 py-2" style={{
+                    borderColor: item.rating === 'positive' ? '#10b981' : '#ef4444'
+                  }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {item.rating === 'positive' ? (
+                        <ThumbsUp className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <ThumbsDown className="h-4 w-4 text-red-600" />
+                      )}
+                      <span className="text-sm font-medium capitalize">{item.rating}</span>
+                      <span className="text-xs text-slate-500">
+                        {format(new Date(item.created_at), 'PPpp')}
+                      </span>
+                    </div>
+                    {item.comment && (
+                      <p className="text-sm text-slate-700">{item.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Issues Section */}
+        {issues.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Reported Issues ({issues.length})
+              </CardTitle>
+              <CardDescription>Problems reported with this conversion</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {issues.map((issue) => (
+                  <div key={issue.id} className="border rounded-lg p-4 bg-slate-50">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <Badge variant="outline" className="mb-2">
+                          {issue.issue_type.replace(/_/g, ' ')}
+                        </Badge>
+                        {issue.page_number && (
+                          <span className="text-xs text-slate-600 ml-2">Page {issue.page_number}</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500">
+                        {format(new Date(issue.created_at), 'PPp')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700">{issue.description}</p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

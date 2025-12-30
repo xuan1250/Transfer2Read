@@ -17,8 +17,8 @@ from app.schemas.job import (
     DownloadUrlResponse
 )
 from app.schemas.progress import ProgressUpdate, ElementsDetected
-from app.schemas.feedback import FeedbackSubmitRequest, FeedbackResponse
-from app.schemas.issue import IssueReportRequest, IssueReportResponse
+from app.schemas.feedback import FeedbackSubmitRequest, FeedbackResponse, FeedbackListResponse, FeedbackItem
+from app.schemas.issue import IssueReportRequest, IssueReportResponse, IssueListResponse, IssueItem
 from app.core.supabase import get_supabase_client
 from app.core.redis_client import init_redis_client
 from app.services.storage.supabase_storage import SupabaseStorageService
@@ -1245,3 +1245,138 @@ async def check_existing_feedback(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"detail": f"Failed to check feedback: {str(e)}", "code": "DATABASE_ERROR"}
         )
+
+
+@router.get(
+    "/jobs/{job_id}/feedback",
+    status_code=status.HTTP_200_OK,
+    response_model=FeedbackListResponse,
+    summary="Get all feedback for a job",
+    description="Retrieve all feedback submissions for a specific job"
+)
+async def get_job_feedback(
+    job_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> FeedbackListResponse:
+    """
+    Get all feedback for a specific job.
+
+    Args:
+        job_id: UUID of the conversion job
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        FeedbackListResponse: List of feedback items
+    """
+    supabase = get_supabase_client()
+
+    try:
+        # Verify job exists and belongs to user
+        job = job_service.get_job(job_id, current_user.user_id)
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "NOT_FOUND"}
+            )
+
+        # Fetch feedback
+        response = supabase.table("job_feedback") \
+            .select("*") \
+            .eq("job_id", job_id) \
+            .order("created_at", desc=True) \
+            .execute()
+
+        feedback_items = [
+            FeedbackItem(
+                id=item["id"],
+                rating=item["rating"],
+                comment=item.get("comment"),
+                created_at=item["created_at"]
+            )
+            for item in response.data
+        ]
+
+        return FeedbackListResponse(
+            feedback=feedback_items,
+            total=len(feedback_items)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get job feedback: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to get feedback: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+
+
+@router.get(
+    "/jobs/{job_id}/issues",
+    status_code=status.HTTP_200_OK,
+    response_model=IssueListResponse,
+    summary="Get all issues for a job",
+    description="Retrieve all reported issues for a specific job"
+)
+async def get_job_issues(
+    job_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    job_service: JobService = Depends(get_job_service)
+) -> IssueListResponse:
+    """
+    Get all issues for a specific job.
+
+    Args:
+        job_id: UUID of the conversion job
+        current_user: Authenticated user from JWT token
+        job_service: Job service instance
+
+    Returns:
+        IssueListResponse: List of issue items
+    """
+    supabase = get_supabase_client()
+
+    try:
+        # Verify job exists and belongs to user
+        job = job_service.get_job(job_id, current_user.user_id)
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"detail": "Job not found", "code": "NOT_FOUND"}
+            )
+
+        # Fetch issues
+        response = supabase.table("job_issues") \
+            .select("*") \
+            .eq("job_id", job_id) \
+            .order("created_at", desc=True) \
+            .execute()
+
+        issue_items = [
+            IssueItem(
+                id=item["id"],
+                issue_type=item["issue_type"],
+                page_number=item.get("page_number"),
+                description=item["description"],
+                screenshot_url=item.get("screenshot_url"),
+                created_at=item["created_at"]
+            )
+            for item in response.data
+        ]
+
+        return IssueListResponse(
+            issues=issue_items,
+            total=len(issue_items)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get job issues: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"detail": f"Failed to get issues: {str(e)}", "code": "DATABASE_ERROR"}
+        )
+

@@ -1,4 +1,4 @@
-import { Job, JobListResponse, DownloadUrlResponse } from '@/types/job';
+import { Job, JobListResponse, DownloadUrlResponse, FeedbackListResponse, IssueListResponse } from '@/types/job';
 import { LimitExceededError } from '@/types/usage';
 import { SystemStats, UserListParams, UserListResponse, TierUpdateRequest, TierUpdateResponse } from '@/types/admin';
 
@@ -182,6 +182,48 @@ export async function deleteJob(token: string, jobId: string): Promise<void> {
 
     throw new Error(getErrorMessage(errorData, 'Failed to delete job'));
   }
+}
+
+/**
+ * Get feedback for a specific job
+ */
+export async function getJobFeedback(token: string, jobId: string): Promise<FeedbackListResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/feedback`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch feedback'));
+  }
+
+  return response.json();
+}
+
+/**
+ * Get issues for a specific job
+ */
+export async function getJobIssues(token: string, jobId: string): Promise<IssueListResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/issues`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch issues'));
+  }
+
+  return response.json();
 }
 
 /**

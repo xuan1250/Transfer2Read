@@ -6,7 +6,7 @@ Story 5.4 - Download & Feedback Flow
 """
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 
 class FeedbackSubmitRequest(BaseModel):
@@ -70,6 +70,24 @@ class FeedbackResponse(BaseModel):
     })
 
 
+class FeedbackItem(BaseModel):
+    """
+    Single feedback item for listing.
+    """
+    id: str = Field(..., description="Feedback ID")
+    rating: Literal['positive', 'negative']
+    comment: Optional[str] = None
+    created_at: datetime
+
+
+class FeedbackListResponse(BaseModel):
+    """
+    Response schema for listing feedback.
+    """
+    feedback: List[FeedbackItem] = Field(default_factory=list)
+    total: int = Field(default=0)
+
+
 class FeedbackStats(BaseModel):
     """
     Aggregated feedback statistics for analytics.
@@ -93,3 +111,4 @@ class FeedbackStats(BaseModel):
             "positive_ratio": 90.0
         }
     })
+

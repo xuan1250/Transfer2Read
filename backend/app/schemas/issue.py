@@ -6,7 +6,7 @@ Story 5.4 - Download & Feedback Flow
 """
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 
 # Define common issue types
@@ -95,6 +95,26 @@ class IssueReportResponse(BaseModel):
     })
 
 
+class IssueItem(BaseModel):
+    """
+    Single issue item for listing.
+    """
+    id: str = Field(..., description="Issue ID")
+    issue_type: IssueType
+    page_number: Optional[int] = None
+    description: str
+    screenshot_url: Optional[str] = None
+    created_at: datetime
+
+
+class IssueListResponse(BaseModel):
+    """
+    Response schema for listing issues.
+    """
+    issues: List[IssueItem] = Field(default_factory=list)
+    total: int = Field(default=0)
+
+
 class IssueStats(BaseModel):
     """
     Aggregated issue statistics for analytics.
@@ -121,3 +141,4 @@ class IssueStats(BaseModel):
             "most_common_type": "table_formatting"
         }
     })
+
