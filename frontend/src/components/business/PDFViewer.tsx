@@ -8,18 +8,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 
 // Dynamic imports for react-pdf to avoid SSR issues
-import type { DocumentProps, PageProps } from 'react-pdf';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
-let Document: React.ComponentType<DocumentProps>;
-let Page: React.ComponentType<PageProps>;
-let pdfjs: typeof import('pdfjs-dist');
-
-// Import CSS on client side only
-if (typeof window !== 'undefined') {
-  import('react-pdf/dist/Page/AnnotationLayer.css');
-  import('react-pdf/dist/Page/TextLayer.css');
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Document: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Page: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pdfjs: any;
 
 interface PDFViewerProps {
   pdfUrl: string;

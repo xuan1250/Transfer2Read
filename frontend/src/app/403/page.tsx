@@ -23,7 +23,7 @@ export default function ForbiddenPage() {
 
         <h1 className="text-4xl font-bold text-gray-900 mb-4">403 Forbidden</h1>
         <p className="text-lg text-gray-600 mb-8">
-          You don't have permission to access this page. Admin privileges are required.
+          You don&apos;t have permission to access this page. Admin privileges are required.
         </p>
 
         <div className="space-y-3">

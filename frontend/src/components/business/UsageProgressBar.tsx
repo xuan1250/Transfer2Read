@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import { UsageStats, SubscriptionTier } from '@/types/usage';
 import { useUser } from '@/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 
 export interface UsageProgressBarProps {
   /** Custom className for the wrapper */
@@ -32,7 +33,7 @@ export function UsageProgressBar({
   className,
   onUsageLoaded,
 }: UsageProgressBarProps) {
-  const { user, session } = useUser();
+  const { user } = useUser();
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,15 @@ export function UsageProgressBar({
 
   useEffect(() => {
     const fetchUsage = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch session to get access_token
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (!session?.access_token) {
         setLoading(false);
         return;
@@ -74,7 +84,7 @@ export function UsageProgressBar({
     };
 
     fetchUsage();
-  }, [session?.access_token, onUsageLoaded]);
+  }, [user, onUsageLoaded]);
 
   // Loading state
   if (loading) {
@@ -213,7 +223,7 @@ export function UsageProgressBar({
         {warningState === 'critical' && (
           <div className="rounded-md bg-red-50 border border-red-200 p-3">
             <p className="text-xs text-red-800">
-              You've reached your monthly limit. Upgrade to PRO for unlimited conversions.
+              You&apos;ve reached your monthly limit. Upgrade to PRO for unlimited conversions.
             </p>
           </div>
         )}

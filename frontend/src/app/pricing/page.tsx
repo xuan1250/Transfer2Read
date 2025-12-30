@@ -2,18 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Sparkles, X } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { SubscriptionTier } from '@/types/usage';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PricingPage() {
   const { user } = useUser();
-  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -276,7 +274,7 @@ export default function PricingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600">
-                    On the Free tier, you'll be notified when you reach your 5 conversions/month limit.
+                    On the Free tier, you&apos;ll be notified when you reach your 5 conversions/month limit.
                     You can upgrade to Pro for unlimited conversions anytime, or wait until next month when
                     your limit resets.
                   </p>
@@ -289,7 +287,7 @@ export default function PricingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600">
-                    Yes! We offer a 30-day money-back guarantee. If you're not satisfied with Pro or Premium,
+                    Yes! We offer a 30-day money-back guarantee. If you&apos;re not satisfied with Pro or Premium,
                     contact us within 30 days for a full refund.
                   </p>
                 </CardContent>

@@ -51,7 +51,7 @@ export default function UserManagementTable({
 }: UserManagementTableProps) {
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState<'ALL' | 'FREE' | 'PRO' | 'PREMIUM'>('ALL');
-  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortBy, setSortBy] = useState<'email' | 'tier' | 'conversions' | 'last_login' | 'created_at'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Debounce search input
@@ -62,13 +62,13 @@ export default function UserManagementTable({
         page_size: pageSize,
         search: search || undefined,
         tier_filter: tierFilter,
-        sort_by: sortBy as any,
+        sort_by: sortBy,
         sort_order: sortOrder,
       });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, onParamsChange, pageSize, tierFilter, sortBy, sortOrder]);
 
   // Update when filters or sorting change
   useEffect(() => {
@@ -77,16 +77,19 @@ export default function UserManagementTable({
       page_size: pageSize,
       search: search || undefined,
       tier_filter: tierFilter,
-      sort_by: sortBy as any,
+      sort_by: sortBy,
       sort_order: sortOrder,
     });
-  }, [tierFilter, sortBy, sortOrder]);
+  }, [tierFilter, sortBy, sortOrder, onParamsChange, pageSize, search]);
 
   const handleSort = (column: string) => {
+    const validColumns = ['email', 'tier', 'conversions', 'last_login', 'created_at'];
+    if (!validColumns.includes(column)) return;
+
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortBy(column);
+      setSortBy(column as typeof sortBy);
       setSortOrder('desc');
     }
   };
@@ -97,7 +100,7 @@ export default function UserManagementTable({
       page_size: pageSize,
       search: search || undefined,
       tier_filter: tierFilter,
-      sort_by: sortBy as any,
+      sort_by: sortBy,
       sort_order: sortOrder,
     });
   };
@@ -146,7 +149,7 @@ export default function UserManagementTable({
             className="pl-10"
           />
         </div>
-        <Select value={tierFilter} onValueChange={(value: any) => setTierFilter(value)}>
+        <Select value={tierFilter} onValueChange={(value: 'ALL' | 'FREE' | 'PRO' | 'PREMIUM') => setTierFilter(value)}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filter by tier" />
           </SelectTrigger>

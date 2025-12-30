@@ -9,7 +9,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { User } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -23,7 +22,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
@@ -57,7 +55,6 @@ export default function AdminDashboard() {
           return;
         }
 
-        setUser(session.user);
         setAccessToken(session.access_token);
 
         // Check if user is superuser
@@ -120,8 +117,9 @@ export default function AdminDashboard() {
       // Refetch users and stats
       await refetchUsers();
       queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update user tier');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update user tier';
+      toast.error(message);
       throw error; // Re-throw to let modal handle loading state
     }
   };

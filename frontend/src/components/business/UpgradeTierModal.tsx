@@ -57,8 +57,6 @@ export default function UpgradeTierModal({
     try {
       await onConfirm(user.id, selectedTier);
       handleClose();
-    } catch (error) {
-      // Error handling is done by parent component (toast)
     } finally {
       setLoading(false);
     }
@@ -107,7 +105,7 @@ export default function UpgradeTierModal({
             <div className="text-sm font-medium text-gray-700">New Tier</div>
             <Select
               value={selectedTier || undefined}
-              onValueChange={(value: any) => {
+              onValueChange={(value: 'FREE' | 'PRO' | 'PREMIUM') => {
                 setSelectedTier(value);
                 setShowConfirm(false);
               }}

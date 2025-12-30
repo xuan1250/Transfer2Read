@@ -15,14 +15,14 @@ export function setLimitExceededHandler(handler: (error: LimitExceededError) => 
 /**
  * Check if response is a limit exceeded error and handle it
  */
-function handleLimitExceededError(response: Response, errorData: any): boolean {
+function handleLimitExceededError(response: Response, errorData: Record<string, unknown>): boolean {
   if (response.status === 403 && errorData.code) {
     const isLimitError =
       errorData.code === 'FILE_SIZE_LIMIT_EXCEEDED' ||
       errorData.code === 'CONVERSION_LIMIT_EXCEEDED';
 
     if (isLimitError && limitExceededHandler) {
-      limitExceededHandler(errorData as LimitExceededError);
+      limitExceededHandler(errorData as unknown as LimitExceededError);
       return true;
     }
   }
