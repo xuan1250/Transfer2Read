@@ -189,19 +189,37 @@ When someone describes Transfer2Read to a friend: *"It shows you exactly how you
 
 Unlike competitors (Adobe, Calibre, online converters), Transfer2Read makes **quality verification the centerpiece**, not an afterthought. Users don't wonder "will this work?" - they **see proof** before committing to download.
 
-### 3.2 Novel UX Pattern: Quality Preview Comparison
+### 3.2 Novel UX Pattern: Quality Preview Comparison [DEPRECATED]
 
-**Pattern Name:** Pre-Download Quality Verification
+> **⚠️ DEPRECATED:** This pattern was removed from MVP in December 2025 (QW-3) for a simpler, more streamlined user experience. Quality verification is now handled entirely through the quality report on the job status page, without visual preview comparison.
 
-**Problem Solved:** 
+**Original Pattern Name:** Pre-Download Quality Verification
+
+**Why It Was Removed:**
+
+Product decision to simplify the application. The split-screen preview comparison added complexity without sufficient user benefit. Users now rely on the comprehensive quality report (tables, images, equations detected) to build confidence before downloading.
+
+**Current Implementation:**
+
+- Quality report displayed on job status page
+- No split-screen comparison
+- Direct download after quality report review
+- Simpler user flow: Upload → Convert → Quality Report → Download
+
+**Original Design (Historical Reference):**
+
+<details>
+<summary>Click to view original design specification</summary>
+
+**Problem Solved:**
 
 Existing PDF converters are "black boxes" - users upload a file, download the result, open it on their e-reader, and THEN discover formatting is broken. This wastes time and destroys trust.
 
-**Transfer2Read's Solution:**
+**Transfer2Read's Original Solution:**
 
 Show conversion quality **before download** through interactive preview comparison.
 
-**User Goal:** 
+**User Goal:**
 
 Verify that complex elements (tables, equations, charts) converted correctly before downloading the EPUB.
 
@@ -214,13 +232,13 @@ Verify that complex elements (tables, equations, charts) converted correctly bef
    - "Converting to EPUB..." (75%)
    - "Complete! Ready to preview" (100%)
 
-3. **Quality Preview Interface** (This is the novel pattern):
-   
+3. **Quality Preview Interface** (This was the novel pattern):
+
    **Layout:** Split-screen comparison view
    - **Left pane:** Original PDF pages (key sections)
    - **Right pane:** Converted EPUB preview (same sections)
    - **Controls:** Zoom, navigate, toggle between sections
-   
+
    **Quality Metrics Dashboard:**
    - ✓ Tables: 12/12 preserved (100%)
    - ✓ Images: 8/8 positioned correctly
@@ -268,12 +286,14 @@ Verify that complex elements (tables, equations, charts) converted correctly bef
 - Screen reader: Announce quality metrics, describe preview comparison
 - Focus indicators: Clear visual focus on active pane
 
-**Why This Works:**
+**Why This Was Originally Designed:**
 
 1. **Trust-Building** → Visual proof replaces anxiety ("It actually works!")
 2. **Time-Saving** → Catch issues before downloading to e-reader
 3. **Empowerment** → Users can verify and customize before committing
 4. **Differentiator** → No competitor offers this level of transparency
+
+</details>
 
 ### 3.3 Core Experience Principles
 

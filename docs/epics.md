@@ -1036,47 +1036,23 @@ So that **I can understand what was converted.**
 
 ---
 
-#### Story 5.3: Split-Screen Comparison UI
+#### Story 5.3: Split-Screen Comparison UI [REMOVED]
 
-**User Story:**
-As a **User**,  
-I want **to compare the original PDF side-by-side with the converted EPUB**,  
+**Status:** REMOVED - Feature removed from MVP for simplified user experience (QW-3)
+
+**Original User Story:**
+As a **User**,
+I want **to compare the original PDF side-by-side with the converted EPUB**,
 So that **I can verify the layout and formatting fidelity.**
 
-**Acceptance Criteria:**
-- [ ] Split-screen component created (Left: PDF Viewer, Right: EPUB/HTML Viewer)
-- [ ] Synchronized scrolling (scrolling left pane scrolls right pane)
-- [ ] "Highlight Differences" toggle (optional for MVP, but good for "Preview Focused" direction)
-- [ ] PDF rendered using `react-pdf`
-- [ ] EPUB rendered using `react-reader` or raw HTML iframe
-- [ ] Mobile responsive adaptation (Stack vertically or show tabs)
+**Reason for Removal:**
+Product decision to simplify the application and streamline the user experience. Quality verification is now handled entirely through the quality report on the job status page.
 
-**Technical Notes:**
-- UX Spec: "Pre-Download Quality Verification" pattern
-- This is the **Core Differentiator** - needs high polish
-
-**Test Data (from Epic 4 Retrospective Action 1.4, Story 5.2):**
-- Use sample EPUBs from `tests/fixtures/epic-5-sample-pdfs/` for development
-  - Simple text PDF: Baseline rendering test
-  - Complex technical book: Validate table/equation rendering in split-screen
-  - Multi-language document: Test CJK font rendering in browser
-  - Large file: Performance test (react-pdf + react-reader with 300+ pages)
-  - Edge case: Test low-quality rendering and warning displays
-
-**PDF Viewer Evaluation (from Epic 4 Retrospective Action 3.1):**
-- Test `react-pdf` library performance with large PDFs
-  - Load time benchmarks: 10-page, 50-page, 300-page PDFs
-  - Memory usage and scrolling performance (60fps target)
-  - Alternatives: PDF.js, iframe embed, or server-side rendering to images
-  - Success: 300-page PDF loads <5 seconds, smooth scrolling, memory <500MB
-
-**EPUB Rendering Strategy (from Epic 4 Retrospective Action 3.2):**
-- Option A: `react-reader` library (native EPUB rendering)
-- Option B: Convert EPUB → HTML preview on backend
-- Prototype Option A first, compare to Apple Books/Calibre fidelity
-- Success: EPUB renders <3 seconds, 95% visual match to e-readers, TOC functional
-
-**Prerequisites:** Story 5.2 **(including Action 1.4: Sample PDFs curated)**
+**Impact:**
+- Preview comparison feature removed from MVP
+- Users now rely on quality report for conversion confidence
+- No split-screen UI, PDF viewer, or EPUB viewer components
+- Dependencies removed: react-pdf, react-reader, pdfjs-dist, epubjs
 
 ---
 
@@ -1279,5 +1255,470 @@ So that **I can monitor the health of the application.**
 1. **Approve this Epic Breakdown**
 2. **Initialize Project** (Start with Epic 1, Story 1.1)
 3. **Hand off to Dev Agents** for implementation
+
+---
+
+## Epic 7: Launch Readiness (Post-MVP)
+
+**Status:** PLANNED (Created: 2025-12-26)
+**Goal:** Verify production readiness, performance, security, and user acceptance before public launch
+**User Value:** Confidence that the system is stable, secure, and performant for real users
+**Context:** All MVP features (Epics 1-6) are complete. This epic prepares for production launch.
+
+---
+
+### Story 7.1: Production Environment Verification
+
+**User Story:**
+As a **DevOps Engineer**,
+I want **to verify that all production services are correctly configured and operational**,
+So that **the application can serve real users reliably.**
+
+**Acceptance Criteria:**
+
+**Production Infrastructure:**
+- [ ] **Vercel Frontend** fully deployed to production domain
+  - Custom domain configured with SSL certificate
+  - Environment variables verified: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`
+  - Preview deployments working for feature branches
+- [ ] **Railway Backend API** operational on production URL
+  - FastAPI service running with health check returning 200
+  - Environment variables verified: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `REDIS_URL`
+  - Auto-deploy from `main` branch verified
+- [ ] **Railway Celery Worker** processing jobs
+  - Worker logs show successful startup and AI SDK initialization
+  - Test job dispatched and completed successfully
+- [ ] **Railway Redis** accessible to API and Worker
+  - Connection verified from both services
+  - Persistence enabled for job queue durability
+
+**Supabase Production:**
+- [ ] **Production Supabase Project** configured separately from development
+  - PostgreSQL database accessible
+  - Row Level Security (RLS) policies verified on all tables
+  - Storage buckets (`uploads`, `downloads`) configured with correct policies
+  - Authentication providers enabled (Email, Google, GitHub OAuth)
+- [ ] **Database Migrations** applied to production
+  - All tables exist: `auth.users`, `conversion_jobs`, `user_usage`
+  - Indexes created for performance
+  - pg_cron or scheduled job for monthly usage reset configured
+
+**API Keys & Secrets:**
+- [ ] **All API keys rotated** for production (not using dev keys)
+  - OpenAI API key with appropriate rate limits
+  - Anthropic API key configured
+  - Supabase service role key (NOT anon key for backend)
+- [ ] **Secrets stored securely** in Railway environment variables (not in code)
+- [ ] **.env files never committed** to git (verified in history)
+
+**CORS & Security:**
+- [ ] **CORS configuration** allows only production frontend domain
+- [ ] **Rate limiting** enabled on API endpoints
+- [ ] **HTTPS enforced** on all services (no HTTP fallback)
+
+**Smoke Tests:**
+- [ ] **End-to-End Smoke Test** on production:
+  1. User can register and log in
+  2. User can upload a PDF
+  3. Conversion job completes successfully
+  4. User can download EPUB
+  5. Usage tracking increments correctly
+
+**Technical Notes:**
+- Use production Supabase project URL (separate from dev)
+- Verify all services can reach each other (API → Supabase, Worker → Redis, etc.)
+- Document production URLs and access procedures for team
+- Set up staging environment identical to production for pre-release testing
+
+**Prerequisites:** Epics 1-6 complete
+
+---
+
+### Story 7.2: Load & Performance Testing
+
+**User Story:**
+As a **QA Engineer**,
+I want **to verify the system can handle expected load and meets performance targets**,
+So that **users experience fast, reliable conversions at scale.**
+
+**Acceptance Criteria:**
+
+**Performance Baseline (Single User):**
+- [ ] **Simple PDF conversion** (10-20 pages, text-only):
+  - Upload → Processing → Download: **< 30 seconds end-to-end**
+  - EPUB file size ≤ 120% of original PDF (FR37 validation)
+- [ ] **Complex PDF conversion** (300 pages, tables/images/equations):
+  - Processing time: **< 2 minutes** (FR35 validation)
+  - AI cost per job: **< $1.00** (validate against Action 1.2 cost tracking)
+  - Quality confidence score: **≥ 90%**
+- [ ] **Frontend page load times:**
+  - Landing page: < 2 seconds
+  - Dashboard: < 3 seconds
+  - Split-screen preview: < 5 seconds for 50-page PDF
+
+**Concurrent Load Testing:**
+- [ ] **10 concurrent users** uploading and converting PDFs:
+  - All jobs complete successfully (no failures)
+  - Average processing time increase: < 20% vs. single user
+  - API response times: P95 < 500ms, P99 < 1s
+- [ ] **50 concurrent users** (stress test):
+  - System remains responsive (no crashes)
+  - Celery worker queue depth monitored (max depth < 100)
+  - Railway CPU/memory usage: < 80%
+
+**AI API Rate Limits:**
+- [ ] **OpenAI rate limits** tested:
+  - Monitor rate limit headers in LangChain callbacks
+  - Verify Claude 3 Haiku fallback triggers on rate limit error
+  - Document API tier (e.g., Tier 3: 10,000 RPM)
+- [ ] **Anthropic rate limits** tested:
+  - Verify fallback or retry logic works
+
+**Database Performance:**
+- [ ] **Supabase PostgreSQL** under load:
+  - Query response times: P95 < 100ms for `conversion_jobs` lookups
+  - RLS policy overhead acceptable (< 10ms per query)
+  - Connection pooling configured (pgBouncer if needed)
+- [ ] **Redis** performance:
+  - Job queue latency: < 10ms for enqueue/dequeue
+  - Memory usage stable under load
+
+**File Storage Performance:**
+- [ ] **Supabase Storage** upload/download speeds:
+  - 50MB PDF upload: < 10 seconds
+  - EPUB download (signed URL): < 5 seconds
+  - No 503 errors under concurrent load
+
+**Load Testing Tools:**
+- [ ] Use **Locust** or **k6** for load testing
+- [ ] Test scenarios documented in `tests/load/scenarios.py`
+- [ ] Load test report generated with metrics and graphs
+
+**Performance Monitoring:**
+- [ ] **Railway metrics dashboard** reviewed during tests
+- [ ] **Sentry performance monitoring** (optional) capturing slow transactions
+- [ ] Bottlenecks identified and documented for future optimization
+
+**Technical Notes:**
+- Run load tests from external network (not localhost) to simulate real conditions
+- Monitor AI API costs during load testing (budget $20-50 for tests)
+- Target: Support 100 conversions/day initially, 1000/day by month 3
+- Document findings in `docs/sprint-artifacts/load-test-report-{date}.md`
+
+**Prerequisites:** Story 7.1
+
+---
+
+### Story 7.3: Security Audit & Penetration Testing
+
+**User Story:**
+As a **Security Engineer**,
+I want **to identify and fix security vulnerabilities before launch**,
+So that **user data and the system are protected from attacks.**
+
+**Acceptance Criteria:**
+
+**Authentication & Authorization:**
+- [ ] **Supabase Auth security** verified:
+  - JWT token expiration working correctly (default: 1 hour)
+  - Refresh token rotation enabled
+  - Email confirmation required (prevents fake accounts)
+  - Password strength enforced (min 8 chars, complexity rules)
+- [ ] **OAuth security** validated:
+  - Google/GitHub OAuth redirect URIs whitelisted (no open redirects)
+  - CSRF protection enabled (Supabase default)
+- [ ] **API endpoint authorization** tested:
+  - All protected endpoints reject requests without valid JWT (401)
+  - Users cannot access other users' jobs (403 test via RLS)
+  - Admin endpoints require `is_superuser` flag
+
+**OWASP Top 10 Validation:**
+- [ ] **Injection attacks** (SQL, Command):
+  - User inputs sanitized (Supabase prepared statements prevent SQL injection)
+  - No `eval()` or `exec()` in Python backend
+  - LangChain prompts sanitized (no prompt injection vulnerabilities)
+- [ ] **Broken Authentication:**
+  - Session management secure (Supabase JWT)
+  - No hardcoded credentials in code (verified via `git grep` for API keys)
+- [ ] **Sensitive Data Exposure:**
+  - Passwords never stored (Supabase handles hashing)
+  - API keys not logged or exposed in error messages
+  - File storage: Private buckets with RLS (no public access)
+- [ ] **XML External Entities (XXE):**
+  - EPUB generation library (`ebooklib`) does not parse untrusted XML
+  - PDF parsing (`pymupdf`) updated to latest version (CVE check)
+- [ ] **Broken Access Control:**
+  - RLS policies tested: User A cannot delete User B's jobs
+  - File download URLs signed (1-hour expiry, user-specific)
+- [ ] **Security Misconfiguration:**
+  - Debug mode disabled in production (`FASTAPI_ENV=production`)
+  - CORS restricted to production frontend domain only
+  - Unnecessary HTTP methods disabled (e.g., no PUT on read-only endpoints)
+- [ ] **Cross-Site Scripting (XSS):**
+  - Next.js automatic XSS protection verified
+  - User-uploaded filenames sanitized before display
+  - shadcn/ui components do not render raw HTML from user input
+- [ ] **Insecure Deserialization:**
+  - Celery tasks do not deserialize untrusted data
+  - JSON parsing uses safe methods (no `pickle`)
+- [ ] **Using Components with Known Vulnerabilities:**
+  - `npm audit` run on frontend (0 high/critical vulnerabilities)
+  - `pip-audit` run on backend (0 high/critical vulnerabilities)
+  - Supabase version up-to-date
+- [ ] **Insufficient Logging & Monitoring:**
+  - Failed login attempts logged
+  - Conversion job failures logged with context
+  - Unusual activity alerts configured (optional for MVP)
+
+**Penetration Testing:**
+- [ ] **Manual security testing** performed:
+  - Attempt to access other users' files via URL manipulation
+  - Test rate limiting by spamming API endpoints
+  - Verify HTTPS enforcement (HTTP requests redirect to HTTPS)
+  - Test file upload: Attempt to upload malicious files (e.g., JS disguised as PDF)
+- [ ] **Automated scanning** (optional):
+  - OWASP ZAP or Burp Suite scan of API endpoints
+  - Snyk or Dependabot vulnerability scanning enabled on GitHub
+
+**Data Privacy:**
+- [ ] **GDPR compliance** (if applicable):
+  - User data deletion flow works (delete account → cascade to jobs and files)
+  - Privacy policy drafted (placeholder acceptable for MVP)
+  - Cookie consent banner (if using analytics)
+- [ ] **File retention policy** enforced:
+  - Files auto-delete after 30 days (Security NFR14 validation)
+  - Cron job or Supabase trigger tested
+
+**Security Documentation:**
+- [ ] **Security incident response plan** documented:
+  - Contact procedures for security issues
+  - Steps to rotate compromised API keys
+  - Backup and restore procedures
+- [ ] **Security findings report** created:
+  - Document in `docs/sprint-artifacts/security-audit-report-{date}.md`
+  - List vulnerabilities found and remediation steps
+  - Sign-off from security reviewer (or Xavier if solo project)
+
+**Technical Notes:**
+- Use `safety` (Python) and `npm audit` for dependency vulnerability scanning
+- Test with real attack scenarios (not just checklist review)
+- Consider bug bounty program for post-launch (HackerOne, Bugcrowd)
+- Budget 1-2 days for thorough security review
+
+**Prerequisites:** Story 7.1
+
+---
+
+### Story 7.4: User Acceptance Testing (UAT)
+
+**User Story:**
+As a **Product Manager**,
+I want **to validate the system with real beta users**,
+So that **we launch with confidence that users find value and can complete workflows successfully.**
+
+**Acceptance Criteria:**
+
+**Beta User Recruitment:**
+- [ ] **5-10 beta testers** recruited:
+  - Mix of target personas: Students, researchers, professionals
+  - At least 2 users with complex PDFs (technical books, multi-language docs)
+  - At least 1 user with accessibility needs (screen reader, keyboard navigation)
+- [ ] **Beta access configured:**
+  - Invite-only registration (whitelist emails in Supabase)
+  - OR: Public beta with "Beta" badge in UI
+
+**UAT Test Scenarios:**
+- [ ] **Scenario 1: Simple Conversion** (Happy Path):
+  - User registers → Uploads 10-page PDF → Converts → Downloads EPUB
+  - Success criteria: Completes without errors, EPUB opens in Apple Books/Calibre
+  - Feedback: "Did the conversion meet your expectations? (1-5 stars)"
+- [ ] **Scenario 2: Complex PDF** (Core Value Test):
+  - User uploads 50-100 page technical book with tables/equations
+  - Conversion completes with quality report showing 90%+ confidence
+  - User previews in split-screen comparison
+  - Success criteria: User rates quality 4+ stars, downloads EPUB
+- [ ] **Scenario 3: Multi-Language Document**:
+  - User uploads PDF with English + Chinese/Japanese text
+  - EPUB renders correctly with embedded fonts (no tofu/missing glyphs)
+  - Success criteria: User confirms readability in e-reader
+- [ ] **Scenario 4: Tier Limits** (Freemium Flow):
+  - Free tier user converts 5 PDFs → Hits limit
+  - Sees upgrade prompt → Understands value proposition
+  - Success criteria: User either upgrades OR provides feedback on pricing
+- [ ] **Scenario 5: Error Handling** (Edge Case):
+  - User uploads corrupted or malformed PDF
+  - System shows clear error message (not crash)
+  - Success criteria: User understands issue and can retry
+
+**Usability Testing:**
+- [ ] **Navigation & UX feedback:**
+  - Can users find upload button without instructions? (5/5 users succeed)
+  - Is split-screen comparison intuitive? (4/5 users understand purpose)
+  - Are quality reports understandable? (User-friendly messages from Action 1.5 validated)
+- [ ] **Performance perception:**
+  - Do users feel conversion is "fast enough"? (Target: 4+ stars for 300-page book)
+  - Is progress feedback clear during processing?
+
+**Feedback Collection:**
+- [ ] **Feedback mechanism** in app:
+  - Post-download survey: "Rate your experience (1-5)" + open text
+  - "Report Issue" button functional (Stories 5.2, 5.4)
+- [ ] **User interviews** (optional):
+  - 30-min call with 3-5 beta users
+  - Ask: "What worked well? What frustrated you? Would you pay for this?"
+
+**Bug Tracking:**
+- [ ] **Beta bugs tracked** in GitHub Issues or project tracker:
+  - Critical bugs (blocking launch) fixed immediately
+  - Non-critical bugs (nice-to-have) documented for post-launch
+- [ ] **UAT results documented:**
+  - Pass/fail for each scenario
+  - User quotes and feedback themes
+  - Recommended fixes before launch
+
+**Success Criteria (Launch Go/No-Go):**
+- [ ] **80%+ users** complete Scenario 1 (simple conversion) successfully
+- [ ] **70%+ users** rate quality 4+ stars on complex PDFs (Scenario 2)
+- [ ] **0 critical bugs** (data loss, security issues, crashes)
+- [ ] **Average user satisfaction:** 4+ stars overall
+
+**Technical Notes:**
+- Use Google Forms or Typeform for feedback surveys
+- Track beta user emails in Supabase (flag: `beta_user: true`)
+- Monitor Sentry errors during UAT period
+- Budget 1 week for UAT (recruit → test → fix → retest)
+
+**Prerequisites:** Story 7.1, Story 7.2 (performance validated)
+
+---
+
+### Story 7.5: Monitoring & Incident Response Setup
+
+**User Story:**
+As an **Operations Engineer**,
+I want **to set up monitoring, alerting, and incident response procedures**,
+So that **we can detect and fix issues quickly after launch.**
+
+**Acceptance Criteria:**
+
+**Application Monitoring:**
+- [ ] **Railway Metrics** configured:
+  - CPU, memory, disk usage dashboards visible
+  - Alerts set for high resource usage (>80% for 5 minutes)
+- [ ] **Supabase Dashboard** reviewed:
+  - Database connection pool usage monitored
+  - API request rate and error rate visible
+  - Storage usage tracked (alert at 80% of quota)
+
+**Error Tracking:**
+- [ ] **Sentry** (or alternative) integrated:
+  - Frontend errors captured (Next.js integration)
+  - Backend errors captured (FastAPI integration)
+  - Celery worker errors captured
+  - Alerts configured: Slack/email on new error spike
+- [ ] **Error rate baseline** established:
+  - Acceptable error rate: < 1% of requests
+  - Zero unhandled exceptions in critical paths (upload, conversion, download)
+
+**Logging:**
+- [ ] **Structured logging** implemented:
+  - FastAPI logs include: `user_id`, `job_id`, `endpoint`, `duration`
+  - Celery logs include: `task_name`, `job_id`, `ai_model_used`, `cost`
+  - Log levels: DEBUG (dev), INFO (prod), ERROR (always)
+- [ ] **Log aggregation** (optional for MVP):
+  - Railway logs retained for 7 days (default)
+  - Consider Papertrail/Logtail for longer retention
+
+**Uptime Monitoring:**
+- [ ] **Uptime checks** configured:
+  - Use UptimeRobot, Pingdom, or Railway health checks
+  - Monitor: Frontend (200 OK), Backend `/api/health` (200 OK)
+  - Alert on downtime >2 minutes
+- [ ] **Status page** (optional):
+  - Public status page (status.transfer2read.com) using Statuspage.io
+  - Shows: API status, conversion processing status
+
+**AI API Monitoring:**
+- [ ] **OpenAI API usage** tracked:
+  - Daily token usage logged (from cost tracker, Action 1.2)
+  - Alert if daily cost exceeds budget (e.g., >$50/day)
+- [ ] **Anthropic API usage** tracked:
+  - Monitor fallback frequency (should be rare if OpenAI reliable)
+
+**Performance Monitoring:**
+- [ ] **Slow query detection:**
+  - Supabase performance insights reviewed
+  - Queries >1s logged and investigated
+- [ ] **Conversion time tracking:**
+  - Average conversion time per job logged
+  - Alert if average time exceeds 5 minutes (indicates worker issues)
+
+**Incident Response Procedures:**
+- [ ] **Runbook created** (`docs/operations/incident-response-runbook.md`):
+  - **Incident 1: API Downtime**
+    - Check Railway status dashboard
+    - Restart services if needed
+    - Verify Supabase connectivity
+  - **Incident 2: Slow Conversions**
+    - Check Celery worker logs
+    - Verify Redis connection
+    - Check AI API rate limits
+  - **Incident 3: High Error Rate**
+    - Check Sentry for error pattern
+    - Review recent deployments (rollback if needed)
+  - **Incident 4: Storage Quota Exceeded**
+    - Run cleanup job (delete old files)
+    - Verify 30-day auto-delete working
+- [ ] **On-call rotation** (if team):
+  - Designate primary contact for production issues
+  - Define escalation path (e.g., Xavier as final escalation)
+- [ ] **Post-incident review template:**
+  - Document: What happened, Root cause, Resolution, Prevention
+
+**Backup & Disaster Recovery:**
+- [ ] **Supabase backups** verified:
+  - Automatic daily backups enabled (Supabase default on paid tier)
+  - Test restore procedure (spin up copy of DB from backup)
+- [ ] **Code repository** backed up:
+  - GitHub as source of truth
+  - Consider secondary remote (GitLab mirror) for redundancy
+- [ ] **Environment variables** documented:
+  - All production secrets stored in password manager (1Password, LastPass)
+  - Team has access in emergency
+
+**Documentation:**
+- [ ] **Operations manual** created (`docs/operations/`):
+  - How to deploy to production
+  - How to rotate API keys
+  - How to scale workers (increase Railway replicas)
+  - How to access production logs
+
+**Go-Live Checklist:**
+- [ ] **Pre-launch verification:**
+  - All monitoring dashboards green (no errors)
+  - Uptime checks passing for 24 hours
+  - Team has tested incident response procedures
+  - Contact info updated (support email, escalation phone)
+
+**Technical Notes:**
+- Start with free tiers (Sentry free, UptimeRobot free, Railway metrics included)
+- Upgrade monitoring tools as revenue grows
+- Monitor AI costs closely in first week (unexpected usage patterns)
+- Document all monitoring URLs and credentials in team wiki
+
+**Prerequisites:** Story 7.1, Story 7.2 (baseline metrics established)
+
+---
+
+### Epic 7 Summary
+
+| Story | Complexity | Key Deliverable |
+|-------|-----------|-----------------|
+| **7.1 Production Verification** | Low | Production services validated |
+| **7.2 Load Testing** | Medium | Performance benchmarks, load test report |
+| **7.3 Security Audit** | Medium-High | Security audit report, vulnerabilities fixed |
+| **7.4 UAT** | Medium | Beta feedback, launch go/no-go decision |
+| **7.5 Monitoring Setup** | Low-Medium | Monitoring dashboards, incident runbook |
+| **Total** | **5 Stories** | **Launch-Ready System** |
 
 ---

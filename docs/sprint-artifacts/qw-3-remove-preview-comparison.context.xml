@@ -1,0 +1,230 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>QW</epicId>
+    <storyId>3</storyId>
+    <title>Remove Preview Comparison Feature</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-30</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/qw-3-remove-preview-comparison.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Product Owner</asA>
+    <iWant>to remove the split-screen PDF/EPUB preview comparison feature</iWant>
+    <soThat>the application has a simpler, more streamlined user experience</soThat>
+    <tasks>
+      - Task 1: Frontend Component Removal (AC #1)
+        - Locate and delete split-screen component file(s)
+        - Remove imports and usages from Job Status page
+        - Remove navigation routes (if dedicated preview page existed)
+        - Test UI still renders correctly
+
+      - Task 2: Dependency Cleanup (AC #2)
+        - Remove react-pdf from package.json
+        - Remove react-reader from package.json (if exists)
+        - Run npm install to update lock file
+        - Verify production build succeeds
+
+      - Task 3: Documentation Sweep (AC #4)
+        - Update PRD.md - remove preview comparison from MVP
+        - Update epics.md - mark Story 5.3 as removed
+        - Update architecture.md - remove preview references
+        - Search all docs for "preview", "comparison", "split-screen" and update
+
+      - Task 4: Testing &amp; Validation (AC #5)
+        - Run frontend tests (npm run test)
+        - Manual test: Upload PDF → Check job status → Download EPUB
+        - Verify quality report displays correctly (becomes primary trust signal)
+        - Check for console errors or broken links
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Frontend Component Removal:
+       - Remove split-screen comparison component (frontend/src/components/business/SplitScreenComparison)
+       - Remove PDF viewer integration (react-pdf library)
+       - Remove EPUB viewer integration (react-reader or HTML iframe viewer)
+       - Remove synchronized scrolling logic
+       - Remove "Preview Comparison" button/link from Job Status page
+       - Update Job Status page to show only quality report and download button
+
+    2. Package Dependencies Cleanup:
+       - Uninstall react-pdf from frontend/package.json
+       - Uninstall react-reader (if installed) from frontend/package.json
+       - Run npm prune to remove unused packages
+       - Verify build still works (npm run build)
+
+    3. Backend Changes:
+       - No backend changes required (preview was frontend-only feature)
+       - Verify /api/v1/jobs/{id} endpoint still returns quality report correctly
+
+    4. Documentation Updates:
+       - PRD.md: Remove "Conversion Preview" from MVP must-haves section (Line ~143)
+       - epics.md: Update Story 5.3 description to mark as "REMOVED" or delete section
+       - architecture.md: Remove references to split-screen comparison in Epic 5 descriptions
+       - UX Design (if exists): Remove preview comparison mockups/specs
+       - README.md: Update feature list to remove preview comparison mention
+
+    5. Testing:
+       - Remove test files for split-screen component (if they exist)
+       - Verify job status page renders correctly without preview button
+       - Test end-to-end flow: Upload → Convert → View Quality Report → Download (no preview step)
+       - Verify no broken links or 404 errors from removed routes
+
+    6. User Flow Updates:
+       - Update user journey to: Job Status → Quality Report → Download (skip preview)
+       - Ensure quality report provides sufficient confidence to download (this becomes critical now)
+       - Consider adding more detail to quality report to compensate for removed preview
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>MVP - Minimum Viable Product / Must-Have for Launch</section>
+        <snippet>Line ~143: "4. Web Application Interface... Conversion Preview: Show before/after comparison for quality verification" - This section needs to be REMOVED as the preview comparison is being eliminated from the MVP.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 5: Quality Preview &amp; Download Experience / Story 5.3</section>
+        <snippet>Story 5.3 describes the split-screen comparison UI with PDF viewer (react-pdf) and EPUB viewer (react-reader). This entire story should be marked as REMOVED since the feature is being eliminated.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Novel Pattern Designs</section>
+        <snippet>Architecture describes "Quality Preview Comparison" as a novel UX pattern with split-screen comparison. References to this pattern and the specific technologies (react-pdf, react-reader, synchronized scrolling) should be removed.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>3.2 Novel UX Pattern: Quality Preview Comparison</section>
+        <snippet>Detailed UX design for split-screen comparison interface with PDF/EPUB preview panes, quality metrics dashboard, and synchronized scrolling. This entire section needs to be removed or marked as deprecated.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>frontend/src/components/business/SplitScreenComparison.tsx</path>
+        <kind>component</kind>
+        <symbol>SplitScreenComparison</symbol>
+        <lines>full file</lines>
+        <reason>Primary component implementing the split-screen preview feature that needs to be removed</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/business/PDFViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>PDFViewer</symbol>
+        <lines>full file</lines>
+        <reason>PDF viewing component using react-pdf library that needs to be removed</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/business/EPUBViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>EPUBViewer</symbol>
+        <lines>full file</lines>
+        <reason>EPUB viewing component using react-reader or HTML iframe that needs to be removed</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/business/PreviewToolbar.tsx</path>
+        <kind>component</kind>
+        <symbol>PreviewToolbar</symbol>
+        <lines>full file</lines>
+        <reason>Toolbar component for preview controls that needs to be removed</reason>
+      </file>
+      <file>
+        <path>frontend/src/app/jobs/[id]/page.tsx</path>
+        <kind>page</kind>
+        <symbol>JobDetailsPage</symbol>
+        <lines>imports and preview button rendering</lines>
+        <reason>Job status page that contains references to preview comparison - needs to be updated to remove preview button/link</reason>
+      </file>
+      <file>
+        <path>frontend/src/app/jobs/[id]/preview/page.tsx</path>
+        <kind>page</kind>
+        <symbol>PreviewPage</symbol>
+        <lines>full file</lines>
+        <reason>Dedicated preview page route that needs to be removed entirely</reason>
+      </file>
+      <file>
+        <path>frontend/src/lib/scroll-utils.test.ts</path>
+        <kind>test</kind>
+        <symbol>scroll utilities tests</symbol>
+        <lines>synchronized scrolling tests</lines>
+        <reason>Test file for synchronized scrolling logic used in split-screen comparison</reason>
+      </file>
+      <file>
+        <path>frontend/package.json</path>
+        <kind>config</kind>
+        <symbol>dependencies</symbol>
+        <lines>37-45</lines>
+        <reason>Contains react-pdf (line 44) and react-reader (line 45) that need to be removed, along with related dependencies epubjs (line 37) and pdfjs-dist (line 40)</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <react-pdf>10.2.0 - PDF rendering library (REMOVE)</react-pdf>
+        <react-reader>2.0.15 - EPUB rendering library (REMOVE)</react-reader>
+        <epubjs>0.3.93 - EPUB parsing library used by react-reader (REMOVE)</epubjs>
+        <pdfjs-dist>5.4.449 - PDF.js distribution used by react-pdf (REMOVE)</pdfjs-dist>
+        <next>15.5.7 - Frontend framework (KEEP)</next>
+        <react>19.2.1 - UI library (KEEP)</react>
+        <lucide-react>0.555.0 - Icon library (KEEP)</lucide-react>
+        <@radix-ui/react-*>Various - shadcn/ui components (KEEP)</radix-ui/react-*>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Preview was entirely a frontend feature - NO backend changes required
+    - Quality report endpoint (/api/v1/jobs/{id}) must continue to work correctly
+    - Quality report becomes the PRIMARY trust signal for users (no visual preview)
+    - Documentation is extensive and mentions preview as a "core differentiator" - thorough cleanup needed
+    - UX Design specification has detailed mockups for preview - entire Section 3.2 needs removal/deprecation
+    - Removal should maintain clean build (no unused imports, no broken routes)
+    - End-to-end user flow changes from: Upload → Convert → Preview → Download to: Upload → Convert → Quality Report → Download
+    - Consider enhancing quality report to compensate for removed visual verification (AC #6)
+  </constraints>
+
+  <interfaces>
+    <api>
+      <name>GET /api/v1/jobs/{id}</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/v1/jobs/{job_id} → { id, status, quality_report, result_url, ... }</signature>
+      <path>backend/app/api/v1/jobs.py</path>
+      <reason>Quality report endpoint that remains critical - verify it still works correctly after frontend changes</reason>
+    </api>
+    <api>
+      <name>GET /api/v1/jobs/{id}/download</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/v1/jobs/{job_id}/download → 302 Redirect to Supabase signed URL</signature>
+      <path>backend/app/api/v1/jobs.py</path>
+      <reason>Download endpoint remains unchanged - users go directly from quality report to download</reason>
+    </api>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend testing with Vitest + React Testing Library
+      - Component tests colocated with components (*.test.tsx)
+      - Integration tests in __tests__ directory
+      - Coverage target: 70% minimum
+      - Run with: npm run test, npm run test:coverage
+    </standards>
+    <locations>
+      - frontend/src/components/**/*.test.tsx (component tests)
+      - frontend/src/__tests__/ (integration tests)
+      - frontend/src/lib/*.test.ts (utility tests)
+    </locations>
+    <ideas>
+      - AC #1: Remove SplitScreenComparison.test.tsx, PDFViewer.test.tsx, EPUBViewer.test.tsx (if they exist)
+      - AC #1: Remove scroll-utils.test.ts (synchronized scrolling logic)
+      - AC #5: Add/update integration test for job status page rendering without preview button
+      - AC #5: Manual E2E test: Upload PDF → Wait for conversion → View quality report → Download EPUB
+      - AC #5: Verify quality report displays meaningful metrics (tables, images, equations counts)
+      - AC #6: Consider testing enhanced quality report if additional details are added
+    </ideas>
+  </tests>
+</story-context>

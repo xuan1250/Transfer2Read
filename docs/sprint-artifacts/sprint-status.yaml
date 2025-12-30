@@ -88,9 +88,10 @@ development_status:
   epic-6-retrospective: completed
   quick-wins-launch-prep: completed
   production-soft-launch: completed
+  qw-3-remove-preview-comparison: review
 
   epic-7: contexted
-  7-1-production-environment-verification: backlog
+  7-1-production-environment-verification: done
   7-2-load-and-performance-testing: backlog
   7-3-security-audit-and-penetration-testing: backlog
   7-4-user-acceptance-testing-uat: backlog

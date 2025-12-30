@@ -139,7 +139,6 @@ This breaks down into specific, measurable outcomes:
 4. **Web Application Interface** 🌐
    - **Clean, intuitive UI**: Extremely user-friendly, no learning curve
    - **Drag-and-drop file upload**: Upload PDF, get EPUB
-   - **Conversion Preview**: Show before/after comparison for quality verification
    - **Real-time progress**: Conversion progress with quality indicators
    - **Quality Report**: Display detected elements (tables, images, chapters found)
    - **Browser compatibility**: Chrome, Firefox, Safari, Edge (latest 2 versions)

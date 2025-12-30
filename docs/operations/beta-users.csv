@@ -1,0 +1,22 @@
+Name,Email,Persona,PDF Type,E-Reader,Use Case Details,Status,Invited Date,Feedback Received
+Student A,student1@example.edu,Student,Textbooks with equations,Apple Books,Converting calculus textbooks for iPad studying,Not Invited,,
+Researcher B,researcher2@university.edu,Researcher,Technical papers with tables,Kindle,Academic journals with complex diagrams,Not Invited,,
+Professional C,professional3@company.com,Professional,Business reports,Kobo,Corporate docs and whitepapers,Not Invited,,
+Multi-language D,user4@example.com,Multi-language User,CJK documents,Apple Books,Chinese technical manuals,Not Invited,,
+Student E,student5@example.edu,Student,Lecture notes,Kindle,PDF slides from university courses,Not Invited,,
+Researcher F,researcher6@institution.org,Researcher,Scientific papers,Apple Books,Biology journals with images,Not Invited,,
+Professional G,professional7@startup.com,Professional,Marketing materials,Kindle,Case studies and reports,Not Invited,,
+Multi-language H,user8@example.jp,Multi-language User,Japanese novels,Kobo,Japanese light novels to EPUB,Not Invited,,
+Accessibility User I,user9@example.com,Accessibility User,Any PDF type,Apple Books (VoiceOver),Screen reader compatibility testing,Not Invited,,
+Power User J,user10@example.com,Power User,Mixed content types,Multiple readers,Testing edge cases and large files,Not Invited,,
+
+# Instructions:
+# 1. Replace example email addresses with actual beta user emails as they sign up
+# 2. Update "Status" column as you progress:
+#    - Not Invited: Default state
+#    - Invited: Email sent (update Invited Date)
+#    - Testing: User actively testing
+#    - Completed: Feedback received (update Feedback Received date)
+# 3. Add notes in "Use Case Details" for specific testing scenarios
+# 4. Target: Minimum 5 diverse users (different personas, PDF types, e-readers)
+# 5. Import this CSV into Google Sheets or Excel for easier tracking

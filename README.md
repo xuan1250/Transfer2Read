@@ -1,5 +1,8 @@
 # Transfer2Read
 
+![Status](https://img.shields.io/badge/status-MVP%20Complete-green)
+![Launch](https://img.shields.io/badge/launch-preparing-yellow)
+
 AI-powered PDF to EPUB converter with intelligent layout analysis and structure recognition.
 
 ## Overview
@@ -195,41 +198,48 @@ Transfer2Read is deployed using modern cloud platforms for automatic scaling and
 
 ### Production URLs
 
+**Live Application:**
 ```bash
-# Frontend (Replace with your actual Vercel URL)
-https://transfer2read.vercel.app
+# Frontend (Custom Domain)
+https://transfer2read.com
 
-# Backend API (Replace with your actual Railway URL)
-https://your-backend.railway.app
+# Backend API (Custom Domain)
+https://api.transfer2read.com
 
 # API Health Check
-https://your-backend.railway.app/api/health
+https://api.transfer2read.com/api/health
 
 # API Documentation (Swagger)
-https://your-backend.railway.app/docs
+https://api.transfer2read.com/docs
 ```
+
+**Note:** Replace URLs above with actual production URLs after completing Quick Win QW-1 (Domain Purchase & DNS Setup). See `docs/sprint-artifacts/quick-wins-plan-2025-12-26.md` for domain configuration steps.
 
 ### Deployment Guide
 
-**📖 For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**
+**📖 For detailed deployment instructions, see:**
 
-The deployment guide includes:
-- Step-by-step setup for Supabase, Vercel, and Railway
-- Environment variable configuration
-- CORS and security setup
-- Verification procedures
-- Troubleshooting common issues
-- Rollback procedures
+- **[Production Deployment Guide](docs/operations/production-deployment-guide.md)** - Step-by-step Vercel/Railway/Supabase setup
+- **[Rollback Procedures](docs/operations/rollback-procedures.md)** - Emergency rollback and disaster recovery
+- **[API Key Rotation Guide](docs/operations/api-key-rotation-guide.md)** - Rotate OpenAI/Anthropic keys quarterly
+- **[Quick Wins Plan](docs/sprint-artifacts/quick-wins-plan-2025-12-26.md)** - Pre-launch preparation checklist
 
 ### Quick Deployment Checklist
 
-- [ ] Create production Supabase project
-- [ ] Deploy frontend to Vercel
+**Pre-Launch Quick Wins (see `docs/sprint-artifacts/quick-wins-plan-2025-12-26.md`):**
+- [ ] **QW-1:** Purchase domain and configure DNS (transfer2read.com, api.transfer2read.com)
+- [ ] **QW-2:** Create production Supabase project (database + auth + storage)
+- [ ] **QW-3:** Rotate API keys for production (OpenAI, Anthropic)
+- [ ] **QW-4:** Update documentation (this README, deployment guides)
+- [ ] **QW-5:** Compile beta user list (5-10 testers)
+
+**Production Deployment:**
+- [ ] Deploy frontend to Vercel with custom domain
 - [ ] Deploy backend + worker to Railway
-- [ ] Configure environment variables on all platforms
-- [ ] Verify health endpoints
-- [ ] Test end-to-end functionality
-- [ ] Confirm CI/CD pipeline works
+- [ ] Configure environment variables on all platforms (.env.production.example)
+- [ ] Verify health endpoints (curl https://api.transfer2read.com/api/health)
+- [ ] Test end-to-end functionality (register → upload → convert → download)
+- [ ] Confirm CI/CD pipeline works (auto-deploy on push to main)
 
 ### Environment Variables
 

@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Eye, ArrowLeft, Flag } from 'lucide-react';
+import { Download, ArrowLeft, Flag } from 'lucide-react';
 import { triggerConfettiOnce } from '@/lib/confetti-utils';
 import { FeedbackWidget } from '@/components/business/FeedbackWidget';
 import { IssueReportModal } from '@/components/business/IssueReportModal';
@@ -171,15 +171,6 @@ export default function JobStatusPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
               size="lg"
-              onClick={() => router.push(`/jobs/${jobId}/preview`)}
-              className="flex-1 gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              Preview Comparison
-            </Button>
-            <Button
-              size="lg"
-              variant="secondary"
               onClick={handleDownload}
               disabled={isDownloading}
               className="flex-1 gap-2"
