@@ -229,19 +229,26 @@ export default function UploadZone({
           // Limit exceeded - show modal if it's a limit error
           const errorData = axiosError.response.data;
           console.log('403 Error Response:', errorData);
-          if (errorData?.code === 'FILE_SIZE_LIMIT_EXCEEDED') {
+
+          // Backend returns nested structure: {detail: {code, detail, ...}}
+          // Extract the actual error object (could be nested in detail)
+          const limitError = (typeof errorData?.detail === 'object' && errorData.detail !== null)
+            ? errorData.detail as LimitExceededError
+            : errorData as LimitExceededError;
+
+          if (limitError?.code === 'FILE_SIZE_LIMIT_EXCEEDED') {
             // Show the limit modal
-            showLimitModal(errorData);
+            showLimitModal(limitError);
             // Also set error message for banner
-            const sizeMB = errorData.current_size_mb?.toFixed(1) || '?';
-            const maxMB = errorData.max_size_mb || '?';
-            errorMessage = `File size limit exceeded: ${sizeMB}MB / ${maxMB}MB allowed for ${errorData.tier} tier`;
-          } else if (errorData?.code === 'CONVERSION_LIMIT_EXCEEDED') {
+            const sizeMB = limitError.current_size_mb?.toFixed(1) || '?';
+            const maxMB = limitError.max_size_mb || '?';
+            errorMessage = `File size limit exceeded: ${sizeMB}MB / ${maxMB}MB allowed for ${limitError.tier} tier`;
+          } else if (limitError?.code === 'CONVERSION_LIMIT_EXCEEDED') {
             // Show the limit modal
-            showLimitModal(errorData);
+            showLimitModal(limitError);
             // Also set error message for banner
-            const used = errorData.current_count || 0;
-            const limit = errorData.limit || 0;
+            const used = limitError.current_count || 0;
+            const limit = limitError.limit || 0;
             errorMessage = `Monthly conversion limit reached: ${used}/${limit} conversions used this month`;
           } else {
             // Other 403 errors - show generic message
