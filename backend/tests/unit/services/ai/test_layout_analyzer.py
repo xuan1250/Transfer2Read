@@ -7,8 +7,8 @@ Tests AI layout analysis with mocked GPT-4o/Claude responses.
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
-from backend.app.services.ai.layout_analyzer import LayoutAnalyzer
-from backend.app.schemas.layout_analysis import (
+from app.services.ai.layout_analyzer import LayoutAnalyzer
+from app.schemas.layout_analysis import (
     LayoutDetection,
     Tables,
     Images,
