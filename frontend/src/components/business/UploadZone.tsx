@@ -228,20 +228,24 @@ export default function UploadZone({
         } else if (axiosError.response?.status === 403) {
           // Limit exceeded - show modal if it's a limit error
           const errorData = axiosError.response.data;
-          if (errorData?.code === 'FILE_SIZE_LIMIT_EXCEEDED' ||
-              errorData?.code === 'CONVERSION_LIMIT_EXCEEDED') {
+          if (errorData?.code === 'FILE_SIZE_LIMIT_EXCEEDED') {
             // Show the limit modal
             showLimitModal(errorData);
-            // Reset upload state without showing error banner
-            setState(prev => ({
-              ...prev,
-              isUploading: false,
-              uploadProgress: 0
-            }));
-            return;
+            // Also set error message for banner
+            const sizeMB = errorData.current_size_mb?.toFixed(1) || '?';
+            const maxMB = errorData.max_size_mb || '?';
+            errorMessage = `File size limit exceeded: ${sizeMB}MB / ${maxMB}MB allowed for ${errorData.tier} tier`;
+          } else if (errorData?.code === 'CONVERSION_LIMIT_EXCEEDED') {
+            // Show the limit modal
+            showLimitModal(errorData);
+            // Also set error message for banner
+            const used = errorData.current_count || 0;
+            const limit = errorData.limit || 0;
+            errorMessage = `Monthly conversion limit reached: ${used}/${limit} conversions used this month`;
+          } else {
+            // Other 403 errors - show generic message
+            errorMessage = 'Access denied. Please check your permissions.';
           }
-          // Other 403 errors - show generic message
-          errorMessage = 'Access denied. Please check your permissions.';
         } else if (axiosError.response?.status === 400) {
           errorMessage = axiosError.response.data?.detail || 'Invalid file. Please upload a valid PDF.';
         } else if (axiosError.response?.status === 413) {
