@@ -222,6 +222,10 @@ export default function UploadZone({
           // Unauthorized - redirect to login
           router.push('/login?message=Please log in to upload files');
           return;
+        } else if (axiosError.response?.status === 403) {
+          // Limit exceeded (conversion or file size)
+          const errorData = axiosError.response.data;
+          errorMessage = errorData?.detail || 'Limit exceeded. Please upgrade to continue.';
         } else if (axiosError.response?.status === 400) {
           errorMessage = axiosError.response.data?.detail || 'Invalid file. Please upload a valid PDF.';
         } else if (axiosError.response?.status === 413) {
