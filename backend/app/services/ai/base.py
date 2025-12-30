@@ -82,3 +82,15 @@ class AIProvider(ABC):
             Model name (e.g., "gpt-4o", "claude-3-5-haiku-20241022")
         """
         return self.__class__.__name__
+
+    async def aclose(self) -> None:
+        """
+        Cleanup AI client resources asynchronously.
+
+        Subclasses should override to properly close httpx clients and other async resources.
+        Must be called before closing the event loop to prevent 'Event loop is closed' errors.
+        """
+        if self._client is not None:
+            # LangChain clients may have internal httpx AsyncClient
+            # Delete reference to allow proper garbage collection
+            self._client = None

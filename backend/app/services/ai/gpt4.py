@@ -164,3 +164,20 @@ class GPT4Provider(AIProvider):
     def get_model_name(self) -> str:
         """Return model name for logging/tracking"""
         return self.MODEL_NAME
+
+    async def aclose(self) -> None:
+        """
+        Cleanup GPT-4o client and httpx resources.
+
+        Closes underlying httpx AsyncClient to prevent 'Event loop is closed' errors.
+        """
+        if self._client is not None:
+            # LangChain's ChatOpenAI uses httpx internally
+            # Explicitly close to prevent cleanup after event loop closes
+            try:
+                if hasattr(self._client, 'async_client'):
+                    await self._client.async_client.aclose()
+            except Exception as e:
+                logger.warning(f"Error closing GPT-4o client: {e}")
+            finally:
+                self._client = None

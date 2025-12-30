@@ -289,6 +289,19 @@ class BatchAnalyzer:
         # Passed all heuristics - likely a simple text page
         return True
 
+    async def aclose(self) -> None:
+        """
+        Cleanup BatchAnalyzer resources.
+
+        Closes both the main analyzer and simple page provider to prevent
+        'Event loop is closed' errors when event loop terminates.
+        """
+        if self.analyzer:
+            await self.analyzer.aclose()
+        if self.simple_page_provider:
+            await self.simple_page_provider.aclose()
+        logger.info("BatchAnalyzer resources cleaned up")
+
 
 def create_batch_analyzer(
     concurrency: Optional[int] = None,

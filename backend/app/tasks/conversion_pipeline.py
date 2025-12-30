@@ -355,6 +355,8 @@ def analyze_layout(self, job_id: str) -> Dict[str, Any]:
                     progress_callback=progress_callback
                 )
             )
+            # Cleanup analyzer resources before closing loop
+            loop.run_until_complete(batch_analyzer.aclose())
         finally:
             loop.close()
 
@@ -651,6 +653,8 @@ def identify_structure(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
                         f"confidence={document_structure['confidence_score']}%, "
                         f"tokens={token_usage['prompt']}+{token_usage['completion']}"
                     )
+                    # Cleanup analyzer resources before closing loop
+                    loop.run_until_complete(analyzer.aclose())
                 finally:
                     loop.close()
 
@@ -708,6 +712,8 @@ def identify_structure(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
                                 "total_chunks": len(chunks)
                             }
                         )
+                    # Cleanup analyzer resources before closing loop
+                    loop.run_until_complete(analyzer.aclose())
                 finally:
                     loop.close()
 

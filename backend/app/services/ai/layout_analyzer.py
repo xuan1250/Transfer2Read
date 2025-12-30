@@ -280,3 +280,16 @@ class LayoutAnalyzer:
                 completion=token_usage.get('completion', 0)
             ),
         )
+
+    async def aclose(self) -> None:
+        """
+        Cleanup AI provider resources.
+
+        Closes both primary and fallback provider httpx clients to prevent
+        'Event loop is closed' errors in Celery workers.
+        """
+        if self.primary_provider:
+            await self.primary_provider.aclose()
+        if self.fallback_provider:
+            await self.fallback_provider.aclose()
+        logger.info("LayoutAnalyzer resources cleaned up")

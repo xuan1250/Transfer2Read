@@ -342,3 +342,18 @@ Analyze the above text carefully and return a complete DocumentStructure JSON ma
 
         # Default to English if language not found
         return patterns.get(language, patterns["en"])
+
+    async def aclose(self) -> None:
+        """
+        Cleanup StructureAnalyzer resources.
+
+        Closes underlying httpx AsyncClient to prevent 'Event loop is closed' errors.
+        """
+        if self._client is not None:
+            try:
+                if hasattr(self._client, 'async_client'):
+                    await self._client.async_client.aclose()
+            except Exception as e:
+                logger.warning(f"Error closing StructureAnalyzer client: {e}")
+            finally:
+                self._client = None
