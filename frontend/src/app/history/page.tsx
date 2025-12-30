@@ -400,6 +400,7 @@ export default function HistoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Job ID</TableHead>
                     <TableHead>Filename</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
@@ -409,6 +410,14 @@ export default function HistoryPage() {
                 <TableBody>
                   {jobs.map((job) => (
                     <TableRow key={job.id}>
+                      <TableCell>
+                        <button
+                          onClick={() => router.push(`/jobs/${job.id}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-mono text-sm"
+                        >
+                          {job.id.slice(0, 8)}...
+                        </button>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {getFilename(job.input_path)}
                       </TableCell>
@@ -477,6 +486,12 @@ export default function HistoryPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
+                        <button
+                          onClick={() => router.push(`/jobs/${job.id}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-mono text-xs mb-1 block"
+                        >
+                          {job.id.slice(0, 8)}...
+                        </button>
                         <p className="font-semibold text-slate-900">
                           {getFilename(job.input_path)}
                         </p>
