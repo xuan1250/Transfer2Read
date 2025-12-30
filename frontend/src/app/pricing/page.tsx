@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,6 +118,36 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation Bar */}
+      <header className="border-b bg-white">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="text-xl font-semibold text-primary hover:text-blue-700">
+            Transfer2Read
+          </Link>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="ghost">Dashboard</Button>
+                </Link>
+                <Link href="/settings">
+                  <Button variant="ghost">Settings</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">Sign Up</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* Pricing Content */}
       <div className="py-12 px-4">
         <div className="max-w-7xl mx-auto">

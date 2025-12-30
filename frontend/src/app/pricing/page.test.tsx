@@ -262,6 +262,28 @@ describe('PricingPage Integration Tests', () => {
       expect(screen.getByText('Simple, Transparent Pricing')).toBeInTheDocument();
       expect(screen.getByText(/Choose the plan that fits your needs/)).toBeInTheDocument();
     });
+
+    it('shows Dashboard link for authenticated users', () => {
+      (useUser as any).mockReturnValue({
+        user: { user_metadata: { tier: 'FREE' } },
+      });
+
+      render(<PricingPage />);
+
+      const dashboardLink = screen.getByRole('link', { name: /Dashboard/i });
+      expect(dashboardLink).toHaveAttribute('href', '/dashboard');
+    });
+
+    it('shows Sign In/Sign Up links for unauthenticated users', () => {
+      (useUser as any).mockReturnValue({
+        user: null,
+      });
+
+      render(<PricingPage />);
+
+      expect(screen.getByRole('link', { name: /Sign In/i })).toHaveAttribute('href', '/login');
+      expect(screen.getByRole('link', { name: /Sign Up/i })).toHaveAttribute('href', '/register');
+    });
   });
 
   describe('Responsive Design', () => {
