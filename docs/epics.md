@@ -988,7 +988,7 @@ So that **I can understand what was converted.**
 - [ ] Success state displays "Quality Report" summary (FR33)
 - [ ] Metrics displayed: Number of pages, tables, images, equations
 - [ ] "Confidence Score" visual indicator
-- [ ] Call-to-action buttons: "Preview Comparison" and "Download EPUB"
+- [ ] Call-to-action button: "Download EPUB" (Preview Comparison removed in QW.3)
 
 **NEW ACCEPTANCE CRITERIA (from Epic 4 Retrospective Action 1.5: Quality Display Language):**
 - [ ] **User-Friendly Quality Messaging:** Map technical confidence scores to plain English
@@ -1213,7 +1213,7 @@ So that **I can monitor the health of the application.**
 | **2. Identity** | 5 | Medium | Auth System, Profile, Tiers |
 | **3. PDF Upload** | 5 | Medium | S3 Service, Upload UI, History |
 | **4. AI Engine** | 5 | High | **Core Conversion Pipeline** |
-| **5. Quality UX** | 4 | High | **Split-Screen Preview** |
+| **5. Quality UX** | 4 | High | **Quality Report & Download** (Preview removed in QW.3) |
 | **6. Usage Tiers** | 4 | Low | Limit Enforcement, Admin |
 | **Total** | **28 Stories** | | **Full MVP** |
 
@@ -1354,7 +1354,7 @@ So that **users experience fast, reliable conversions at scale.**
 - [ ] **Frontend page load times:**
   - Landing page: < 2 seconds
   - Dashboard: < 3 seconds
-  - Split-screen preview: < 5 seconds for 50-page PDF
+  - Job status page: < 3 seconds (Preview comparison removed in QW.3)
 
 **Concurrent Load Testing:**
 - [ ] **10 concurrent users** uploading and converting PDFs:
@@ -1535,7 +1535,7 @@ So that **we launch with confidence that users find value and can complete workf
 - [ ] **Scenario 2: Complex PDF** (Core Value Test):
   - User uploads 50-100 page technical book with tables/equations
   - Conversion completes with quality report showing 90%+ confidence
-  - User previews in split-screen comparison
+  - User reviews quality report (Preview comparison removed in QW.3)
   - Success criteria: User rates quality 4+ stars, downloads EPUB
 - [ ] **Scenario 3: Multi-Language Document**:
   - User uploads PDF with English + Chinese/Japanese text
@@ -1553,7 +1553,7 @@ So that **we launch with confidence that users find value and can complete workf
 **Usability Testing:**
 - [ ] **Navigation & UX feedback:**
   - Can users find upload button without instructions? (5/5 users succeed)
-  - Is split-screen comparison intuitive? (4/5 users understand purpose)
+  - Is quality report clear and trustworthy? (User-friendly messages from Action 1.5 validated)
   - Are quality reports understandable? (User-friendly messages from Action 1.5 validated)
 - [ ] **Performance perception:**
   - Do users feel conversion is "fast enough"? (Target: 4+ stars for 300-page book)
