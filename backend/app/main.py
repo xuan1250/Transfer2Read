@@ -15,13 +15,15 @@ app = FastAPI(
 )
 
 # CORS Configuration
-# Allow requests from frontend (localhost for dev, Vercel domain for prod)
+# Allow requests from frontend (localhost for dev, custom domain for prod)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Next.js dev server
         "http://localhost:3001",  # Alternative port
-        "https://transfer2read.vercel.app",  # Production frontend
+        "https://transfer2read.vercel.app",  # Vercel preview deployments
+        "https://transfer2read.app",  # Production custom domain
+        "https://www.transfer2read.app",  # Production www subdomain
     ],
     allow_credentials=True,
     allow_methods=["*"],
