@@ -8,10 +8,12 @@ FROM python:3.12.9-slim
 WORKDIR /app
 
 # Install system dependencies for PDF processing
-# PyMuPDF requires these libraries
+# PyMuPDF requires libmupdf-dev and mupdf-tools
+# python-magic requires libmagic1
 RUN apt-get update && apt-get install -y \
     libmupdf-dev \
     mupdf-tools \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
