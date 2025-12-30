@@ -66,7 +66,6 @@ export default function EPUBViewer({
   // Handle rendition ready (for customization)
   const handleRenditionReady = (rendition: IRendition) => {
     setRendition(rendition);
-    setLoading(false);
     setError(null);
 
     // Customize EPUB rendering
@@ -76,14 +75,15 @@ export default function EPUBViewer({
       'color': '#1f2937',
     });
 
-    // Listen for errors
-    rendition.on('rendered', () => {
-      setLoading(false);
-    });
+    // Clear loading state immediately when rendition is ready
+    // This ensures the EPUB viewer becomes visible even if 'rendered' event doesn't fire
+    setLoading(false);
 
+    // Listen for errors
     rendition.on('error', (err: Error) => {
       console.error('EPUB rendering error:', err);
       setError('Error rendering EPUB content. The file may be corrupted.');
+      setLoading(false);
     });
   };
 
