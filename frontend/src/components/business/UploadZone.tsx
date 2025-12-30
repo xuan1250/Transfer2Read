@@ -12,6 +12,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { createClient } from '@/lib/supabase/client';
 import { getTierBenefits } from '@/lib/tierUtils';
 import { SubscriptionTier } from '@/types/auth';
+import { useLimitModal } from '@/contexts/LimitModalContext';
+import { LimitExceededError } from '@/types/usage';
 
 /**
  * Upload state management
@@ -57,6 +59,7 @@ export default function UploadZone({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+  const { showLimitModal } = useLimitModal();
 
   // State management
   const [state, setState] = useState<UploadState>({
@@ -216,16 +219,29 @@ export default function UploadZone({
       let errorMessage = 'Upload failed. Please check your connection and try again.';
 
       if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{ detail: string; code: string }>;
+        const axiosError = error as AxiosError<LimitExceededError>;
 
         if (axiosError.response?.status === 401) {
           // Unauthorized - redirect to login
           router.push('/login?message=Please log in to upload files');
           return;
         } else if (axiosError.response?.status === 403) {
-          // Limit exceeded (conversion or file size)
+          // Limit exceeded - show modal if it's a limit error
           const errorData = axiosError.response.data;
-          errorMessage = errorData?.detail || 'Limit exceeded. Please upgrade to continue.';
+          if (errorData?.code === 'FILE_SIZE_LIMIT_EXCEEDED' ||
+              errorData?.code === 'CONVERSION_LIMIT_EXCEEDED') {
+            // Show the limit modal
+            showLimitModal(errorData);
+            // Reset upload state without showing error banner
+            setState(prev => ({
+              ...prev,
+              isUploading: false,
+              uploadProgress: 0
+            }));
+            return;
+          }
+          // Other 403 errors - show generic message
+          errorMessage = 'Access denied. Please check your permissions.';
         } else if (axiosError.response?.status === 400) {
           errorMessage = axiosError.response.data?.detail || 'Invalid file. Please upload a valid PDF.';
         } else if (axiosError.response?.status === 413) {
@@ -250,7 +266,7 @@ export default function UploadZone({
         setState(prev => ({ ...prev, uploadError: null }));
       }, 5000);
     }
-  }, [validateFile, uploadPDF, onUploadSuccess, router]);
+  }, [validateFile, uploadPDF, onUploadSuccess, router, showLimitModal]);
 
   /**
    * Drag-and-drop event handlers
