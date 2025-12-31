@@ -138,7 +138,7 @@ class LayoutDetection(BaseModel):
     overall_confidence: int = Field(
         ..., ge=0, le=100, description="Overall analysis confidence 0-100"
     )
-    analysis_metadata: AnalysisMetadata = Field(..., description="Analysis execution metadata")
+    analysis_metadata: Optional[AnalysisMetadata] = Field(None, description="Analysis execution metadata (populated after AI response)")
 
 
 # Alias for clarity in batch processing
