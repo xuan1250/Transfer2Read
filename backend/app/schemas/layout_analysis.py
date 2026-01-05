@@ -5,8 +5,9 @@ Defines structured output schemas for AI-powered PDF layout analysis.
 Used with LangChain's .with_structured_output() for strict JSON validation.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Literal, Union
+import json
 
 
 class TableItem(BaseModel):
@@ -28,6 +29,14 @@ class Tables(BaseModel):
     count: int = Field(..., ge=0, description="Number of tables detected")
     items: List[TableItem] = Field(default_factory=list, description="List of detected tables")
 
+    @field_validator('items', mode='before')
+    @classmethod
+    def parse_items_if_string(cls, v):
+        """Parse items if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
 
 class ImageItem(BaseModel):
     """Single image/diagram detection"""
@@ -47,6 +56,14 @@ class Images(BaseModel):
     count: int = Field(..., ge=0, description="Number of images detected")
     items: List[ImageItem] = Field(default_factory=list, description="List of detected images")
 
+    @field_validator('items', mode='before')
+    @classmethod
+    def parse_items_if_string(cls, v):
+        """Parse items if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
 
 class EquationItem(BaseModel):
     """Single equation detection"""
@@ -63,6 +80,14 @@ class Equations(BaseModel):
     items: List[EquationItem] = Field(
         default_factory=list, description="List of detected equations"
     )
+
+    @field_validator('items', mode='before')
+    @classmethod
+    def parse_items_if_string(cls, v):
+        """Parse items if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class TextBlock(BaseModel):
@@ -82,6 +107,14 @@ class TextBlocks(BaseModel):
 
     count: int = Field(..., ge=0, description="Number of text blocks detected")
     items: List[TextBlock] = Field(default_factory=list, description="List of detected text blocks")
+
+    @field_validator('items', mode='before')
+    @classmethod
+    def parse_items_if_string(cls, v):
+        """Parse items if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class Layout(BaseModel):
@@ -139,6 +172,30 @@ class LayoutDetection(BaseModel):
         ..., ge=0, le=100, description="Overall analysis confidence 0-100"
     )
     analysis_metadata: Optional[AnalysisMetadata] = Field(None, description="Analysis execution metadata (populated after AI response)")
+
+    @field_validator('headers_footers', mode='before')
+    @classmethod
+    def parse_headers_footers_if_string(cls, v):
+        """Parse headers_footers if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+    @field_validator('secondary_languages', mode='before')
+    @classmethod
+    def parse_secondary_languages_if_string(cls, v):
+        """Parse secondary_languages if Claude returns it as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+    @field_validator('tables', 'images', 'equations', 'text_blocks', 'layout', mode='before')
+    @classmethod
+    def parse_nested_objects_if_string(cls, v):
+        """Parse nested objects if Claude returns them as JSON string"""
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 # Alias for clarity in batch processing
