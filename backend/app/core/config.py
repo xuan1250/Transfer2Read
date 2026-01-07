@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str  # Required for GPT-4o layout analysis
     ANTHROPIC_API_KEY: str  # Required for Claude fallback
 
+    # Stirling-PDF Configuration (Story 4.1)
+    STIRLING_PDF_URL: str  # Base URL for Stirling-PDF service
+    STIRLING_PDF_API_KEY: Optional[str] = None  # API key for Stirling-PDF authentication
+
     # AI Analysis Configuration (Story 4.2)
     ANALYSIS_CONCURRENCY: int = 4  # Number of concurrent page analyses
     ANALYSIS_PAGE_BATCH_SIZE: int = 5  # Update progress every N pages

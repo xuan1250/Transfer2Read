@@ -146,7 +146,40 @@ Click **"Environment Variables"** and add:
 4. Railway provisions a managed Redis instance
 5. Note the **internal URL** (like `redis://redis.railway.internal:6379`)
 
-### 3.3 Deploy API Service
+### 3.3 Deploy Stirling-PDF Service
+
+**⚠️ IMPORTANT:** Stirling-PDF must be deployed before the API and Worker services, as they depend on it for PDF conversion.
+
+1. Click **"+ New"** → **"Docker Image"**
+2. Image Name: `stirlingtools/stirling-pdf:latest`
+3. Click **"Deploy"**
+4. Wait for deployment to complete (~2-3 minutes)
+
+5. **Service Configuration:**
+   - Navigate to service **Settings** → **Networking**
+   - **Public Domain:** Optional (enable only if you need to access the Stirling-PDF web UI for testing)
+   - **Private Networking:** ✅ Enabled (Railway provides internal networking by default)
+   - **Port:** `8080` (Railway should detect this automatically from the image)
+
+6. **Get Internal Service URL:**
+   - In Railway, go to the Stirling-PDF service
+   - Navigate to **Settings** → **Service**
+   - Look for the internal hostname (typically: `stirling-pdf.railway.internal`)
+   - Full internal URL will be: `http://stirling-pdf.railway.internal:8080`
+   - **Note this URL** - you'll need it for API and Worker environment variables
+
+7. **Verify Stirling-PDF is Running:**
+   - Check service logs for: `Started Stirling-PDF successfully`
+   - Optional: If you enabled public domain, visit the URL to see the Stirling-PDF web interface
+
+8. **Resource Configuration (Recommended):**
+   - Go to **Settings** → **Resources**
+   - Recommended settings for production:
+     - **Memory:** 2GB (minimum) - Stirling-PDF requires significant memory for PDF processing
+     - **CPU:** 1 vCPU (Railway's default)
+   - These settings prevent out-of-memory errors during large PDF conversions
+
+### 3.4 Deploy API Service
 
 1. Click **"+ New"** → **"GitHub Repo"** → Select your repo
 2. Configure the API service:
@@ -157,22 +190,25 @@ Click **"Environment Variables"** and add:
 
 3. Set environment variables for API service:
 
-| Variable | Value |
-|----------|-------|
-| `SUPABASE_URL` | Production Supabase URL from Task 1 |
-| `SUPABASE_SERVICE_KEY` | Production service role key from Task 1 |
-| `OPENAI_API_KEY` | Your OpenAI API key |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
-| `REDIS_URL` | Railway Redis internal URL (auto-provided) |
-| `CELERY_BROKER_URL` | Same as REDIS_URL |
-| `CELERY_RESULT_BACKEND` | Same as REDIS_URL |
-| `ENVIRONMENT` | `production` |
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `SUPABASE_URL` | Production Supabase URL from Task 1 | Example: `https://xxxxx.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | Production service role key from Task 1 | ⚠️ Keep secret! Admin access key |
+| `SUPABASE_JWT_SECRET` | JWT secret from Supabase Settings → API | Used for token validation |
+| `OPENAI_API_KEY` | Your OpenAI API key | For GPT-4o structure analysis |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key | For Claude fallback |
+| `REDIS_URL` | Railway Redis internal URL | Auto-provided by Railway |
+| `CELERY_BROKER_URL` | Same as REDIS_URL | Celery message broker |
+| `CELERY_RESULT_BACKEND` | Same as REDIS_URL | Celery result storage |
+| `STIRLING_PDF_URL` | `http://stirling-pdf.railway.internal:8080` | From Task 3.3 - Update with actual hostname |
+| `STIRLING_PDF_API_KEY` | (Leave empty or set custom key) | Optional - only if you configured API key in Stirling-PDF |
+| `ENVIRONMENT` | `production` | Application environment mode |
 
 4. Click **"Deploy"**
 5. Wait for build to complete (~3-5 minutes)
 6. Railway provides a public URL: `https://your-backend.railway.app`
 
-### 3.4 Deploy Worker Service
+### 3.5 Deploy Worker Service
 
 1. Click **"+ New"** → **"GitHub Repo"** → Select your repo again
 2. Configure the Worker service:
@@ -188,7 +224,7 @@ Click **"Environment Variables"** and add:
 4. Click **"Deploy"**
 5. Worker doesn't get a public URL (internal service only)
 
-### 3.5 Verify Deployments
+### 3.6 Verify Deployments
 
 1. **Check API service logs:**
    - Should see: `Uvicorn running on http://0.0.0.0:8000`
@@ -212,7 +248,7 @@ Expected response:
 }
 ```
 
-### 3.6 Update Vercel Environment Variables
+### 3.7 Update Vercel Environment Variables
 
 1. Go back to Vercel project
 2. Navigate to **Settings → Environment Variables**
@@ -370,6 +406,7 @@ https://your-backend.railway.app/docs
 - `REDIS_URL` (auto-provided by Railway)
 - `CELERY_BROKER_URL`
 - `CELERY_RESULT_BACKEND`
+- `STIRLING_PDF_URL`
 - `ENVIRONMENT`
 
 ---
@@ -401,12 +438,31 @@ https://your-backend.railway.app/docs
 2. Check Supabase project is active (not paused)
 3. Verify Railway has network access to Supabase (should be allowed)
 
-**Problem:** Worker not processing tasks  
+**Problem:** Worker not processing tasks
 **Solution:**
 1. Check Railway Worker logs for startup errors
 2. Verify `REDIS_URL` is correct
 3. Ensure Worker has same environment variables as API
 4. Check Redis service is running
+
+**Problem:** Stirling-PDF conversion fails or times out
+**Solution:**
+1. Check Stirling-PDF service logs in Railway for errors
+2. Verify `STIRLING_PDF_URL` environment variable is correct in API and Worker
+3. Test Stirling-PDF health:
+   ```bash
+   curl http://stirling-pdf.railway.internal:8080/api/v1/info
+   ```
+4. Check Stirling-PDF resource allocation (needs minimum 2GB RAM)
+5. Verify private networking is enabled between services
+6. For large PDFs, may need to increase `CELERY_TASK_TIME_LIMIT` (default: 360s)
+
+**Problem:** "Connection refused" to Stirling-PDF
+**Solution:**
+1. Verify Stirling-PDF service is running in Railway
+2. Check internal hostname is correct (Settings → Service → Service Name)
+3. Ensure all services are in the same Railway project (required for private networking)
+4. Wait 1-2 minutes after deploy for internal DNS to propagate
 
 ### CI/CD Issues
 

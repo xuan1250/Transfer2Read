@@ -163,6 +163,37 @@ def test_epub_size_validation():
     assert 'oversized' in msg.lower()
 
 
+def test_epub_full_generation():
+    """Test full EPUB generation with HTML content."""
+    generator = EpubGenerator(job_id="test_job_full", user_id="test_user")
+    
+    # Mock inputs
+    structure = DocumentStructure(
+        title="Full Test",
+        author="Tester",
+        language="en",
+        chapters=[
+            ChapterMetadata(title="Chapter 1", start_page=1, end_page=1, chapter_num=1)
+        ],
+        toc={"items": [], "total_entries": 0, "max_depth": 1},
+        confidence_score=100
+    )
+    html_content = "<html><body><div class='page'><h1>Chapter 1</h1><p>Content</p></div></body></html>"
+    pdf_bytes = b"%PDF-1.4..."  # Dummy PDF
+    
+    # Generate
+    epub_bytes, metadata = generator.generate(
+        document_structure=structure,
+        html_content=html_content,
+        pdf_bytes=pdf_bytes
+    )
+    
+    assert iter(epub_bytes)
+    assert len(epub_bytes) > 0
+    assert metadata['title'] == "Full Test"
+    assert metadata['chapter_count'] == 1
+
+
 if __name__ == "__main__":
     # Run tests
     test_epub_basic_creation()
@@ -188,5 +219,8 @@ if __name__ == "__main__":
 
     test_epub_size_validation()
     print("✓ test_epub_size_validation passed")
+
+    test_epub_full_generation()
+    print("✓ test_epub_full_generation passed")
 
     print("\n✅ All EPUB tests passed!")

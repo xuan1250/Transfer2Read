@@ -116,21 +116,23 @@ This breaks down into specific, measurable outcomes:
 **Must-Have for Launch:**
 
 1. **Intelligent Complex PDF Conversion Engine** ⭐ *Core Differentiator*
-   - **AI-Powered Layout Analysis**: Detect tables, charts, images, equations, multi-column layouts automatically
+   - **Stirling-PDF Hybrid Architecture**:
+     - **Stirling-PDF Foundation**: Reliable, industry-standard conversion of PDF to high-fidelity HTML.
+     - **AI-Powered Structure Analysis**: AI analyzes the HTML structure to extract metadata, TOC, and semantic meaning.
    - **Smart Element Preservation**:
-     - Tables: Maintain structure, alignment, and cell content
-     - Images/Charts: Preserve positioning, captions, and quality
-     - Equations: Render correctly (MathML or high-quality image fallback)
-     - Multi-column → single-column intelligent reflow
-   - **Quality Target**: 95%+ fidelity for complex PDFs (vs. Calibre's ~70%)
-   - **Backend**: Python-based (PyMuPDF for parsing + AI models for layout intelligence)
+     - Tables: Maintain structure, alignment, and cell content (HTML-native).
+     - Images/Charts: Preserve positioning, captions, and quality (HTML-native).
+     - Equations: Render correctly via HTML/CSS.
+     - Multi-column → single-column intelligent reflow (HTML flow).
+   - **Quality Target**: 95%+ fidelity for complex PDFs.
+   - **Backend**: Python-based (Stirling-PDF Service + BeautifulSoup + AI).
 
 2. **Multi-Language Support**
    - Native rendering for **EN, ZH, JP, KO, VI** (covers Xavier's library + major markets)
    - Font embedding for special characters (no missing glyphs)
    - Mixed-language document handling (e.g., English text with Japanese quotes)
 
-3. **AI Structural Analysis** (Hybrid Mode)
+3. **AI Structural Analysis** ((Stirling + AI Mode)
    - Auto-detect and generate **Table of Contents** from document structure
    - Identify **chapter/section breaks** and tag correctly
    - Recognize headers, titles, and document hierarchy
@@ -387,7 +389,7 @@ The interface should feel:
 
 ### AI-Powered PDF Analysis & Conversion
 
-- FR16: System analyzes PDF layout to detect complex elements (tables, charts, images, equations, multi-column layouts)
+- FR16: System uses Stirling-PDF to convert PDF to HTML and AI to analyze the structure (tables, charts, images, equations)
 - FR17: System preserves table structures with correct alignment and cell content during conversion
 - FR18: System preserves images and charts with original positioning and captions
 - FR19: System renders mathematical equations correctly using MathML or high-quality image fallback

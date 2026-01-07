@@ -6,11 +6,11 @@
 
 ## Executive Summary
 
-Transfer2Read is a high-fidelity PDF to EPUB converter designed to solve the "complex PDF" problem for technical and academic documents. The system employs an **API-First Intelligence Architecture**, utilizing a **Next.js** frontend for a responsive, modern user experience and a **FastAPI** backend orchestrating **GPT-4o** and **Claude 3 Haiku** via **LangChain** for intelligent document analysis. To ensure scalability and performance, long-running conversion tasks are offloaded to **Celery** workers backed by **Redis**. All user data, authentication, and file storage are managed through **Supabase**, providing a unified, managed platform with real-time capabilities. This architecture balances the need for advanced AI processing with rapid development and simplified infrastructure management.
+Transfer2Read is a high-fidelity PDF to EPUB converter designed to solve the "complex PDF" problem for technical and academic documents. The system employs an **HTML-First Hybrid Architecture**, utilizing **Stirling-PDF** for high-fidelity PDF-to-HTML conversion and **GPT-4o** via **LangChain** for semantic structure analysis. Long-running tasks are managed by **Celery** workers backed by **Redis**. All user data and storage are managed through **Supabase**. This approach combines the reliability of standard PDF processing tools with the intelligence of AI for structure and metadata.
 
 ## Project Initialization
 
-**Approach:** The project is built **from scratch** without using any starter template. This provides full control over the architecture and allows for clean integration of Supabase, LangChain, and custom conversion logic.
+**Approach:** The project is built **from scratch** to integrate Supabase, Stirling-PDF, and LangChain.
 
 ### Core Services Setup
 
@@ -228,11 +228,11 @@ The core value proposition relies on a robust conversion pipeline that doesn't b
   - **Retry Logic:** Built-in retry with exponential backoff for API failures
 
 **Pipeline Steps:**
-1.  **Ingest:** Load PDF with PyMuPDF (fitz library) for text and image extraction.
-2.  **Analyze (AI):** Send page content + rendered images to GPT-4o via LangChain → Identify structure (titles, headings, paragraphs, tables, images).
-3.  **Structure:** Build logical document tree using AI-detected hierarchy (Chapters > Sections > Subsections).
-4.  **Reflow:** Extract and reformat content based on AI analysis, preserve semantic reading order.
-5.  **Generate:** Build EPUB container structure (OPF, NCX, XHTML per chapter) with proper metadata.
+1.  **Ingest:** Upload PDF to Supabase Storage.
+2.  **Convert (Stirling):** Send PDF to **Stirling-PDF** service to generate high-fidelity HTML.
+3.  **Extract:** Parse and clean HTML content using `BeautifulSoup`.
+4.  **Structure (AI):** Send HTML context to **GPT-4o** to identify chapters, TOC, and metadata.
+5.  **Generate:** Assemble EPUB using the cleaned HTML and AI-generated structure.
 
 **Failure Handling:**
 - **Celery Retries:** Max 3 retries with exponential backoff (1min, 5min, 15min)

@@ -147,7 +147,7 @@ class EpubGenerator:
     def generate(
         self,
         document_structure: DocumentStructure,
-        layout_analysis: List[PageAnalysis],
+        html_content: str,
         pdf_bytes: bytes
     ) -> Tuple[bytes, Dict[str, Any]]:
         """
@@ -166,7 +166,7 @@ class EpubGenerator:
 
         Args:
             document_structure: TOC and chapter structure from Story 4.3
-            layout_analysis: Page layouts with tables/images from Story 4.2
+            html_content: Converted HTML from Stirling-PDF (Stage 1)
             pdf_bytes: Original PDF file for metadata and cover extraction
 
         Returns:
@@ -175,9 +175,12 @@ class EpubGenerator:
             - epub_metadata: Dict with title, author, page_count, chapter_count, etc.
 
         Raises:
-            ValueError: If document_structure or layout_analysis is invalid
+            ValueError: If document_structure or html_content is invalid
             RuntimeError: If EPUB generation fails
         """
+        if not html_content:
+            raise ValueError("HTML content is required for EPUB generation")
+
         # Step 1: Create book
         self.create_epub_book()
 
@@ -208,28 +211,21 @@ class EpubGenerator:
         # Step 5: Add CSS stylesheet (with font-face rules if fonts embedded)
         self._add_stylesheet(font_result.get('embedded_fonts', []))
 
-        # Step 6: Build chapters from document structure and layout analysis
+        # Step 6: Build chapters from document structure and HTML content
         chapters_data = []
         if document_structure.chapters:
-            # Extract chapters with elements from layout analysis
-            chapters_data = self.content_assembler.extract_chapters(
+            # Extract chapters using page markers in HTML
+            chapters_data = self.content_assembler.extract_chapters_from_html(
                 chapter_metadata=document_structure.chapters,
-                layout_analysis=layout_analysis
+                html_content=html_content
             )
         else:
-            # Graceful degradation: Create single chapter from all pages
-            chapters_data = [{
-                'title': title or 'Document Content',
-                'start_page': 1,
-                'end_page': len(layout_analysis) if layout_analysis else 0,
-                'elements': []
-            }]
-            # Extract elements from all pages (if any)
-            if layout_analysis:
-                for page_num, page in enumerate(layout_analysis, start=1):
-                    chapters_data[0]['elements'].extend(
-                        self.content_assembler._extract_page_elements(page, page_num)
-                    )
+            # Graceful degradation: Create single chapter from full HTML
+            # Use content_assembler fallback logic by passing empty metadata
+            chapters_data = self.content_assembler.extract_chapters_from_html(
+                chapter_metadata=[],
+                html_content=html_content
+            )
 
         # Step 7: Create EPUB chapters and embed images/tables/equations
         epub_chapters = []
@@ -327,7 +323,7 @@ class EpubGenerator:
             'author': author or 'Unknown',
             'language': language,
             'chapter_count': len(epub_chapters),
-            'page_count': len(layout_analysis) if layout_analysis else 0,
+            'page_count': metadata.get('page_count', 0),
             'size_bytes': len(epub_bytes),
             'generated_at': datetime.utcnow().isoformat(),
             'has_toc': bool(document_structure.toc and document_structure.toc.items),

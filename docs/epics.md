@@ -746,57 +746,46 @@ So that **I can download them again or manage my files.**
 
 **User Story:**
 As a **Developer**,  
-I want **to implement the main conversion workflow using Celery**,  
-So that **the multi-step conversion process is managed reliably.**
+I want **to implement the main conversion workflow using Celery and Stirling-PDF**,  
+So that **PDFs are reliably converted to HTML and then processed.**
 
 **Acceptance Criteria:**
-- [ ] Celery workflow (chain/chord) defined: `analyze -> extract -> structure -> generate`
-- [ ] State updates sent to Redis/DB at each step (e.g., "Analyzing Layout...", "Generating EPUB...")
-- [ ] Error handling: Retries for transient failures, specific error states for permanent failures
-- [ ] Timeout configuration (FR35: <2 mins target, but set hard limit higher)
-- [ ] Cancellation support (if user cancels job)
+- [ ] Celery workflow (chain) defined: `convert_to_html -> extract_content -> identify_structure -> generate_epub`
+- [ ] **Stirling-PDF Integration**: Call `StirlingPDFClient` to convert PDF to HTML.
+- [ ] **Extract Content**: Parse and clean HTML using BeautifulSoup.
+- [ ] **State updates**: Update Redis/DB at each step (e.g., "Converting to HTML...", "Analyzing Structure...").
+- [ ] Error handling: Retries for Stirling API timeouts.
+- [ ] Timeout configuration: 5 mins max per job.
 
 **Technical Notes:**
-- Architecture: Pipeline Pattern
-- Use Celery Canvas for workflow orchestration
+- Architecture: Pipeline Pattern with Stirling Service.
+- Use Celery Canvas.
 
 **Prerequisites:** Story 1.4, Story 3.2
 
 ---
 
-####Story 4.2: LangChain AI Layout Analysis Integration
+#### Story 4.2: Stirling-PDF Integration & AI Structure Analysis
 
 **User Story:**
 As a **Developer**,  
-I want **to integrate GPT-4o via LangChain for PDF layout analysis**,  
-So that **complex elements (tables, equations, images) are extracted with high fidelity.**
+I want **to use Stirling-PDF for HTML conversion and GPT-4o for structure analysis**,  
+So that **I get high-fidelity content with semantic meaning.**
 
 **Acceptance Criteria:**
-- [ ] **LangChain Document Loader:**
-  - Use `PyPDFLoader` from LangChain to extract text + page images
-  - Extract pages with `pymupdf` for image rendering (GPT-4o vision input)
-- [ ] **GPT-4o Integration** (`backend/app/services/ai/gpt4.py`):
-  - Initialize `ChatOpenAI(model="gpt-4o", temperature=0)`
-  - Prompt: "Analyze this PDF page image. Identify: tables, equations, images, multi-column layouts. Return structured JSON."
-  - Input: Page text + rendered image (base64)
-  - Output: Structured JSON with detected elements and positions
-- [ ] **Claude 3 Haiku Fallback** (`backend/app/services/ai/claude.py`):
-  - Trigger on OpenAI API failure or rate limit
-  - Same prompt structure, faster/cheaper processing
-- [ ] **Detection Output:**
-  - Tables: Count, positions, cell content (FR17)
-  - Images: Count, positions, captions (FR18)
-  - Equations: Count, LaTeX representations (FR19)
-  - Multi-column detection: Flag + reflow instructions (FR20)
-- [ ] **Performance:** 
-  - 300-page PDF analyzed in ~5-15 minutes (API latency)
-  - Parallel processing for non-sequential pages
+- [ ] **Stirling-PDF Client**: Implement client to POST PDF to Stirling API and retrieve HTML.
+- [ ] **Content Extraction**: Implement `ContentAssembler` to parse HTML.
+- [ ] **AI Structure Analysis**:
+  - Prompt GPT-4o with HTML snippets/metadata.
+  - Return JSON with TOC, Chapters, Title, Author.
+- [ ] **Performance**: 
+  - Stirling conversion ~10-30s.
+  - AI analysis ~10-20s.
 
 **Technical Notes:**
-- **Architecture ADR-001:** API-First Intelligence (no local models)
-- FR16-FR25: Core extraction requirements
-- **Cost Optimization:** Use Claude for simple pages, GPT-4o for complex
-- **Retry Logic:** LangChain built-in exponential backoff
+- **Architecture**: HTML-First Hybrid.
+- **Cost**: Lower than Vision API (only text/structure analysis needed).
+- **Retry Logic**: For both Stirling and OpenAI calls.
 
 **Prerequisites:** Story 4.1
 

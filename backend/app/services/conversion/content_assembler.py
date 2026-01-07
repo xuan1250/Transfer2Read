@@ -18,6 +18,8 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 import base64
 from io import BytesIO
+from bs4 import BeautifulSoup
+import re
 
 from app.schemas.layout_analysis import (
     PageAnalysis,
@@ -58,7 +60,7 @@ class ContentAssembler:
         layout_analysis: List[PageAnalysis]
     ) -> List[Dict[str, Any]]:
         """
-        Extract chapter data from document structure.
+        Extract chapter data from document structure (Legacy/Vision approach).
 
         Args:
             chapter_metadata: List of chapters from Story 4.3
@@ -88,6 +90,98 @@ class ContentAssembler:
 
             chapters.append(chapter_data)
 
+        return chapters
+
+    def extract_chapters_from_html(
+        self,
+        chapter_metadata: List[ChapterMetadata],
+        html_content: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Extract chapter data from HTML content (Stirling-PDF approach).
+        
+        Splits the full HTML into chapters based on page markers (if present)
+        and document structure.
+        
+        Args:
+            chapter_metadata: List of chapters from structure analysis
+            html_content: Full HTML string from Stirling-PDF
+            
+        Returns:
+            List of dicts with chapter info: {title, elements}
+            (Note: elements will be raw HTML strings wrapped in XHTMLElement)
+        """
+        chapters = []
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Try to find page containers
+        # Strategy: Look for common Stirling/pdf2htmlEX classes or IDs
+        # Common patterns: class="page", id="page-container-X", data-page-no="X"
+        page_elements = []
+        
+        # Heuristic 1: class="page" or "pf" (pdf2htmlEX)
+        candidates = soup.find_all('div', class_=re.compile(r'\b(page|pf)\b'))
+        if not candidates:
+            # Heuristic 2: direct children of body if they look like pages
+            candidates = [child for child in soup.body.find_all('div', recursive=False)]
+        
+        if candidates and len(candidates) > 1:
+            page_elements = candidates
+        else:
+            # Fallback: Treat body content as one page/blob
+            page_elements = [soup.body]
+            
+        total_pages = len(page_elements)
+        
+        if not chapter_metadata:
+             # Create single chapter if no structure
+            return [{
+                'title': 'Document Content',
+                'elements': [XHTMLElement(
+                    tag='div',
+                    content=str(soup.body) if soup.body else html_content,
+                    attributes={'class': 'chapter-content'}
+                )]
+            }]
+
+        for chapter in chapter_metadata:
+            chapter_data = {
+                'title': chapter.title,
+                'level': 1,
+                'elements': []
+            }
+            
+            # Identify page range
+            start = chapter.start_page
+            end = chapter.end_page if chapter.end_page else total_pages
+            
+            # Collect HTML for these pages
+            chapter_html = []
+            
+            # Handle 1-based indexing
+            # If we found pages, map them. If we have 1 big blob, just put it in first chapter.
+            if len(page_elements) > 1:
+                for i in range(start, end + 1):
+                    if 1 <= i <= len(page_elements):
+                        # Get the page element (0-indexed)
+                        page_elem = page_elements[i-1]
+                        chapter_html.append(str(page_elem))
+            else:
+                # Single blob case: Only valid for first chapter or full doc
+                if chapter.chapter_num == 1:
+                    chapter_html.append(str(soup.body) if soup.body else html_content)
+
+            # Create a wrapper element for this chapter's content
+            if chapter_html:
+                full_chapter_html = "\n<hr class='page-break'/>\n".join(chapter_html)
+                chapter_data['elements'].append(XHTMLElement(
+                    tag='div',
+                    content=full_chapter_html,
+                    attributes={'class': 'chapter-content'}
+                ))
+            
+            chapters.append(chapter_data)
+            
         return chapters
 
     def _extract_page_elements(

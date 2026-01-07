@@ -26,7 +26,7 @@ from app.core.redis_client import get_cached_redis_client
 from app.services.usage_tracker import UsageTracker
 from celery import chain
 from app.tasks.conversion_pipeline import (
-    analyze_layout,
+    convert_to_html,
     extract_content,
     identify_structure,
     generate_epub,
@@ -197,7 +197,7 @@ async def upload_pdf(
 
         # Build the conversion chain directly (avoid orchestrator task anti-pattern)
         workflow = chain(
-            analyze_layout.s(job_id),
+            convert_to_html.s(job_id),
             extract_content.s(),
             identify_structure.s(),
             generate_epub.s(),

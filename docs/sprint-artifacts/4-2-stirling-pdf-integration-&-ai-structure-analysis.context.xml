@@ -1,0 +1,217 @@
+<story-context id="4-2-stirling-pdf-integration-ai-structure-analysis" v="2.0">
+  <metadata>
+    <epicId>epic-4</epicId>
+    <storyId>4-2</storyId>
+    <title>Stirling-PDF Integration &amp; AI Structure Analysis</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2026-01-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-2-stirling-pdf-integration-&amp;-ai-structure-analysis.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Developer</asA>
+    <iWant>to verify the StirlingPDFClient works reliably and implement AI-based structure analysis</iWant>
+    <soThat>I can transform raw HTML content from Stirling-PDF into structured, semantic document metadata</soThat>
+    <tasks>
+      - Stirling Client Testing: Create comprehensive unit tests for StirlingPDFClient (mock httpx responses), create integration tests for real Stirling service, document performance metrics
+      - Content Assembler Implementation: Verify/enhance backend/app/services/conversion/content_assembler.py for HTML sanitization and chapter extraction from HTML
+      - AI Analyzer Implementation: Verify/enhance backend/app/services/ai/structure_analyzer.py using LangChain GPT-4o with Pydantic DocumentStructure models for structured output
+      - Integration with Pipeline: Ensure extract_content and identify_structure tasks in conversion_pipeline.py use these services correctly
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Stirling-PDF Client Verification: Verify existing StirlingPDFClient functions correctly (convert_pdf_to_html successfully converts PDFs, get_version returns valid info), add unit tests mocking httpx.AsyncClient responses (success 200 OK, connection failure 500, timeout, empty response ValueError, API key header), create integration test uploading real 5-page PDF and validating HTML output
+    2. Content Extraction &amp; Assembly: ContentAssembler.assemble_content(html, job_id) sanitizes HTML (remove script/style tags using BeautifulSoup), normalizes structure (ensure valid HTML5), extracts metadata (parse title/meta tags), splits content if >100k chars with context overlap, returns structured dict with html_clean, chunks, and metadata
+    3. AI Structure Analysis: StructureAnalyzer.analyze_structure(text, language, page_count, document_title) uses GPT-4o with LangChain's with_structured_output(DocumentStructure), prompt strategy: analyze HTML/text content to identify title, author, TOC (chapters/sections with hierarchy), language, page count, return JSON with confidence scores, implement retry logic with exponential backoff (max 3 retries), fallback to Claude 3 Haiku if GPT-4o fails (rate limit, timeout)
+    4. Integration Test: Create integration test for flow: Sample HTML from Stirling → ContentAssembler → StructureAnalyzer → DocumentStructure JSON, use real AI API calls (GPT-4o), validate HTML sanitization (no script tags), validate DocumentStructure Pydantic instance, validate TOC contains expected chapters, validate confidence score is reasonable (>0.7 for well-structured docs)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-4.md</path>
+        <title>Technical Specification: Epic 4 (AI-Powered Conversion Engine)</title>
+        <section>Implementation Details > Technical Approach > AI Layout Analysis</section>
+        <snippet>
+          HTML-First Hybrid approach: Stirling-PDF provides high-fidelity HTML conversion preserving layout hints (tables, headings, images). AI (GPT-4o text-based) focuses on semantic structure analysis (TOC, chapters). Cost comparison: Text API ~$0.001-0.005 per page vs Vision API ~$0.01-0.05 per page. Trade-off: Stirling handles complex layout, AI focuses on semantic structure.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - AI Model Specification</title>
+        <section>Novel Pattern Designs > PDF Conversion Pipeline > AI Model Specification</section>
+        <snippet>
+          Primary Model: GPT-4o (OpenAI) - Multimodal understanding, document structure analysis, high-quality text extraction. Cost: ~$2.50/1M input tokens, ~$10/1M output tokens. Speed: ~2-5 seconds per page. Fallback Model: Claude 3 Haiku (Anthropic) - Fast text processing, cost-effective for simple documents. Cost: ~$0.25/1M input tokens, ~$1.25/1M output tokens. Orchestration: LangChain 0.3.x with PyPDFLoader, RecursiveCharacterTextSplitter, Custom chains, Built-in retry with exponential backoff.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - HTML Sanitization Strategy</title>
+        <section>Implementation Patterns > Testing Patterns</section>
+        <snippet>
+          Security: Remove XSS vectors (script tags, inline event handlers). AI Readiness: Keep semantic tags (h1-h6, table, p) for structure analysis. Performance: Remove unnecessary styling/formatting to reduce token usage.
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/app/services/stirling/stirling_client.py</path>
+        <kind>client</kind>
+        <symbol>StirlingPDFClient</symbol>
+        <lines>1-91</lines>
+        <reason>EXISTING CLIENT - Fully implemented. This story VERIFIES through testing. Methods: async convert_pdf_to_html(pdf_bytes, filename) returns HTML string with 300s timeout, async get_version() for health check. Configured with STIRLING_PDF_URL and STIRLING_PDF_API_KEY from settings.</reason>
+      </file>
+      <file>
+        <path>backend/app/services/conversion/content_assembler.py</path>
+        <kind>service</kind>
+        <symbol>ContentAssembler</symbol>
+        <lines>1-537</lines>
+        <reason>EXISTING SERVICE - Fully implemented. Handles HTML content assembly and chapter extraction. Key methods: extract_chapters_from_html(chapter_metadata, html_content) for Stirling-PDF HTML, build_xhtml_chapter(chapter_title, elements, language) for XHTML generation. Uses BeautifulSoup for HTML parsing.</reason>
+      </file>
+      <file>
+        <path>backend/app/services/ai/structure_analyzer.py</path>
+        <kind>service</kind>
+        <symbol>StructureAnalyzer</symbol>
+        <lines>1-360</lines>
+        <reason>EXISTING SERVICE - Fully implemented. AI-powered document structure analysis using GPT-4o. Key method: async analyze_structure(text, language, page_count, document_title) returns tuple[DocumentStructure, Dict[str, int]]. Uses LangChain ChatOpenAI with with_structured_output() for strict JSON validation. Includes aclose() method for proper cleanup.</reason>
+      </file>
+      <file>
+        <path>backend/app/schemas/document_structure.py</path>
+        <kind>schema</kind>
+        <symbol>DocumentStructure, TOC, TOCEntry, ChapterMetadata</symbol>
+        <lines>1-123</lines>
+        <reason>EXISTING SCHEMAS - Fully implemented Pydantic v2 models. DocumentStructure: title, author, language, toc (TOC), chapters (List[ChapterMetadata]), confidence_score. TOCEntry: title, level (1-4), page_number, confidence, text_sample, type. ChapterMetadata: chapter_num, title, start_page, end_page, subsections. Includes validate_hierarchy() method to check TOC consistency.</reason>
+      </file>
+      <file>
+        <path>backend/app/tasks/conversion_pipeline.py</path>
+        <kind>celery_tasks</kind>
+        <symbol>convert_to_html, extract_content, identify_structure</symbol>
+        <lines>1-1005</lines>
+        <reason>INTEGRATION POINT - Pipeline tasks that use these services. convert_to_html uses StirlingPDFClient. extract_content parses HTML with BeautifulSoup. identify_structure uses StructureAnalyzer and HeuristicStructureDetector fallback.</reason>
+      </file>
+      <file>
+        <path>backend/app/core/config.py</path>
+        <kind>config</kind>
+        <symbol>Settings</symbol>
+        <reason>Configuration settings for STIRLING_PDF_URL, STIRLING_PDF_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, STRUCTURE_ANALYSIS_TIMEOUT, STRUCTURE_CHUNK_SIZE</reason>
+      </file>
+      <file>
+        <path>backend/tests/unit/services/conversion/test_structure_analyzer.py</path>
+        <kind>test</kind>
+        <symbol>test_analyze_structure, etc.</symbol>
+        <reason>EXISTING UNIT TESTS - Reference for test patterns and mocking strategies for StructureAnalyzer</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <dep name="httpx">Async HTTP client used by StirlingPDFClient (timeout: 300s for large PDFs)</dep>
+        <dep name="beautifulsoup4">HTML parsing and sanitization in ContentAssembler</dep>
+        <dep name="langchain" version="0.3.12">AI orchestration framework</dep>
+        <dep name="langchain-openai">GPT-4o integration via ChatOpenAI</dep>
+        <dep name="langchain-anthropic">Claude 3 Haiku integration via ChatAnthropic (fallback)</dep>
+        <dep name="pydantic">Pydantic v2 models for strict JSON validation with LangChain</dep>
+        <dep name="pymupdf">PDF metadata extraction (page count, title, author)</dep>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Stirling-PDF: Must handle connection timeouts (300s), large files (chunking if needed), network errors
+    - AI Models: Use json_mode/with_structured_output for reliable JSON output matching Pydantic schemas
+    - Security: Sanitize HTML to remove XSS vectors (script, style, iframe, object, embed tags), keep semantic tags (h1-h6, table, p, div, span, a, ul, ol, li) for AI analysis
+    - Cost Optimization: Use text-based AI (not vision) for structure analysis to reduce costs 10x
+    - Error Handling: Implement retry logic for transient failures, fallback to Claude 3 Haiku if GPT-4o fails, fallback to HeuristicStructureDetector if all AI fails
+    - Story Scope: PRIMARY - Implement and test ContentAssembler and StructureAnalyzer services. SECONDARY - Verify StirlingPDFClient through comprehensive testing. OUT OF SCOPE - Orchestration (Story 4.1), EPUB generation (Story 4.4), Quality scoring (Story 4.5)
+    - Architecture: HTML-First Hybrid - Stirling-PDF handles layout complexity, AI focuses on semantic structure detection
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>StirlingPDFClient.convert_pdf_to_html</name>
+      <kind>async_method</kind>
+      <signature>async def convert_pdf_to_html(self, pdf_bytes: bytes, filename: str = "document.pdf") -> str</signature>
+      <path>backend/app/services/stirling/stirling_client.py</path>
+      <description>Convert PDF to HTML via Stirling-PDF API. Sends multipart/form-data POST to /api/v1/convert/pdf/html with fileInput field. Returns HTML string. Timeout: 300 seconds. Raises httpx.HTTPError on failure, ValueError if response empty.</description>
+    </interface>
+    <interface>
+      <name>StirlingPDFClient.get_version</name>
+      <kind>async_method</kind>
+      <signature>async def get_version(self) -> dict</signature>
+      <path>backend/app/services/stirling/stirling_client.py</path>
+      <description>Get Stirling-PDF version info for health check. Sends GET to /api/v1/info. Returns JSON dict with version info. Timeout: 10 seconds.</description>
+    </interface>
+    <interface>
+      <name>ContentAssembler.extract_chapters_from_html</name>
+      <kind>method</kind>
+      <signature>def extract_chapters_from_html(self, chapter_metadata: List[ChapterMetadata], html_content: str) -> List[Dict[str, Any]]</signature>
+      <path>backend/app/services/conversion/content_assembler.py</path>
+      <description>Extract chapter data from HTML content (Stirling-PDF approach). Splits full HTML into chapters based on page markers and document structure. Returns list of dicts with chapter info: {title, elements (List[XHTMLElement])}</description>
+    </interface>
+    <interface>
+      <name>ContentAssembler.build_xhtml_chapter</name>
+      <kind>method</kind>
+      <signature>def build_xhtml_chapter(self, chapter_title: str, elements: List[XHTMLElement], language: str = 'en') -> str</signature>
+      <path>backend/app/services/conversion/content_assembler.py</path>
+      <description>Assemble complete XHTML chapter from elements. Returns complete XHTML string for chapter with proper DOCTYPE, html namespace, meta tags, and CSS link.</description>
+    </interface>
+    <interface>
+      <name>StructureAnalyzer.analyze_structure</name>
+      <kind>async_method</kind>
+      <signature>async def analyze_structure(self, text: str, language: str, page_count: int, document_title: Optional[str] = None) -> tuple[DocumentStructure, Dict[str, int]]</signature>
+      <path>backend/app/services/ai/structure_analyzer.py</path>
+      <description>Analyze document text to detect hierarchical structure and generate TOC using GPT-4o. Returns tuple of (DocumentStructure Pydantic model, token_usage_dict with 'prompt' and 'completion' counts). Uses LangChain ChatOpenAI with with_structured_output(DocumentStructure) for strict JSON validation. Includes language-specific heading patterns and few-shot examples in prompt. Validates hierarchy consistency after analysis.</description>
+    </interface>
+    <interface>
+      <name>StructureAnalyzer.aclose</name>
+      <kind>async_method</kind>
+      <signature>async def aclose(self) -> None</signature>
+      <path>backend/app/services/ai/structure_analyzer.py</path>
+      <description>Cleanup StructureAnalyzer resources. Closes underlying httpx AsyncClient to prevent 'Event loop is closed' errors. Must be called after analyze_structure to clean up properly.</description>
+    </interface>
+    <interface>
+      <name>DocumentStructure.validate_hierarchy</name>
+      <kind>method</kind>
+      <signature>def validate_hierarchy(self) -> List[str]</signature>
+      <path>backend/app/schemas/document_structure.py</path>
+      <description>Validate TOC hierarchy consistency. Returns list of validation errors (empty if valid). Checks: no H3 under H1 without H2, no H4 under H2 without H3, level progression is logical, page numbers are positive.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Unit tests: Mock external services (httpx.AsyncClient for Stirling API, LangChain ChatOpenAI for AI responses) using pytest fixtures and pytest-asyncio for async tests
+      - StirlingPDFClient tests: Mock httpx.AsyncClient.post() and get() methods, test success (200 OK with HTML response), connection failure (500 error, network timeout), empty response handling (ValueError raised), API key authentication (X-API-KEY header sent)
+      - ContentAssembler tests: Test HTML sanitization (remove XSS vectors, verify script tags removed), test large HTML splitting (verify chunks overlap by 100 chars), test metadata extraction from various HTML structures, test chapter extraction from Stirling-PDF HTML
+      - StructureAnalyzer tests: Mock LangChain ChatOpenAI responses with valid DocumentStructure JSON, test Pydantic validation (invalid JSON rejected), test fallback logic (simulate GPT-4o failure, verify Claude called), test retry logic (simulate transient errors, verify 3 retries with exponential backoff), test aclose() cleanup (verify httpx client closed)
+      - Integration tests: Use real Stirling-PDF service (if deployed) OR recorded HTTP responses (VCR.py), use real AI API calls (GPT-4o) for validation (mark as slow test @pytest.mark.slow, run sparingly), assert HTML sanitization, DocumentStructure validity, TOC chapter matching, confidence score >0.7
+      - Coverage target: 80% minimum for new code
+    </standards>
+    <locations>
+      - backend/tests/unit/services/stirling/test_stirling_client.py (Create new - unit tests for StirlingPDFClient)
+      - backend/tests/integration/test_stirling_integration.py (Create new - integration test with real Stirling service)
+      - backend/tests/unit/services/conversion/test_content_assembler.py (Create new - unit tests for ContentAssembler)
+      - backend/tests/unit/services/conversion/test_structure_analyzer.py (EXISTING - unit tests for StructureAnalyzer)
+      - backend/tests/integration/test_content_to_structure_flow.py (Create new - integration test for full flow)
+      - backend/tests/fixtures/ (Sample PDFs and HTML files for testing)
+    </locations>
+    <ideas>
+      - Test AC1: StirlingPDFClient success case (200 OK with valid HTML, verify HTML content length >0)
+      - Test AC1: StirlingPDFClient connection failure (500 error, verify HTTPError raised)
+      - Test AC1: StirlingPDFClient timeout (mock 5-minute timeout, verify TimeoutException raised)
+      - Test AC1: StirlingPDFClient empty response (200 OK but empty string, verify ValueError raised with message "empty response")
+      - Test AC1: StirlingPDFClient API key header (verify X-API-KEY header sent in request)
+      - Test AC2: ContentAssembler HTML sanitization (input HTML with script/style/iframe tags, verify all removed)
+      - Test AC2: ContentAssembler large HTML splitting (input 150k char HTML, verify chunks created with 100 char overlap)
+      - Test AC2: ContentAssembler metadata extraction (input HTML with title and meta tags, verify extracted correctly)
+      - Test AC3: StructureAnalyzer GPT-4o success (mock valid DocumentStructure response, verify title/author/TOC/chapters parsed)
+      - Test AC3: StructureAnalyzer Pydantic validation (mock invalid JSON response missing required fields, verify ValidationError raised)
+      - Test AC3: StructureAnalyzer fallback logic (mock GPT-4o RateLimitError, verify Claude 3 Haiku called as fallback)
+      - Test AC3: StructureAnalyzer retry logic (mock transient network error, verify 3 retries with exponential backoff)
+      - Test AC3: StructureAnalyzer cleanup (call aclose(), verify httpx client closed without errors)
+      - Test AC4: Integration flow (Sample HTML from Stirling → ContentAssembler → StructureAnalyzer → DocumentStructure JSON, verify no script tags, valid Pydantic instance, TOC contains expected chapters from known test PDF, confidence >0.7)
+      - Manual smoke test: Upload real 5-page technical PDF through Stirling, verify HTML output contains tables/images, verify StructureAnalyzer detects chapters correctly, check AI API call logs for token usage and response time
+    </ideas>
+  </tests>
+</story-context>

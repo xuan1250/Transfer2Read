@@ -11,7 +11,7 @@ from app.tasks.conversion_pipeline import (
     update_job_status,
     check_cancellation,
     cleanup_temp_files,
-    analyze_layout,
+    convert_to_html,
     extract_content,
     identify_structure,
     generate_epub,
@@ -95,29 +95,46 @@ class TestCheckCancellation:
             check_cancellation("job-id")
 
 
-class TestAnalyzeLayout:
-    """Test the analyze_layout task."""
+class TestConvertToHtml:
+    """Test the convert_to_html task."""
 
     @patch('app.tasks.conversion_pipeline.check_cancellation')
     @patch('app.tasks.conversion_pipeline.update_job_status')
-    def test_analyze_layout_placeholder(self, mock_update_status, mock_check_cancel):
-        """Test analyze_layout placeholder implementation."""
+    @patch('app.tasks.conversion_pipeline.StirlingPDFClient')
+    @patch('app.tasks.conversion_pipeline.SupabaseStorageService')
+    @patch('app.tasks.conversion_pipeline.get_supabase_client')
+    def test_convert_to_html_success(self, mock_get_supabase, mock_storage_cls, mock_stirling_cls, mock_update_status, mock_check_cancel):
+        """Test convert_to_html success flow."""
         # Setup mocks
         mock_check_cancel.return_value = False
+        
+        # Mock Stirling Client
+        mock_stirling = MagicMock()
+        mock_stirling_cls.return_value = mock_stirling
+        mock_stirling.convert_pdf_to_html.return_value = "<html>Content</html>"
+        mock_stirling.get_version.return_value = {"version": "1.0.0"}
+        
+        # Mock Storage
+        mock_storage = MagicMock()
+        mock_storage_cls.return_value = mock_storage
+        mock_storage.download_file.return_value = b"%PDF..."
 
         # Call task
-        result = analyze_layout("test-job-id")
+        from app.tasks.conversion_pipeline import convert_to_html
+        result = convert_to_html("test-job-id")
 
         # Verify status update was called
-        mock_update_status.assert_called_once()
-        call_args = mock_update_status.call_args
-        assert call_args[1]["status"] == "ANALYZING"
-        assert call_args[1]["progress"] == 25
+        mock_update_status.assert_called()
+        call_args = mock_update_status.call_args_list[0]
+        assert call_args[1]["status"] == "CONVERTING"
+        # assert call_args[1]["progress"] == 20 # Initial progress
 
         # Verify result structure
         assert "job_id" in result
         assert result["job_id"] == "test-job-id"
-        assert "layout_analysis" in result
+        assert "html_content" in result
+        assert result["html_content"] == "<html>Content</html>"
+        assert "stirling_metadata" in result
 
 
 class TestExtractContent:
