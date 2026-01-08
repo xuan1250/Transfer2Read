@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
+from app.core.config import settings
 
 app = FastAPI(
     title="Transfer2Read API",
@@ -38,16 +39,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS Configuration
-# Allow requests from frontend (localhost for dev, custom domain for prod)
+# Allow requests from frontend origins defined in environment variables
+# For production, update CORS_ORIGINS in .env to include only trusted domains
+cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js dev server
-        "http://localhost:3001",  # Alternative port
-        "https://transfer2read.vercel.app",  # Vercel preview deployments
-        "https://transfer2read.app",  # Production custom domain
-        "https://www.transfer2read.app",  # Production www subdomain
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,19 +1,24 @@
 # Production Dockerfile for Transfer2Read Backend
 # Supports both API and Worker deployments via different start commands
-# Python 3.12.9 base image (matches local development environment)
+# Python 3.13-slim base image for containerized deployment
 
-FROM python:3.12.9-slim
+FROM python:3.13-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for PDF processing
-# PyMuPDF requires libmupdf-dev and mupdf-tools
+# Install system dependencies for PDF processing and LangChain
 # python-magic requires libmagic1
+# curl needed for health checks
+# gcc, g++, make required for building some Python packages (asyncpg, etc.)
+# libpq-dev required for asyncpg (PostgreSQL adapter)
 RUN apt-get update && apt-get install -y \
-    libmupdf-dev \
-    mupdf-tools \
     libmagic1 \
+    curl \
+    gcc \
+    g++ \
+    make \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
@@ -26,14 +31,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY ./app ./app
 
-# Railway provides $PORT environment variable for API service
-# Default to 8000 if not provided (for local testing)
+# Create uploads directory for file storage
+RUN mkdir -p /app/uploads && chmod 755 /app/uploads
+
+# Default port for API service
 ENV PORT=8000
 
-# Expose the port (Railway ignores this, but useful for documentation)
+# Expose the port
 EXPOSE $PORT
 
+# Health check for API service
+# Docker will mark container as unhealthy if this fails
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/api/health || exit 1
+
 # Default command runs API server
-# Railway will override this for Worker service with:
+# Docker Compose will override this for Worker service with:
 # celery -A app.worker worker --loglevel=info
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}

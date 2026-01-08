@@ -11,21 +11,20 @@ Transfer2Read converts PDF documents into clean, readable EPUB files using advan
 
 ## Architecture
 
-**Frontend:** Next.js 15 (App Router) + shadcn/ui + Tailwind CSS  
-**Backend:** FastAPI (Python 3.13) + LangChain AI integration  
-**Database & Auth:** Supabase (PostgreSQL + Auth + Storage)  
-**AI Models:** GPT-4o (layout analysis) + Claude 3 Haiku (text extraction)  
-**Task Queue:** Celery + Redis  
-**Deployment:** Vercel (frontend) + Railway (backend)
+**Frontend:** Next.js 15 (App Router) + shadcn/ui + Tailwind CSS
+**Backend:** FastAPI (Python 3.13) + LangChain AI integration
+**Database & Auth:** Supabase (PostgreSQL + Auth + Storage)
+**AI Models:** GPT-4o (layout analysis) + Claude 3 Haiku (text extraction)
+**Task Queue:** Celery + Redis 8.4
+**Deployment:** Docker Compose (self-hosted)
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js:** 24.12.0 LTS ([download](https://nodejs.org/))
-- **Python:** 3.13.0 ([download](https://www.python.org/downloads/))
-- **Docker Desktop:** Latest version ([download](https://www.docker.com/products/docker-desktop/))
-- **Supabase Account:** Free tier ([sign up](https://supabase.com/))
+- **Docker:** 20.10+ with Docker Compose 2.0+ ([download](https://www.docker.com/products/docker-desktop/))
+- **Supabase Account:** Free tier for database, auth, and storage ([sign up](https://supabase.com/))
+- **AI API Keys:** OpenAI API (GPT-4o) + Anthropic API (Claude 3 Haiku)
 - **Git:** For version control
 
 ## Setup Instructions
@@ -127,28 +126,115 @@ cd ..
 
 ⚠️ **Security Note:** NEVER commit `.env` files to Git! They're already in `.gitignore`.
 
-### 3. Local Development Setup
+### 3. Docker Deployment
 
-**Backend Setup** (in `backend/` directory):
+Transfer2Read uses Docker Compose for easy deployment with all services containerized.
+
+**Clone and Configure:**
 ```bash
-# Story 1.2 will create the FastAPI application
-# For now, the directory exists but is empty
+# Clone the repository
+git clone https://github.com/youruser/transfer2read.git
+cd transfer2read
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your actual credentials
+nano .env
 ```
 
-**Frontend Setup** (in `frontend/` directory):
+**Start All Services:**
 ```bash
-# Story 1.3 will initialize the Next.js application
-# For now, the directory exists but is empty
+# Build and start all containers (frontend, backend-api, backend-worker, redis)
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Check service status
+docker-compose ps
 ```
 
-**Redis (Docker):**
+**Access the Application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Health Check: http://localhost:8000/api/health
+
+**Docker Commands:**
 ```bash
-# Story 1.2 will create docker-compose.yml for Redis
+# Stop all services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up -d --build
+
+# View logs for specific service
+docker-compose logs -f backend-api
+docker-compose logs -f frontend
+docker-compose logs -f backend-worker
+
+# Restart a service
+docker-compose restart backend-api
+
+# Scale worker processes (for high load)
+docker-compose up -d --scale backend-worker=3
 ```
 
-### 4. Running the Application
+### 4. Local Development Setup (Without Docker)
 
-Full instructions will be available after Stories 1.2 (Backend), 1.3 (Frontend), and 1.4 (Workers) are complete.
+For development purposes, you can run services locally without Docker:
+
+**Backend Setup:**
+```bash
+cd backend
+python3.13 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend Setup:**
+```bash
+cd frontend
+npm install
+npm run dev  # Starts on http://localhost:3000
+```
+
+**Redis (Required):**
+```bash
+# Using Docker for Redis only
+docker run -d -p 6379:6379 redis:8.4.0-alpine
+```
+
+### 5. Production Deployment Considerations
+
+**Hardware Requirements:**
+- CPU: 4+ cores (AI processing intensive)
+- RAM: 8GB minimum, 16GB recommended
+- Storage: 50GB+ for Docker images and temp files
+
+**Security Checklist:**
+- ✅ `.env` file excluded from version control (.gitignore)
+- ✅ Use production Supabase project (separate from development)
+- ✅ Configure firewall to expose only ports 3000/8000 if needed
+- ✅ Enable HTTPS via reverse proxy (nginx/Caddy) for production
+- ✅ Set `ENVIRONMENT=production` in `.env`
+- ✅ Regular Docker image updates: `docker-compose pull && docker-compose up -d`
+
+**Monitoring:**
+```bash
+# Container health
+docker-compose ps
+
+# Resource usage
+docker stats
+
+# Application logs
+docker-compose logs --tail=100 -f
+
+# Redis connection test
+docker exec transfer2read-redis redis-cli ping
+```
 
 ## Project Structure
 
@@ -184,115 +270,66 @@ transfer_app/
 3. **Testing:** All stories require tests (pytest for backend, Vitest for frontend)
 4. **Review:** Code review required before marking stories complete
 
-## Production Deployment
+## Troubleshooting
 
-Transfer2Read is deployed using modern cloud platforms for automatic scaling and zero-downtime updates.
+### Common Docker Issues
 
-### Deployment Architecture
-
-- **Frontend:** Vercel (Edge Network with global CDN)
-- **Backend API:** Railway (Containerized FastAPI)
-- **Worker:** Railway (Containerized Celery)
-- **Redis:** Railway (Managed Redis for task queue)
-- **Database + Auth + Storage:** Supabase (Managed PostgreSQL + Auth + Storage)
-
-### Production URLs
-
-**Live Application:**
+**Port conflicts:**
 ```bash
-# Frontend (Custom Domain)
-https://transfer2read.com
+# Check if ports are already in use
+lsof -i :3000  # Frontend
+lsof -i :8000  # Backend
+lsof -i :6379  # Redis
 
-# Backend API (Custom Domain)
-https://api.transfer2read.com
-
-# API Health Check
-https://api.transfer2read.com/api/health
-
-# API Documentation (Swagger)
-https://api.transfer2read.com/docs
+# Solution: Stop conflicting processes or change ports in docker-compose.yml
 ```
 
-**Note:** Replace URLs above with actual production URLs after completing Quick Win QW-1 (Domain Purchase & DNS Setup). See `docs/sprint-artifacts/quick-wins-plan-2025-12-26.md` for domain configuration steps.
-
-### Deployment Guide
-
-**📖 For detailed deployment instructions, see:**
-
-- **[Production Deployment Guide](docs/operations/production-deployment-guide.md)** - Step-by-step Vercel/Railway/Supabase setup
-- **[Rollback Procedures](docs/operations/rollback-procedures.md)** - Emergency rollback and disaster recovery
-- **[API Key Rotation Guide](docs/operations/api-key-rotation-guide.md)** - Rotate OpenAI/Anthropic keys quarterly
-- **[Quick Wins Plan](docs/sprint-artifacts/quick-wins-plan-2025-12-26.md)** - Pre-launch preparation checklist
-
-### Quick Deployment Checklist
-
-**Pre-Launch Quick Wins (see `docs/sprint-artifacts/quick-wins-plan-2025-12-26.md`):**
-- [ ] **QW-1:** Purchase domain and configure DNS (transfer2read.com, api.transfer2read.com)
-- [ ] **QW-2:** Create production Supabase project (database + auth + storage)
-- [ ] **QW-3:** Rotate API keys for production (OpenAI, Anthropic)
-- [ ] **QW-4:** Update documentation (this README, deployment guides)
-- [ ] **QW-5:** Compile beta user list (5-10 testers)
-
-**Production Deployment:**
-- [ ] Deploy frontend to Vercel with custom domain
-- [ ] Deploy backend + worker to Railway
-- [ ] Configure environment variables on all platforms (.env.production.example)
-- [ ] Verify health endpoints (curl https://api.transfer2read.com/api/health)
-- [ ] Test end-to-end functionality (register → upload → convert → download)
-- [ ] Confirm CI/CD pipeline works (auto-deploy on push to main)
-
-### Environment Variables
-
-**Frontend (Vercel):**
+**Service startup order issues:**
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
-NEXT_PUBLIC_API_URL=https://your-backend.railway.app
+# If worker fails because backend-api isn't ready:
+docker-compose restart backend-worker
+
+# Or add healthcheck wait in docker-compose.yml (already configured)
 ```
 
-**Backend (Railway - API and Worker services):**
+**Environment variable errors:**
 ```bash
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_KEY=eyJhbGc...
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-REDIS_URL=redis://railway-redis:6379  # Auto-provided by Railway
-CELERY_BROKER_URL=redis://railway-redis:6379/0
-CELERY_RESULT_BACKEND=redis://railway-redis:6379/0
-ENVIRONMENT=production
+# Verify .env file exists and has all required variables
+cat .env
+
+# Check if containers can read environment variables
+docker-compose exec backend-api printenv | grep SUPABASE
 ```
 
-### CI/CD Pipeline
-
-GitHub Actions automatically runs tests on every pull request:
-- **Backend Tests:** pytest with coverage
-- **Frontend Build:** Next.js production build
-- **Linting:** Code quality checks
-
-Deployments are automatic:
-- **Push to main → Auto-deploy** to Vercel (frontend) and Railway (backend)
-- **Pull requests → Preview deployments** on Vercel
-
-### Troubleshooting Deployment
+**Build failures:**
+```bash
+# Clean Docker cache and rebuild
+docker-compose down
+docker system prune -f
+docker-compose up -d --build
+```
 
 **Frontend not loading:**
-1. Check Vercel deployment logs
-2. Verify environment variables are set
-3. Test API endpoint directly
+- Check if `NEXT_PUBLIC_BACKEND_URL` is set correctly in `.env`
+- Verify backend-api is running: `curl http://localhost:8000/api/health`
+- Check browser console for errors
 
-**Backend 500 errors:**
-1. Check Railway logs for errors
-2. Verify Supabase credentials
-3. Test health endpoint: `/api/health`
+**Worker not processing tasks:**
+- Check worker logs: `docker-compose logs backend-worker`
+- Verify Redis connection: `docker exec transfer2read-redis redis-cli ping`
+- Restart worker: `docker-compose restart backend-worker`
 
-**Worker not processing:**
-1. Check Railway worker logs
-2. Verify Redis connection
-3. Ensure environment variables match API service
+## Contributing
 
-For detailed troubleshooting, see [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md#troubleshooting)
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/my-feature`
+3. Follow coding standards in `docs/architecture.md`
+4. Add tests for new functionality
+5. Submit pull request
 
+## License
 
+MIT License - see LICENSE file for details
 
 ## Technology Stack Details
 

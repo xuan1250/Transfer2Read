@@ -1,0 +1,342 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>5</storyId>
+    <title>Docker Compose Deployment Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-08</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-5-docker-compose-deployment-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>DevOps Engineer</asA>
+    <iWant>to configure Docker Compose for self-hosted deployment</iWant>
+    <soThat>the application can run on local hardware with all services containerized</soThat>
+    <tasks>
+- Task 1: Create Docker Compose configuration (AC: Docker Compose File Created)
+  - 1.1: Create `docker-compose.yml` with service definitions
+  - 1.2: Configure service dependencies and networking
+  - 1.3: Set up volume mounts for Redis and backend
+  - 1.4: Configure environment variable loading from `.env`
+  - 1.5: Set restart policy to `unless-stopped`
+
+- Task 2: Create Dockerfiles (AC: Dockerfiles Created)
+  - 2.1: Write `frontend/Dockerfile` with multi-stage build
+  - 2.2: Write `backend/Dockerfile` with Python 3.13
+  - 2.3: Optimize images for minimal size
+  - 2.4: Add health check directives
+
+- Task 3: Configure environment variables (AC: Environment Configuration)
+  - 3.1: Create root `.env` file with all required variables
+  - 3.2: Create `.env.example` template
+  - 3.3: Update `.gitignore` to exclude `.env`
+  - 3.4: Verify no secrets committed to git history
+
+- Task 4: Verify service health (AC: Health Checks Verified)
+  - 4.1: Start all services with `docker-compose up -d`
+  - 4.2: Check frontend accessibility at port 3000
+  - 4.3: Verify backend health endpoint returns 200 OK
+  - 4.4: Test Redis ping command
+  - 4.5: Check worker logs for successful startup
+  - 4.6: Dispatch test Celery task and verify completion
+
+- Task 5: Test service communication (AC: Service Communication)
+  - 5.1: Verify frontend can call backend API
+  - 5.2: Verify backend can enqueue Celery tasks to Redis
+  - 5.3: Verify worker can consume tasks from Redis
+  - 5.4: Test Docker DNS resolution between services
+
+- Task 6: Configure production Supabase (AC: Production Supabase)
+  - 6.1: Create separate Supabase project for production
+  - 6.2: Apply RLS policies to production database
+  - 6.3: Configure storage buckets in production
+  - 6.4: Update production `.env` with production Supabase credentials
+
+- Task 7: Update documentation (AC: Documentation)
+  - 7.1: Update README.md with Docker deployment guide
+  - 7.2: Document all deployment commands
+  - 7.3: Add troubleshooting section for common Docker issues
+  - 7.4: Document production deployment considerations
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Docker Compose File Created
+   - Docker Compose File: `docker-compose.yml` created in project root
+   - Defines 4 services: `frontend`, `backend-api`, `backend-worker`, `redis`
+   - All services use appropriate base images (Next.js, FastAPI, Redis 8.4)
+   - Port mappings: `3000` (frontend), `8000` (backend), `6379` (Redis internal only)
+   - Environment variables loaded from `.env` file
+   - Volume mounts for Redis persistence and backend uploads
+   - Service dependencies configured (worker depends on API, API depends on Redis)
+   - Restart policy: `unless-stopped` for all services
+
+2. Dockerfiles Created
+   - Frontend Dockerfile: `frontend/Dockerfile`
+   - Multi-stage build for Next.js 15.0.3 production
+   - Base image: `node:24.12.0-alpine`
+   - Build stage: Install dependencies, build Next.js app
+   - Production stage: Copy build artifacts, expose port 3000
+   - Optimized for minimal image size
+   - Backend Dockerfile: `backend/Dockerfile`
+   - Base image: `python:3.13-slim`
+   - Install all Python dependencies from `requirements.txt`
+   - Include LangChain, FastAPI, Celery, Supabase client
+   - Expose port 8000
+   - Health check endpoint configured
+
+3. Environment Configuration
+   - Root `.env` File: Contains all required variables
+   - Supabase credentials: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`
+   - AI API keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+   - Redis URLs: `REDIS_URL=redis://redis:6379` (internal Docker network)
+   - Celery broker: `CELERY_BROKER_URL=redis://redis:6379/0`
+   - Celery backend: `CELERY_RESULT_BACKEND=redis://redis:6379/0`
+   - `.env.example` Template: Documented for team reference
+   - `.gitignore` Updated: Excludes `.env` file from version control
+
+4. Health Checks Verified
+   - Frontend Health Check: Accessible at `http://localhost:3000` → Next.js UI loads
+   - Backend API Health Check: `http://localhost:8000/api/health` → `200 OK`
+   - Returns: `{"status": "healthy", "supabase": "connected", "redis": "connected"}`
+   - Redis Health Check: `docker exec transfer2read-redis redis-cli ping` → `PONG`
+   - Worker Health Check: Logs show successful Celery startup
+
+5. Service Communication
+   - Frontend → Backend: Frontend can call backend API at `http://backend-api:8000`
+   - Backend → Redis: Backend API can connect to Redis at `redis://redis:6379`
+   - Worker → Redis: Worker can consume tasks from Redis queue
+   - All Services Resolvable: Services can resolve each other by container name
+
+6. Production Supabase
+   - Separate Production Project: Production Supabase project created
+   - Production URL and keys configured in `.env`
+   - RLS policies applied
+   - Storage buckets configured
+
+7. Documentation
+   - README.md Updated: Docker deployment instructions added
+   - Prerequisites listed: Docker 20.10+, Docker Compose 2.0+
+   - Deployment Commands Documented
+   - Troubleshooting Section: Common Docker issues and solutions
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD References -->
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR8: Best-effort uptime (dependent on host hardware). NFR21: Vertical scaling only within host hardware limits.</snippet>
+      </doc>
+
+      <!-- Architecture References -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Deployment Architecture</section>
+        <snippet>Self-hosted Docker Compose deployment with 4 services: frontend, backend-api, backend-worker, redis. All services run as containers on host machine. Docker Compose configuration with service dependencies and networking.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Technology Stack</section>
+        <snippet>Next.js 15.0.3, FastAPI 0.122.0, Python 3.13, Node.js 24.12.0 LTS, Redis 8.4.0-alpine, Celery 5.5.3. Frontend and Backend Dockerfiles needed for containerization.</snippet>
+      </doc>
+
+      <!-- Epic 1 Tech Spec -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Story 1.5: Deployment Pipeline Configuration</section>
+        <snippet>Docker Compose with 4 services, health checks verified, service communication tested, production Supabase configured separately from dev.</snippet>
+      </doc>
+
+      <!-- Story 1-5 -->
+      <doc>
+        <path>docs/sprint-artifacts/1-5-docker-compose-deployment-configuration.md</path>
+        <title>Story 1.5: Docker Compose Deployment Configuration</title>
+        <section>Acceptance Criteria</section>
+        <snippet>Docker Compose file with 4 services defined. Dockerfiles for frontend (Node 24, Next.js multi-stage) and backend (Python 3.13). Environment configuration with .env. Health checks verified. Production Supabase project separate from development.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing Docker Configuration -->
+      <artifact>
+        <path>docker-compose.yml</path>
+        <kind>configuration</kind>
+        <symbol>docker-compose-services</symbol>
+        <lines>1-77</lines>
+        <reason>Existing Docker Compose configuration with 5 services: db (postgres:15), redis, stirling-pdf, backend, worker. Story 1-5 needs to update to Docker Compose spec for self-hosted deployment.</reason>
+      </artifact>
+
+      <!-- Backend Dockerfile -->
+      <artifact>
+        <path>backend/Dockerfile</path>
+        <kind>dockerfile</kind>
+        <symbol>backend-docker-image</symbol>
+        <lines>1-40</lines>
+        <reason>Existing Dockerfile for backend/worker with Python 3.12.9-slim base. Uses uvicorn for API, celery for worker. Includes system dependencies for PDF processing.</reason>
+      </artifact>
+
+      <!-- Backend Configuration -->
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>configuration</kind>
+        <symbol>Settings</symbol>
+        <lines>1-79</lines>
+        <reason>Application configuration with Supabase, AI API keys, Redis, Celery settings. Environment variable management via Pydantic BaseSettings.</reason>
+      </artifact>
+
+      <!-- Backend Main Application -->
+      <artifact>
+        <path>backend/app/main.py</path>
+        <kind>application</kind>
+        <symbol>FastAPI-app</symbol>
+        <lines>1-135</lines>
+        <reason>FastAPI application entrypoint with CORS configuration, middleware, route registration, health check endpoint. Reference for deployment requirements.</reason>
+      </artifact>
+
+      <!-- Environment Configuration -->
+      <artifact>
+        <path>.env.example</path>
+        <kind>configuration</kind>
+        <symbol>environment-variables</symbol>
+        <lines>1-46</lines>
+        <reason>Template for environment variables required by all services: Supabase credentials, AI API keys, Redis URLs, Celery configuration.</reason>
+      </artifact>
+
+      <!-- README Documentation -->
+      <artifact>
+        <path>README.md</path>
+        <kind>documentation</kind>
+        <symbol>project-setup</symbol>
+        <lines>1-347</lines>
+        <reason>Project setup instructions, deployment architecture overview, production deployment checklist, troubleshooting guide.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="next" version="^15.5.7" />
+        <package name="react" version="^19.2.1" />
+        <package name="react-dom" version="^19.2.1" />
+        <package name="@supabase/supabase-js" version="^2.86.0" />
+        <package name="@supabase/auth-helpers-nextjs" version="^0.15.0" />
+        <package name="axios" version="^1.13.2" />
+        <package name="tailwindcss" version="^3.4.1" />
+        <package name="typescript" version="^5" />
+      </frontend>
+
+      <backend>
+        <package name="fastapi" version="0.122.0" />
+        <package name="uvicorn[standard]" version="0.30.0" />
+        <package name="pydantic" version=">=2.11.7,<3.0.0" />
+        <package name="supabase" version="2.24.0" />
+        <package name="celery" version="5.5.3" />
+        <package name="redis" version="5.0.1" />
+        <package name="langchain" version="~=0.3.0" />
+        <package name="langchain-openai" version="~=0.2.0" />
+        <package name="langchain-anthropic" version="~=0.3.0" />
+        <package name="pymupdf" version="1.24.10" />
+        <package name="boto3" version="1.36.0" />
+        <package name="pytest" version="8.3.0" />
+        <package name="pytest-asyncio" version="0.21.2" />
+      </backend>
+
+      <docker>
+        <image name="postgres" version="15-alpine" />
+        <image name="redis" version="7-alpine" />
+        <image name="stirling-pdf" version="latest" source="docker.stirlingpdf.com/stirlingtools/stirling-pdf" />
+        <image name="python" version="3.12.9-slim" />
+        <image name="node" version="24.12.0-alpine" note="For frontend Dockerfile" />
+      </docker>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="ARCH-001">Docker Compose self-hosted deployment - All services run in containers on single host machine (Architecture Line 417-419)</constraint>
+    <constraint id="ARCH-002">No auto-scaling or CDN - Best-effort uptime, vertical scaling only (Architecture Lines 468-470, PRD NFR8, NFR21)</constraint>
+    <constraint id="ARCH-003">4 required services: frontend (port 3000), backend-api (port 8000), backend-worker (Celery), redis (port 6379 internal) (Architecture Lines 421-432)</constraint>
+    <constraint id="ARCH-004">Supabase external managed service - NOT containerized, production project separate from development (Story 1-5 AC, Architecture ADR-002)</constraint>
+    <constraint id="STORY-001">Docker Compose file must include restart policy: unless-stopped for all services (Story 1-5 AC Line 418)</constraint>
+    <constraint id="STORY-002">Environment variables loaded from root .env file via docker-compose env_file directive (Story 1-5 AC Line 415)</constraint>
+    <constraint id="STORY-003">Volume mounts required: redis-data for persistence, backend uploads (Story 1-5 AC Line 416)</constraint>
+    <constraint id="STORY-004">Service dependencies: worker depends on API + Redis, API depends on Redis (Story 1-5 AC Line 417)</constraint>
+    <constraint id="STORY-005">Frontend Dockerfile: Multi-stage build for Next.js 15, node:24.12.0-alpine base (Story 1-5 AC Lines 421-429)</constraint>
+    <constraint id="STORY-006">Backend Dockerfile: Python 3.13-slim base with PDF processing dependencies (Story 1-5 AC Lines 430-436)</constraint>
+    <constraint id="DEPLOY-001">.gitignore must exclude .env file from version control (Story 1-5 AC Line 428)</constraint>
+    <constraint id="DEPLOY-002">Health checks: Frontend HTTP 3000, Backend /api/health 8000, Redis ping, Worker Celery logs (Story 1-5 AC Lines 429-433)</constraint>
+    <constraint id="DEPLOY-003">Service communication via internal Docker network using container names (Story 1-5 AC Lines 435-438)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Health Check API</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/health → 200 OK {"status": "healthy", "database": "connected", "redis": "connected"}</signature>
+      <path>backend/app/api/health.py</path>
+    </interface>
+
+    <interface>
+      <name>Docker Compose Service Network</name>
+      <kind>Internal Docker network</kind>
+      <signature>Services communicate via container names: frontend → backend-api:8000, backend-api → redis:6379, worker → redis:6379</signature>
+      <path>docker-compose.yml</path>
+    </interface>
+
+    <interface>
+      <name>Environment Variables</name>
+      <kind>Configuration interface</kind>
+      <signature>Required vars: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND</signature>
+      <path>.env</path>
+    </interface>
+
+    <interface>
+      <name>CORS Configuration</name>
+      <kind>HTTP middleware</kind>
+      <signature>Allowed origins: http://localhost:3000 (dev), https://transfer2read.vercel.app (prod), credentials: true</signature>
+      <path>backend/app/main.py:42-54</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend testing uses pytest with asyncio support and FastAPI TestClient. Tests organized in backend/tests/ with separation between unit tests (tests/unit/) and integration tests (tests/integration/). Fixtures defined in conftest.py for test database, client, and authenticated users. Health endpoint testing validates database and Redis connections. Integration tests verify service communication between containers. Docker Compose health checks ensure all services start successfully and remain healthy.
+    </standards>
+
+    <locations>
+      <location>backend/tests/unit/ - Unit tests for business logic, models, services</location>
+      <location>backend/tests/integration/ - Integration tests for API endpoints, database, external services</location>
+      <location>backend/tests/conftest.py - Shared pytest fixtures and test configuration</location>
+      <location>frontend/src/ - Frontend tests colocated with components using Vitest</location>
+    </locations>
+
+    <ideas>
+      <test ac="AC-1" priority="high">
+        Docker Compose startup test: Run `docker-compose up -d`, verify all 4 services start without errors, check container status with `docker ps`, validate health endpoints respond correctly
+      </test>
+      <test ac="AC-2" priority="high">
+        Dockerfiles build test: Build frontend Dockerfile (multi-stage Next.js), verify image size optimization. Build backend Dockerfile, verify Python 3.13 and all dependencies install correctly
+      </test>
+      <test ac="AC-3" priority="high">
+        Environment configuration test: Verify .env file loaded by docker-compose, check all required variables present in container environments, validate .gitignore excludes .env
+      </test>
+      <test ac="AC-4" priority="critical">
+        Health checks integration test: Frontend accessible at localhost:3000, Backend /api/health returns 200 OK with database + redis status, Redis ping successful via docker exec, Worker logs show Celery startup
+      </test>
+      <test ac="AC-5" priority="critical">
+        Service communication test: Frontend can call backend API at http://backend-api:8000 (internal Docker network), Backend can connect to Redis, Worker can consume Celery tasks from Redis queue, Docker DNS resolution working
+      </test>
+      <test ac="AC-6" priority="medium">
+        Production Supabase test: Verify separate production Supabase project credentials configured, RLS policies applied, storage buckets created with correct permissions
+      </test>
+      <test ac="AC-7" priority="low">
+        Documentation test: README.md includes Docker deployment instructions, troubleshooting section present, deployment commands documented (up, logs, down, rebuild, scale workers)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

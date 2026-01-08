@@ -4,7 +4,7 @@
     <storyId>1</storyId>
     <title>Production Environment Verification</title>
     <status>drafted</status>
-    <generatedAt>2025-12-30</generatedAt>
+    <generatedAt>2026-01-08</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/sprint-artifacts/7-1-production-environment-verification.md</sourceStoryPath>
   </metadata>
@@ -14,165 +14,197 @@
     <iWant>to verify that all production services are correctly configured and operational</iWant>
     <soThat>the application can serve real users reliably</soThat>
     <tasks>
-- Task 1: Verify Production Infrastructure Deployment (AC: #1)
-  - 1.1: Verify Vercel frontend deployed to custom domain with SSL
-  - 1.2: Test Vercel environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL)
-  - 1.3: Verify preview deployments work for feature branches
-  - 1.4: Verify Railway backend API responds to health check (GET /api/health → 200 OK)
-  - 1.5: Test Railway backend environment variables (SUPABASE_URL, SUPABASE_SERVICE_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, REDIS_URL)
-  - 1.6: Verify Railway auto-deploy from main branch works
-  - 1.7: Verify Celery worker running in Railway (check logs for startup and AI SDK initialization)
-  - 1.8: Dispatch test conversion job and verify worker processes it successfully
-  - 1.9: Verify Redis connection from both API and Worker services
-  - 1.10: Confirm Redis persistence enabled (check Railway Redis configuration)
+### Task 1: Verify Docker Compose Services (AC: #1, #2, #3, #4, #5)
+- [x] Check all containers are running: `docker-compose ps`
+- [x] Verify frontend accessibility: `curl http://localhost:3000`
+- [x] Verify backend health endpoint: `curl http://localhost:8000/api/health`
+- [x] Check worker logs: `docker-compose logs backend-worker`
+- [x] Test Redis connectivity: `docker exec transfer2read-redis redis-cli ping`
+- [x] Verify Docker volume mounts (Redis persistence)
+- [x] Confirm restart policies are set to `unless-stopped`
 
-- Task 2: Verify Supabase Production Configuration (AC: #2)
-  - 2.1: Verify production Supabase project exists (separate from development)
-  - 2.2: Test PostgreSQL database connectivity from backend API
-  - 2.3: Verify Row Level Security (RLS) policies on all tables (auth.users, conversion_jobs, user_usage)
-  - 2.4: Verify storage buckets configured: `uploads` (private), `downloads` (private)
-  - 2.5: Test storage bucket RLS policies (users can only access their own files)
-  - 2.6: Verify authentication providers enabled (Email/Password, Google OAuth, GitHub OAuth)
-  - 2.7: Run database migrations on production (verify all tables exist)
-  - 2.8: Verify database indexes created for performance
-  - 2.9: Configure pg_cron or scheduled job for monthly usage reset
+### Task 2: Verify Supabase Configuration (AC: #6, #7)
+- [x] Validate Supabase connection from backend
+- [x] Verify database tables exist (via health endpoint or direct query)
+- [x] Check RLS policies on `conversion_jobs` and `user_usage` tables
+- [x] Verify storage buckets (`uploads`, `downloads`) exist with correct policies
+- [x] Confirm authentication providers enabled (Email, Google, GitHub)
+- [ ] Set up automated monthly usage reset (pg_cron or scheduled job)
 
-- Task 3: Rotate and Secure API Keys (AC: #3)
-  - 3.1: Generate new OpenAI API key for production (not reusing dev key)
-  - 3.2: Verify OpenAI API key has appropriate rate limits for production traffic
-  - 3.3: Generate new Anthropic API key for production
-  - 3.4: Verify Supabase service role key configured in backend (NOT anon key)
-  - 3.5: Store all secrets in Railway environment variables (encrypted at rest)
-  - 3.6: Verify Vercel environment variables set for frontend
-  - 3.7: Verify .env files never committed to git (run `git log --all --full-history -- "**/.env*"`)
-  - 3.8: Document API key rotation schedule (90 days) and store in operations guide
+### Task 3: Validate API Keys and Secrets (AC: #8, #9)
+- [x] Verify all required environment variables present in `.env`
+- [x] Confirm OpenAI API key is valid and has appropriate rate limits
+- [x] Confirm Anthropic API key is valid
+- [x] Verify Supabase service role key (not anon key) used in backend
+- [x] Check `.gitignore` includes `.env` file
+- [x] Scan git history for accidentally committed secrets (if needed)
 
-- Task 4: Configure CORS and Security (AC: #4)
-  - 4.1: Update backend CORS configuration to allow only production frontend domain
-  - 4.2: Verify CORS headers in API responses (OPTIONS and actual requests)
-  - 4.3: Enable rate limiting on all API endpoints (configure limits based on tier)
-  - 4.4: Verify HTTPS enforced on Vercel frontend (HTTP → HTTPS redirect)
-  - 4.5: Verify HTTPS enforced on Railway backend API
-  - 4.6: Test security headers (HSTS, X-Content-Type-Options, X-Frame-Options)
+### Task 4: Review Security Configuration (AC: #10)
+- [ ] Review CORS configuration in backend
+- [ ] Update CORS to allow production frontend domain (when deployed)
+- [x] Verify rate limiting middleware is active
+- [ ] Plan HTTPS/SSL setup for production deployment (future: nginx reverse proxy)
 
-- Task 5: Execute End-to-End Smoke Tests (AC: #5)
-  - 5.1: Create test user account via registration flow (production environment)
-  - 5.2: Log in with test user credentials
-  - 5.3: Upload a simple test PDF (10-20 pages, text-only)
-  - 5.4: Monitor conversion job progress (verify worker picks up job)
-  - 5.5: Verify conversion completes successfully with quality report
-  - 5.6: Download converted EPUB file
-  - 5.7: Verify usage tracking incremented in user_usage table
-  - 5.8: Test logout and re-login with same credentials
-  - 5.9: Document smoke test results (screenshots, timestamps, any errors)
+### Task 5: Execute End-to-End Smoke Tests (AC: #11)
+- [x] Test user registration flow
+- [x] Test user login flow
+- [x] Upload a test PDF file
+- [x] Verify conversion job is processed
+- [x] Download the generated EPUB
+- [x] Verify usage tracking increments
+- [x] Document any issues or failures
     </tasks>
   </story>
 
   <acceptanceCriteria>
-1. **Production Infrastructure:**
-   - Vercel Frontend fully deployed to production domain with custom domain, SSL certificate, and environment variables verified
-   - Railway Backend API operational on production URL with health check returning 200 and auto-deploy verified
-   - Railway Celery Worker processing jobs with successful startup and test job completion
-   - Railway Redis accessible to API and Worker with persistence enabled
+### Production Infrastructure
+1. **Docker Compose Services Running:**
+   - [x] All 4 services started: `docker-compose ps` shows all containers healthy
+   - [x] Frontend container: `transfer2read-frontend` (port 3000)
+   - [x] Backend API container: `transfer2read-api` (port 8000)
+   - [x] Worker container: `transfer2read-worker`
+   - [x] Redis container: `transfer2read-redis` (port 6379)
+   - [x] All services have restart policy `unless-stopped`
 
-2. **Supabase Production:**
-   - Production Supabase Project configured separately from development with PostgreSQL accessible
-   - Row Level Security (RLS) policies verified on all tables
-   - Storage buckets (uploads, downloads) configured with correct policies
-   - Authentication providers enabled (Email, Google, GitHub OAuth)
-   - Database Migrations applied to production with all tables, indexes, and scheduled jobs configured
+2. **Frontend Service Verified:**
+   - [x] Accessible at `http://localhost:3000` or `http://<host-ip>:3000`
+   - [x] Environment variables loaded correctly from `.env`
+   - [x] Can communicate with backend API
 
-3. **API Keys & Secrets:**
-   - All API keys rotated for production (OpenAI, Anthropic with appropriate rate limits)
-   - Supabase service role key configured (NOT anon key for backend)
-   - Secrets stored securely in Railway environment variables
-   - .env files never committed to git (verified in history)
+3. **Backend API Service Verified:**
+   - [x] Health check: `curl http://localhost:8000/api/health` → `200 OK`
+   - [x] Environment variables verified: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `REDIS_URL`
+   - [x] CORS configured for frontend origin
 
-4. **CORS & Security:**
-   - CORS configuration allows only production frontend domain
-   - Rate limiting enabled on API endpoints
-   - HTTPS enforced on all services (no HTTP fallback)
+4. **Celery Worker Service Verified:**
+   - [x] Worker logs show successful startup: `docker-compose logs backend-worker`
+   - [x] AI SDK initialization successful (GPT-4o + Claude connection verified)
+   - [x] Test job dispatched and completed successfully
 
-5. **Smoke Tests:**
-   - End-to-End Smoke Test on production validates user registration, login, PDF upload, conversion completion, EPUB download, and usage tracking
+5. **Redis Service Verified:**
+   - [x] Redis ping successful: `docker exec transfer2read-redis redis-cli ping` → `PONG`
+   - [x] Backend API can connect to Redis
+   - [x] Worker can connect to Redis for task queue
+   - [x] Data persistence enabled via Docker volume `redis-data`
+
+### Supabase Production
+6. **Production Supabase Project** configured separately from development
+   - [x] PostgreSQL database accessible
+   - [x] Row Level Security (RLS) policies verified on all tables
+   - [x] Storage buckets (`uploads`, `downloads`) configured with correct policies
+   - [x] Authentication providers enabled (Email, Google, GitHub OAuth)
+
+7. **Database Migrations** applied to production
+   - [x] All tables exist: `auth.users`, `conversion_jobs`, `user_usage`
+   - [x] Indexes created for performance
+   - [ ] pg_cron or scheduled job for monthly usage reset configured
+
+### API Keys & Secrets
+8. **All API keys rotated** for production (not using dev keys)
+   - [x] OpenAI API key with appropriate rate limits
+   - [x] Anthropic API key configured
+   - [x] Supabase service role key (NOT anon key for backend)
+
+9. **Secrets stored securely** in environment variables (not in code)
+   - [x] All secrets in `.env` file (git-ignored)
+   - [x] No secrets committed to git repository
+
+### CORS & Security
+10. **CORS configuration** allows only production frontend domain
+    - [ ] CORS origins verified (currently set to localhost for development)
+    - [x] Rate limiting implementation exists
+    - [ ] HTTPS enforced on all services (N/A for local Docker deployment)
+
+### Smoke Tests
+11. **End-to-End Smoke Test** on production:
+    - [x] User can register and log in
+    - [x] User can upload a PDF
+    - [x] Conversion job completes successfully
+    - [x] User can download EPUB
+    - [x] Usage tracking increments correctly
   </acceptanceCriteria>
 
   <artifacts>
     <docs>
       <doc>
         <path>docs/architecture.md</path>
-        <title>Production Deployment Architecture</title>
-        <section>Production Deployment Architecture (lines 459-794)</section>
-        <snippet>Infrastructure overview: Vercel (frontend), Railway (backend + worker + Redis), Supabase (database + auth + storage). Custom domains: transfer2read.com (frontend), api.transfer2read.com (backend). Environment variables documented for all services.</snippet>
+        <title>Deployment Architecture</title>
+        <section>Deployment Architecture (lines 413-478)</section>
+        <snippet>Docker Compose deployment with 4 services: frontend (Next.js, port 3000), backend-api (FastAPI, port 8000), backend-worker (Celery), redis (8.4.0-alpine, port 6379). All services use `.env` file, volumes for Redis persistence and backend uploads, restart policy `unless-stopped`. Health checks via frontend HTTP 200, backend `/api/health` endpoint, Redis `ping`, worker logs.</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
-        <title>Deployment Configuration</title>
-        <section>Deployment Configuration (lines 545-676)</section>
-        <snippet>Vercel build config (Next.js 15, Node 24.x), Railway services (backend-api, celery-worker, redis), Supabase configuration (PostgreSQL, Auth providers, Storage buckets). Auto-deploy from main branch.</snippet>
-      </doc>
-      <doc>
-        <path>docs/architecture.md</path>
-        <title>Security Configuration</title>
-        <section>Security Configuration (lines 677-718)</section>
-        <snippet>HTTPS/SSL auto-provisioned via Let's Encrypt. CORS restricted to production domains. Environment variable storage in Railway/Vercel (encrypted). API key rotation schedule (90 days). Row Level Security (RLS) policies for multi-tenancy.</snippet>
-      </doc>
-      <doc>
-        <path>docs/architecture.md</path>
-        <title>Deployment Checklist</title>
-        <section>Deployment Checklist (lines 823-847)</section>
-        <snippet>Pre-deployment: Domain DNS configured, Supabase production project, API keys rotated, documentation updated. Deployment steps: Deploy to Vercel/Railway, configure env vars, add custom domains, verify health endpoints, test end-to-end. Post-deployment: Smoke tests, beta invite, monitoring.</snippet>
+        <title>Production Considerations</title>
+        <section>Production Considerations (lines 453-478)</section>
+        <snippet>Hardware requirements: CPU 4+ cores, RAM 8GB min / 16GB rec, Storage 50GB+. Vertical scaling only (upgrade host). Security: API keys in `.env` (never commit), firewall expose ports 3000/8000 only if needed, Supabase handles auth/storage security. Monitoring: `docker-compose ps`, `docker stats`, `docker-compose logs`. Scaling: vertical only, scale workers with `docker-compose up -d --scale backend-worker=3`.</snippet>
       </doc>
       <doc>
         <path>docs/epics.md</path>
         <title>Story 7.1 Acceptance Criteria</title>
-        <section>Story 7.1 (lines 1294-1358)</section>
-        <snippet>5 main acceptance criteria: Production Infrastructure (Vercel, Railway, Redis), Supabase Production (RLS, storage, auth), API Keys rotation, CORS/Security, End-to-End Smoke Tests. Detailed technical notes on verification procedures.</snippet>
+        <section>Story 7.1 Production Environment Verification (lines 1285-1362)</section>
+        <snippet>Docker Compose services running (frontend, backend-api, backend-worker, redis). Supabase production project configured (RLS policies, storage buckets, auth providers). API keys rotated for production. CORS configuration for production domain. End-to-end smoke test (register → login → upload → convert → download → usage tracking).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/7-1-production-environment-verification.md</path>
+        <title>Learnings from Story 7-2</title>
+        <section>Learnings from Previous Story (lines 230-279)</section>
+        <snippet>Story 7-2 completed comprehensive load testing with results: 10 concurrent users (1,274 requests, 0 failures, 100% success), 50 concurrent users (4,244 requests, 99.93% success), Docker resources <20% CPU/memory. Performance metrics: API P95 15.84ms, P99 25.63ms (31-39x faster than targets). Infrastructure validated production-ready with 5-6x resource headroom. All services (Database, Redis, API, Worker) running and stable.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Performance Targets</title>
+        <section>Technical Performance Targets (lines 91-99)</section>
+        <snippet>Processing: <2 minutes for 300-page technical book. File size: EPUB ≤ 120% of original PDF. Uptime: 99.5% for web application. EPUBs open correctly on major readers: Apple Books (iPad), Kindle, Kobo, Google Play Books. Browser support: Chrome, Firefox, Safari, Edge (latest 2 versions).</snippet>
       </doc>
     </docs>
     <code>
       <artifact>
-        <path>backend/app/main.py</path>
-        <kind>application</kind>
-        <symbol>FastAPI app</symbol>
-        <lines>1-112</lines>
-        <reason>CORS configuration for production domains - needs verification that transfer2read.com and api.transfer2read.com are whitelisted (lines 21-27)</reason>
+        <path>docker-compose.yml</path>
+        <kind>configuration</kind>
+        <symbol>Docker Compose Services</symbol>
+        <lines>1-59</lines>
+        <reason>Defines all 4 production services (redis, backend-api, backend-worker, frontend) with restart policies, volumes, environment configuration, and service dependencies. Critical for production deployment verification.</reason>
+      </artifact>
+      <artifact>
+        <path>.env.example</path>
+        <kind>configuration</kind>
+        <symbol>Environment Variables Template</symbol>
+        <lines>1-54</lines>
+        <reason>Documents all required environment variables for production: Supabase credentials (URL, anon key, service key), AI API keys (OpenAI, Anthropic), Redis URLs (Docker internal network), application config. Critical for secret management verification.</reason>
       </artifact>
       <artifact>
         <path>backend/app/api/health.py</path>
         <kind>endpoint</kind>
         <symbol>health_check()</symbol>
         <lines>19-78</lines>
-        <reason>Health check endpoint that verifies Supabase and Redis connectivity - critical for production readiness verification (returns 200 OK if healthy, 503 if unhealthy)</reason>
+        <reason>Health check endpoint that verifies Supabase and Redis connectivity. Returns 200 OK if healthy, 503 if unhealthy. Used for production readiness verification (AC #3). Returns JSON with database/redis status.</reason>
       </artifact>
       <artifact>
-        <path>backend/.env.example</path>
-        <kind>configuration</kind>
-        <symbol>Environment variables template</symbol>
-        <lines>1-63</lines>
-        <reason>Documents all required environment variables for production deployment including Supabase, AI API keys, Redis, and security notes for Railway deployment</reason>
-      </artifact>
-      <artifact>
-        <path>frontend/.env.local.example</path>
-        <kind>configuration</kind>
-        <symbol>Frontend environment template</symbol>
-        <lines>1-10</lines>
-        <reason>Frontend environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL) - must be configured in Vercel for production</reason>
+        <path>backend/app/main.py</path>
+        <kind>application</kind>
+        <symbol>FastAPI app with CORS and Security</symbol>
+        <lines>1-133</lines>
+        <reason>Main FastAPI application with CORS configuration (currently localhost:3000, needs production domain update for AC #10), security headers middleware (HSTS, X-Content-Type-Options, X-Frame-Options), route registration for all API endpoints. Critical for security configuration review.</reason>
       </artifact>
     </code>
     <dependencies>
       <backend ecosystem="Python">
         <package name="fastapi" version="0.122.0"/>
-        <package name="uvicorn" version="0.30.0"/>
+        <package name="uvicorn[standard]" version="0.30.0"/>
+        <package name="pydantic" version="2.11.7+"/>
         <package name="supabase" version="2.24.0"/>
+        <package name="sqlalchemy" version="2.0.36"/>
+        <package name="redis" version="5.0.1"/>
+        <package name="celery" version="5.5.3"/>
         <package name="langchain" version="~0.3.0"/>
         <package name="langchain-openai" version="~0.2.0"/>
         <package name="langchain-anthropic" version="~0.3.0"/>
-        <package name="celery" version="5.5.3"/>
-        <package name="redis" version="5.0.1"/>
-        <package name="pymupdf" version="1.24.10"/>
+        <package name="pymupdf" version="1.25.0+"/>
+        <package name="ebooklib" version="latest"/>
         <package name="pytest" version="8.3.0"/>
+        <package name="pytest-asyncio" version="0.21.2"/>
         <package name="pytest-cov" version="6.0.0"/>
+        <package name="httpx" version="0.27.0"/>
       </backend>
       <frontend ecosystem="Node.js">
         <package name="next" version="^15.5.7"/>
@@ -181,99 +213,135 @@
         <package name="@supabase/auth-helpers-nextjs" version="^0.15.0"/>
         <package name="@tanstack/react-query" version="^5.90.12"/>
         <package name="axios" version="^1.13.2"/>
-        <package name="react-pdf" version="^10.2.0"/>
-        <package name="epubjs" version="^0.3.93"/>
         <package name="vitest" version="^4.0.15"/>
         <package name="@testing-library/react" version="^16.3.0"/>
       </frontend>
+      <infrastructure>
+        <service name="Redis" version="8.4.0-alpine" type="Docker image"/>
+        <service name="Supabase" version="latest" type="Managed external service"/>
+      </infrastructure>
     </dependencies>
   </artifacts>
 
   <constraints>
-    <constraint type="security">All production API keys must be rotated (not reusing dev keys) - OpenAI, Anthropic, Supabase service role key</constraint>
-    <constraint type="security">CORS must restrict to production domains only: transfer2read.com and www.transfer2read.com (currently allows .app domain in main.py lines 25-26, needs update)</constraint>
-    <constraint type="security">HTTPS enforced on all services - Vercel and Railway auto-provision Let's Encrypt SSL certificates</constraint>
-    <constraint type="deployment">Separate Supabase projects required: development vs. production (must NOT share database/auth)</constraint>
-    <constraint type="deployment">Environment variables stored in Railway (backend) and Vercel (frontend) encrypted environment managers - never committed to Git</constraint>
-    <constraint type="infrastructure">Railway services: backend-api, celery-worker, redis (managed) must all be deployed and healthy</constraint>
-    <constraint type="infrastructure">Supabase RLS policies must be verified on conversion_jobs and user_usage tables before production launch</constraint>
-    <constraint type="testing">End-to-end smoke test required: register → login → upload PDF → conversion completes → download EPUB → usage tracking increments</constraint>
+    <constraint type="deployment">Docker Compose deployment architecture established in Epic 1, Story 1.5. All 4 services (frontend, backend-api, backend-worker, redis) must run as containers on same host machine. Supabase is external managed service.</constraint>
+    <constraint type="deployment">All services must use restart policy `unless-stopped` to ensure automatic recovery after host reboots or container failures.</constraint>
+    <constraint type="deployment">Separate Supabase projects required for development vs. production (must NOT share database/auth/storage).</constraint>
+    <constraint type="security">All production API keys must be rotated (not reusing dev keys) - OpenAI, Anthropic, Supabase service role key.</constraint>
+    <constraint type="security">Environment variables stored in `.env` file (git-ignored) and loaded into containers via docker-compose.yml `env_file` directive.</constraint>
+    <constraint type="security">CORS configuration in backend/app/main.py (lines 42-52) currently allows localhost:3000 and Docker internal network. Needs update for production frontend domain (Task 4).</constraint>
+    <constraint type="security">Security headers middleware (HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection) already implemented in backend/app/main.py (lines 20-38).</constraint>
+    <constraint type="infrastructure">Redis data persistence enabled via Docker volume `redis-data` to prevent queue loss on container restart.</constraint>
+    <constraint type="infrastructure">Backend uploads stored in Docker volume `backend_uploads` shared between backend-api and backend-worker containers.</constraint>
+    <constraint type="infrastructure">Service communication: Frontend → Backend API (HTTP localhost:8000 or internal docker://backend-api:8000), Backend API → Supabase (HTTPS external), Backend API → Redis (redis://redis:6379), Worker → Redis (same).</constraint>
+    <constraint type="testing">End-to-end smoke test required: register → login → upload PDF → conversion completes → download EPUB → usage tracking increments (AC #11, Task 5).</constraint>
+    <constraint type="performance">System validated by Story 7-2 load testing: handles 50+ concurrent users with <20% resource usage, 5-6x headroom for growth.</constraint>
   </constraints>
+
   <interfaces>
     <interface>
       <name>GET /api/health</name>
       <kind>REST endpoint</kind>
-      <signature>GET https://api.transfer2read.com/api/health → 200 OK with {status: "healthy", database: "connected", redis: "connected", timestamp}</signature>
+      <signature>GET http://localhost:8000/api/health → 200 OK with {"status": "healthy", "database": "connected", "redis": "connected", "timestamp": "ISO8601"} or 503 with {"status": "unhealthy", ...}</signature>
       <path>backend/app/api/health.py:19-78</path>
     </interface>
     <interface>
-      <name>Railway Backend API Service</name>
+      <name>Docker Compose Services</name>
       <kind>deployment</kind>
-      <signature>Start command: uvicorn app.main:app --host 0.0.0.0 --port $PORT, Healthcheck: /api/health, Auto-deploy: main branch</signature>
-      <path>docs/architecture.md:580-609</path>
+      <signature>Services: redis (8.4.0-alpine, port 6379), backend-api (FastAPI, port 8000), backend-worker (Celery), frontend (Next.js, port 3000). All services use restart: unless-stopped, env_file: .env</signature>
+      <path>docker-compose.yml:1-59</path>
     </interface>
     <interface>
-      <name>Vercel Frontend Deployment</name>
+      <name>Frontend Service</name>
       <kind>deployment</kind>
-      <signature>Framework: Next.js, Build: npm run build, Environment: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL, Custom domain: transfer2read.com</signature>
-      <path>docs/architecture.md:549-575</path>
+      <signature>Container: transfer2read-frontend, Port: 3000, Environment: NEXT_PUBLIC_BACKEND_URL=http://backend-api:8000 (Docker internal network), Depends on: backend-api</signature>
+      <path>docker-compose.yml:41-54</path>
+    </interface>
+    <interface>
+      <name>Backend API Service</name>
+      <kind>deployment</kind>
+      <signature>Container: transfer2read-backend-api, Port: 8000, Environment: from .env (Supabase, AI keys, Redis), Depends on: redis, Volumes: backend_uploads, ./backend (dev mount)</signature>
+      <path>docker-compose.yml:9-23</path>
+    </interface>
+    <interface>
+      <name>Backend Worker Service</name>
+      <kind>deployment</kind>
+      <signature>Container: transfer2read-backend-worker, Command: celery -A app.worker worker --loglevel=info, Environment: from .env, Depends on: redis + backend-api, Volumes: backend_uploads, ./backend</signature>
+      <path>docker-compose.yml:25-39</path>
+    </interface>
+    <interface>
+      <name>Redis Service</name>
+      <kind>deployment</kind>
+      <signature>Container: transfer2read-redis, Image: redis:8.4.0-alpine, Port: 6379 (internal), Volume: redis_data:/data (persistence)</signature>
+      <path>docker-compose.yml:2-7</path>
     </interface>
     <interface>
       <name>Supabase Production Project</name>
       <kind>managed service</kind>
-      <signature>PostgreSQL database (conversion_jobs, user_usage tables with RLS), Storage buckets (uploads, downloads with RLS), Auth providers (Email, Google, GitHub OAuth)</signature>
-      <path>docs/architecture.md:646-675</path>
+      <signature>PostgreSQL database (conversion_jobs, user_usage tables with RLS), Storage buckets (uploads, downloads with RLS), Auth providers (Email, Google, GitHub OAuth). Access via SUPABASE_URL, SUPABASE_SERVICE_KEY (backend), SUPABASE_ANON_KEY (frontend)</signature>
+      <path>.env.example:10-18</path>
     </interface>
   </interfaces>
+
   <tests>
-    <standards>Testing for Story 7.1 focuses on verification and validation rather than automated unit tests. Use manual testing checklists, shell scripts for environment verification, and curl/httpx for API endpoint testing. Backend uses pytest for integration tests (backend/tests/), frontend uses Vitest for component tests (frontend/src/__tests__/). Production smoke tests document results in markdown format with screenshots and timestamps.</standards>
+    <standards>Story 7.1 focuses on production environment verification and operational readiness testing. Testing approach uses manual verification checklists, shell commands for service health checks, and end-to-end smoke tests to validate deployment. Backend uses pytest for integration tests (backend/tests/), frontend uses Vitest for component tests (frontend/src/__tests__/). Production verification results documented in markdown format with command outputs and screenshots.</standards>
     <locations>
       - backend/tests/integration/ (API integration tests)
       - backend/tests/unit/ (Service/model unit tests)
+      - backend/tests/load/ (Load testing infrastructure from Story 7-2)
       - frontend/src/__tests__/ (Component tests)
-      - docs/operations/ (Operations documentation and runbooks)
       - docs/sprint-artifacts/ (Smoke test results documentation)
     </locations>
     <ideas>
-      <test id="AC1-1" criteria="Production Infrastructure - Vercel Frontend">
-        <description>Verify Vercel frontend deployed to custom domain transfer2read.com with SSL certificate</description>
-        <approach>Manual: Open https://transfer2read.com in browser, verify SSL lock icon, check certificate issuer (Let's Encrypt), verify no HTTP fallback</approach>
-        <validation>Browser shows secure connection, certificate valid for transfer2read.com</validation>
+      <test id="AC1" criteria="Docker Compose Services Running">
+        <description>Verify all 4 Docker containers (frontend, backend-api, backend-worker, redis) are running with healthy status and restart policies</description>
+        <approach>Execute: `docker-compose ps` → Verify all services show "Up" status with restart policy "unless-stopped". Check container names match expected (transfer2read-frontend, transfer2read-backend-api, transfer2read-backend-worker, transfer2read-redis). Verify exposed ports: 3000 (frontend), 8000 (backend-api), 6379 (redis internal only).</approach>
+        <validation>All containers running, health checks passing, restart policies configured, ports correctly exposed</validation>
       </test>
-      <test id="AC1-2" criteria="Production Infrastructure - Railway Backend">
-        <description>Verify Railway backend API operational with health check returning 200 OK</description>
-        <approach>curl https://api.transfer2read.com/api/health -v, verify response status 200, check JSON body contains {"status": "healthy", "database": "connected", "redis": "connected"}</approach>
-        <validation>Health endpoint returns 200 OK with all services "connected"</validation>
+      <test id="AC2" criteria="Frontend Service Verified">
+        <description>Verify frontend accessible at localhost:3000 with environment variables loaded and backend API communication working</description>
+        <approach>Execute: `curl http://localhost:3000` → Verify HTML response (Next.js page). Check Docker logs: `docker-compose logs frontend` → Verify no NEXT_PUBLIC_BACKEND_URL errors. Test frontend → backend communication by visiting dashboard page and checking network tab for API calls to http://localhost:8000.</approach>
+        <validation>Frontend loads successfully, environment variables present, API communication functional</validation>
       </test>
-      <test id="AC1-3" criteria="Production Infrastructure - Celery Worker">
-        <description>Verify Celery worker running in Railway with successful AI SDK initialization</description>
-        <approach>Check Railway logs for celery-worker service, grep for "Celery worker started", "LangChain initialized", "OpenAI client ready", dispatch test conversion job via API</approach>
-        <validation>Worker logs show successful startup, test job completes with EPUB generated</validation>
+      <test id="AC3" criteria="Backend API Service Verified">
+        <description>Verify backend health check endpoint returns 200 OK with Supabase and Redis connected</description>
+        <approach>Execute: `curl http://localhost:8000/api/health -v` → Verify response status 200 OK, JSON body: {"status": "healthy", "database": "connected", "redis": "connected", "timestamp": "..."}. Check environment variables: `docker exec transfer2read-backend-api env | grep -E "SUPABASE|OPENAI|ANTHROPIC|REDIS"` → Verify all keys present. Check CORS headers: `curl -H "Origin: http://localhost:3000" http://localhost:8000/api/health -v` → Verify Access-Control-Allow-Origin header present.</approach>
+        <validation>Health endpoint returns 200, all environment variables configured, CORS allows frontend</validation>
       </test>
-      <test id="AC2-1" criteria="Supabase Production - Database Tables">
-        <description>Verify all production tables exist with correct RLS policies</description>
-        <approach>Connect to Supabase SQL editor, run: SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('conversion_jobs', 'user_usage'); SELECT * FROM pg_policies WHERE tablename IN ('conversion_jobs', 'user_usage');</approach>
-        <validation>Tables exist, RLS policies enforce auth.uid() = user_id for row-level security</validation>
+      <test id="AC4" criteria="Celery Worker Service Verified">
+        <description>Verify Celery worker logs show successful startup with AI SDK initialization and test job completion</description>
+        <approach>Execute: `docker-compose logs backend-worker | grep -E "worker|celery|LangChain|OpenAI|Anthropic"` → Verify logs show: "celery@... ready", "LangChain initialized", no connection errors. Dispatch test conversion job via API: `curl -X POST http://localhost:8000/api/v1/convert ...` (with test PDF) → Monitor worker logs for job processing → Verify job completes with EPUB generated.</approach>
+        <validation>Worker started successfully, AI SDKs initialized, test job processed and completed</validation>
       </test>
-      <test id="AC2-2" criteria="Supabase Production - Storage Buckets">
-        <description>Verify storage buckets configured with correct RLS policies</description>
-        <approach>Supabase Dashboard > Storage, verify buckets: uploads (private), downloads (private), check RLS policies allow only auth.uid() folder access</approach>
-        <validation>Buckets exist, policies restrict access to user-specific folders</validation>
+      <test id="AC5" criteria="Redis Service Verified">
+        <description>Verify Redis responding to ping and both backend API and worker can connect for task queue</description>
+        <approach>Execute: `docker exec transfer2read-redis redis-cli ping` → Verify response "PONG". Check Redis connections from backend: `docker exec transfer2read-redis redis-cli client list | grep -E "backend|worker"` → Verify both services connected. Check volume persistence: `docker volume inspect transfer2read_redis_data` → Verify volume exists and mounted.</approach>
+        <validation>Redis ping successful, backend and worker connected, data persistence enabled</validation>
       </test>
-      <test id="AC3-1" criteria="API Keys Rotation">
-        <description>Verify production API keys are rotated and not reusing dev keys</description>
-        <approach>Compare Railway environment variable values (first/last 4 chars only) with local .env dev keys, verify different, check OpenAI/Anthropic dashboard for key creation dates</approach>
-        <validation>Production keys created recently, different from dev keys</validation>
+      <test id="AC6" criteria="Production Supabase Project">
+        <description>Verify production Supabase project configured separately from development with RLS policies and storage buckets</description>
+        <approach>Check Supabase dashboard → Verify production project URL different from dev. Verify tables exist: Run SQL query in Supabase SQL editor: `SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('conversion_jobs', 'user_usage');` → Verify 2 rows returned. Check RLS policies: `SELECT * FROM pg_policies WHERE tablename IN ('conversion_jobs', 'user_usage');` → Verify policies enforce auth.uid() = user_id. Check storage buckets: Supabase Dashboard > Storage → Verify buckets "uploads" and "downloads" exist with RLS enabled. Check auth providers: Supabase Dashboard > Authentication > Providers → Verify Email, Google OAuth, GitHub OAuth enabled.</approach>
+        <validation>Production Supabase project separate, tables exist, RLS policies active, storage buckets configured, auth providers enabled</validation>
       </test>
-      <test id="AC4-1" criteria="CORS Configuration">
-        <description>Verify CORS allows only production frontend domain</description>
-        <approach>curl https://api.transfer2read.com/api/health -H "Origin: https://malicious-site.com" -v, verify CORS headers reject, curl with Origin: https://transfer2read.com, verify accepted</approach>
-        <validation>CORS rejects unauthorized origins, accepts transfer2read.com</validation>
+      <test id="AC7" criteria="Database Migrations Applied">
+        <description>Verify all production tables exist with indexes and monthly usage reset configured</description>
+        <approach>Supabase SQL editor: `SELECT table_name FROM information_schema.tables WHERE table_schema IN ('public', 'auth') AND table_name IN ('users', 'conversion_jobs', 'user_usage');` → Verify 3 tables exist. Check indexes: `SELECT indexname, tablename FROM pg_indexes WHERE tablename IN ('conversion_jobs', 'user_usage');` → Verify performance indexes created. Check pg_cron: `SELECT * FROM cron.job WHERE jobname LIKE '%usage_reset%';` → Verify scheduled job exists for monthly reset (or document alternative approach).</approach>
+        <validation>Tables exist, indexes created, monthly usage reset mechanism configured or documented as pending</validation>
       </test>
-      <test id="AC5-1" criteria="End-to-End Smoke Test">
-        <description>Execute full user journey on production: register → login → upload → convert → download → usage tracking</description>
-        <approach>1. Register new test user (test+smoke@example.com), 2. Login and verify JWT token, 3. Upload 10-page sample PDF, 4. Monitor conversion job status (poll /api/v1/jobs/{id}), 5. Download EPUB and verify file size/validity, 6. Check user_usage table incremented, Document with screenshots</approach>
-        <validation>All steps complete successfully, EPUB opens in Apple Books/Calibre, usage tracking shows 1 conversion</validation>
+      <test id="AC8-9" criteria="API Keys & Secrets">
+        <description>Verify production API keys rotated (not dev keys) and secrets stored securely in .env (never committed)</description>
+        <approach>Compare .env API key prefixes (first 8 chars) with dev keys → Verify different. Check OpenAI dashboard → Verify production key created recently with rate limits configured. Check Anthropic dashboard → Verify production key active. Verify Supabase service role key (not anon key) used in backend: `docker exec transfer2read-backend-api env | grep SUPABASE_SERVICE_KEY` → Verify starts with "eyJhbGc...". Check git history: `git log --all --full-history -- "*/.env*" -- "**/.env"` → Verify no .env files committed. Check .gitignore: `cat .gitignore | grep .env` → Verify .env listed.</approach>
+        <validation>Production API keys rotated, service role key used in backend, .env never committed, .gitignore configured</validation>
+      </test>
+      <test id="AC10" criteria="CORS & Security">
+        <description>Verify CORS configuration and security headers</description>
+        <approach>Check backend/app/main.py lines 42-52 → Document current CORS origins (localhost:3000, localhost:3001, frontend:3000). Note: Production domain update needed when deployed (Task 4). Test CORS headers: `curl -H "Origin: http://malicious-site.com" http://localhost:8000/api/health -v` → Verify CORS rejects unauthorized origins. Check security headers: `curl -I http://localhost:8000/api/health` → Verify headers: Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection present. Note: HTTPS enforcement N/A for local Docker deployment, document nginx reverse proxy plan for future.</approach>
+        <validation>CORS origins documented (update needed for production), security headers implemented, HTTPS plan documented</validation>
+      </test>
+      <test id="AC11" criteria="End-to-End Smoke Test">
+        <description>Execute full user journey: register → login → upload PDF → convert → download EPUB → usage tracking</description>
+        <approach>1. Register test user: Visit http://localhost:3000/register → Create account test+smoke@example.com → Verify email confirmation (if enabled). 2. Login: Visit http://localhost:3000/login → Enter credentials → Verify redirect to dashboard. 3. Upload PDF: Drag-drop 10-page test PDF on upload zone → Verify upload progress → Verify job created. 4. Monitor conversion: Watch job status page → Verify progress updates → Verify quality report shown with confidence score. 5. Download EPUB: Click "Download EPUB" button → Verify file downloads → Open in Apple Books/Calibre → Verify renders correctly. 6. Check usage tracking: Supabase dashboard → user_usage table → Verify conversion_count incremented by 1 for test user. Document all steps with timestamps and screenshots.</approach>
+        <validation>All steps complete successfully, EPUB renders correctly in e-reader, usage tracking increments</validation>
       </test>
     </ideas>
   </tests>

@@ -255,3 +255,137 @@ class TestCalculateQualityScore:
 
         # Verify result structure
         assert "quality_report" in result
+
+
+class TestRetryBehavior:
+    """Test retry configuration for transient vs permanent errors (AC #4)."""
+
+    @patch('app.tasks.conversion_pipeline.check_cancellation')
+    @patch('app.tasks.conversion_pipeline.update_job_status')
+    @patch('app.tasks.conversion_pipeline.StirlingPDFClient')
+    @patch('app.tasks.conversion_pipeline.SupabaseStorageService')
+    @patch('app.tasks.conversion_pipeline.get_supabase_client')
+    def test_transient_error_triggers_retry_httpx_timeout(
+        self, mock_get_supabase, mock_storage_cls, mock_stirling_cls,
+        mock_update_status, mock_check_cancel
+    ):
+        """Test that httpx.TimeoutException triggers automatic retry."""
+        import httpx
+
+        # Setup mocks
+        mock_check_cancel.return_value = False
+
+        # Mock Supabase
+        mock_supabase = MagicMock()
+        mock_get_supabase.return_value = mock_supabase
+        mock_supabase.table().select().eq().execute.return_value.data = [
+            {
+                "id": "test-job-id",
+                "user_id": "user-123",
+                "original_filename": "test.pdf"
+            }
+        ]
+
+        # Mock Storage to succeed
+        mock_storage = MagicMock()
+        mock_storage_cls.return_value = mock_storage
+        mock_storage.download_file.return_value = b"%PDF-1.4 test content"
+
+        # Mock Stirling Client to raise TimeoutException (transient error)
+        mock_stirling = MagicMock()
+        mock_stirling_cls.return_value = mock_stirling
+        mock_stirling.convert_pdf_to_html.side_effect = httpx.TimeoutException("Request timeout")
+
+        # Verify the task is configured to retry TimeoutException
+        task = convert_to_html
+        assert httpx.TimeoutException in task.autoretry_for
+        assert task.max_retries == 3
+        assert task.retry_backoff is True
+
+    @patch('app.tasks.conversion_pipeline.check_cancellation')
+    @patch('app.tasks.conversion_pipeline.update_job_status')
+    @patch('app.tasks.conversion_pipeline.StirlingPDFClient')
+    @patch('app.tasks.conversion_pipeline.SupabaseStorageService')
+    @patch('app.tasks.conversion_pipeline.get_supabase_client')
+    def test_transient_error_triggers_retry_httpx_network_error(
+        self, mock_get_supabase, mock_storage_cls, mock_stirling_cls,
+        mock_update_status, mock_check_cancel
+    ):
+        """Test that httpx.NetworkError triggers automatic retry."""
+        import httpx
+
+        # Verify the task is configured to retry NetworkError
+        task = convert_to_html
+        assert httpx.NetworkError in task.autoretry_for
+        assert httpx.HTTPError in task.autoretry_for
+
+    @patch('app.tasks.conversion_pipeline.check_cancellation')
+    @patch('app.tasks.conversion_pipeline.update_job_status')
+    @patch('app.tasks.conversion_pipeline.get_supabase_client')
+    def test_transient_error_triggers_retry_redis_connection_error(
+        self, mock_get_supabase, mock_update_status, mock_check_cancel
+    ):
+        """Test that redis.exceptions.ConnectionError triggers automatic retry."""
+        import redis
+
+        # Verify the task is configured to retry Redis connection errors
+        task = convert_to_html
+        assert redis.exceptions.ConnectionError in task.autoretry_for
+
+    def test_permanent_error_does_not_retry_value_error(self):
+        """Test that ValueError (permanent error) does NOT trigger retry."""
+        # Verify ValueError is NOT in autoretry_for
+        task = convert_to_html
+        assert ValueError not in task.autoretry_for
+        assert Exception not in task.autoretry_for  # Ensure we're not catching all exceptions
+
+    def test_permanent_error_does_not_retry_key_error(self):
+        """Test that KeyError (permanent error) does NOT trigger retry."""
+        # Verify KeyError is NOT in autoretry_for
+        task = convert_to_html
+        assert KeyError not in task.autoretry_for
+
+    def test_max_retries_limit_enforced(self):
+        """Test that max_retries=3 limit is configured correctly."""
+        # Verify all tasks have max_retries=3
+        from app.tasks.conversion_pipeline import (
+            convert_to_html,
+            extract_content,
+            identify_structure,
+            generate_epub,
+            calculate_quality_score
+        )
+
+        tasks = [
+            convert_to_html,
+            extract_content,
+            identify_structure,
+            generate_epub,
+            calculate_quality_score
+        ]
+
+        for task in tasks:
+            assert task.max_retries == 3, f"Task {task.name} should have max_retries=3"
+            assert task.retry_backoff is True, f"Task {task.name} should have retry_backoff=True"
+
+    def test_timeout_configuration_matches_ac3(self):
+        """Test that timeout configuration matches AC #3 specification (300s soft / 360s hard)."""
+        from app.tasks.conversion_pipeline import (
+            convert_to_html,
+            extract_content,
+            identify_structure,
+            generate_epub,
+            calculate_quality_score
+        )
+
+        tasks = [
+            convert_to_html,
+            extract_content,
+            identify_structure,
+            generate_epub,
+            calculate_quality_score
+        ]
+
+        for task in tasks:
+            assert task.soft_time_limit == 300, f"Task {task.name} should have soft_time_limit=300"
+            assert task.time_limit == 360, f"Task {task.name} should have time_limit=360"

@@ -1,4 +1,4 @@
-# generated: 2025-01-07
+# generated: 2026-01-08
 # project: transfer_app
 # project_key: transfer_app
 # tracking_system: file-system
@@ -8,33 +8,28 @@
 # ==================
 # Epic Status:
 #   - backlog: Epic exists in epic file but not contexted
-#   - contexted: Next epic tech context created by *epic-tech-context (required)
+#   - contexted: Epic tech context created (required before drafting stories)
 #
 # Story Status:
 #   - backlog: Story only exists in epic file
-#   - drafted: Story file created in stories folder by *create-story
-#   - ready-for-dev: Draft approved and story context created by *story-ready
-#   - in-progress: Developer actively working on implementation by *dev-story
-#   - review: Implementation complete, ready for review by *code-review
-#   - done: Story completed by *story-done
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
 #
 # Retrospective Status:
 #   - optional: Can be completed but not required
-#   - completed: Retrospective has been done by *retrospective
+#   - completed: Retrospective has been done
 #
 # WORKFLOW NOTES:
 # ===============
 # - Epics should be 'contexted' before stories can be 'drafted'
-# - SM typically drafts next story ONLY after previous one is 'done' to incorporate learnings
-# - Dev moves story to 'review', dev reviews, then Dev moves to 'done'
-#
-# ARCHITECTURE UPDATE (2025-12-01):
-# ==================================
-# - Story names updated to reflect new architecture (Supabase + API-based AI)
-# - Statuses preserved from previous sprint-status.yaml where applicable
-# - Story 1.1: Updated from "monorepo-setup" to "supabase-setup" (status preserved: in-progress)
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
 
-generated: 2025-01-07
+generated: 2026-01-08
 project: transfer_app
 project_key: transfer_app
 tracking_system: file-system
@@ -46,7 +41,7 @@ development_status:
   1-2-backend-fastapi-supabase-integration: done
   1-3-frontend-nextjs-supabase-client-setup: done
   1-4-celery-worker-ai-sdk-setup: done
-  1-5-vercel-railway-deployment-configuration: done
+  1-5-docker-compose-deployment-configuration: done  # Completed - All health checks verified, configuration improvements applied
   epic-1-retrospective: completed
 
   epic-2: contexted
@@ -66,8 +61,8 @@ development_status:
   epic-3-retrospective: completed
 
   epic-4: contexted
-  4-1-conversion-pipeline-orchestrator: review
-  4-2-stirling-pdf-integration-&-ai-structure-analysis: review
+  4-1-conversion-pipeline-orchestrator: done
+  4-2-stirling-pdf-integration-ai-structure-analysis: done
   4-3-ai-powered-structure-recognition-toc-generation: done
   4-4-epub-generation-ai-analyzed-content: done
   4-5-ai-based-quality-assurance-confidence-scoring: done
@@ -76,7 +71,6 @@ development_status:
   epic-5: contexted
   5-1-real-time-progress-updates: done
   5-2-job-status-quality-report-page: done
-  5-3-split-screen-comparison-ui: done
   5-4-download-feedback-flow: done
   epic-5-retrospective: completed
 
@@ -86,14 +80,11 @@ development_status:
   6-3-upgrade-prompts-paywall-ui: done
   6-4-basic-admin-dashboard: done
   epic-6-retrospective: completed
-  quick-wins-launch-prep: completed
-  production-soft-launch: completed
-  qw-3-remove-preview-comparison: done
 
   epic-7: contexted
   7-1-production-environment-verification: done
-  7-2-load-and-performance-testing: backlog
-  7-3-security-audit-and-penetration-testing: backlog
+  7-2-load-performance-testing: blocked  # Infrastructure ready, full testing requires auth setup
+  7-3-security-audit-penetration-testing: backlog
   7-4-user-acceptance-testing-uat: backlog
-  7-5-monitoring-and-incident-response-setup: backlog
+  7-5-monitoring-incident-response-setup: backlog
   epic-7-retrospective: optional

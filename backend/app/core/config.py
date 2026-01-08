@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
 
+    # CORS Configuration (Story 7.1)
+    # Comma-separated list of allowed origins for frontend
+    # Example: "http://localhost:3000,https://yourdomain.com"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://frontend:3000"
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

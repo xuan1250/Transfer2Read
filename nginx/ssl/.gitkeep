@@ -1,0 +1,14 @@
+# SSL Certificates Directory
+
+This directory will contain your SSL certificates after running certbot.
+
+**Files (created during setup):**
+- fullchain.pem - Full certificate chain
+- privkey.pem - Private key
+
+**Important:**
+- Never commit SSL certificates to git
+- Keep privkey.pem secure (chmod 600)
+- Certificates expire every 90 days (Let's Encrypt)
+
+See nginx/README.md for setup instructions.

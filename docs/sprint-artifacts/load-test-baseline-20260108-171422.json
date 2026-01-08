@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-01-08T17:14:18.959377",
+  "tests": [
+    {
+      "test": "health_endpoint",
+      "total_requests": 100,
+      "successful_requests": 100,
+      "failed_requests": 0,
+      "avg_response_time_ms": 8.852145671844482,
+      "median_response_time_ms": 8.23974609375,
+      "min_response_time_ms": 5.711078643798828,
+      "max_response_time_ms": 25.626182556152344,
+      "p95_response_time_ms": 15.842199325561523,
+      "p99_response_time_ms": 25.626182556152344,
+      "target_p95_ms": 500,
+      "target_p99_ms": 1000,
+      "p95_pass": true,
+      "p99_pass": true
+    },
+    {
+      "test": "docker_resources",
+      "containers": [
+        {
+          "name": "transfer2read-frontend",
+          "cpu_percent": 0.0,
+          "mem_percent": 0.53,
+          "mem_usage": "41.47MiB / 7.653GiB",
+          "net_io": "1.99kB / 126B"
+        },
+        {
+          "name": "transfer2read-backend-worker",
+          "cpu_percent": 0.07,
+          "mem_percent": 9.16,
+          "mem_usage": "718.2MiB / 7.653GiB",
+          "net_io": "87.7kB / 96.9kB"
+        },
+        {
+          "name": "transfer2read-backend-api",
+          "cpu_percent": 0.24,
+          "mem_percent": 1.79,
+          "mem_usage": "140.3MiB / 7.653GiB",
+          "net_io": "200kB / 269kB"
+        },
+        {
+          "name": "transfer2read-redis",
+          "cpu_percent": 0.32,
+          "mem_percent": 0.38,
+          "mem_usage": "29.72MiB / 7.653GiB",
+          "net_io": "222kB / 159kB"
+        }
+      ],
+      "max_cpu_threshold": 80,
+      "max_mem_threshold": 80,
+      "cpu_within_limits": true,
+      "mem_within_limits": true
+    },
+    {
+      "test": "redis_connectivity",
+      "redis_available": true,
+      "queue_depth": 0,
+      "max_queue_depth_threshold": 100,
+      "queue_within_limits": true
+    },
+    {
+      "test": "database_connectivity",
+      "database_connected": true,
+      "redis_connected": true,
+      "health_status": "healthy"
+    }
+  ]
+}

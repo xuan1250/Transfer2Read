@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional
 from celery import chain
 from supabase import create_client, Client
 import redis
+import httpx
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
@@ -264,12 +265,12 @@ def conversion_pipeline(self, job_id: str) -> Dict[str, Any]:
 @celery_app.task(
     name='convert_to_html',
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, redis.exceptions.ConnectionError),
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,  # 15 minutes max backoff
-    soft_time_limit=900,
-    time_limit=1200
+    soft_time_limit=300,
+    time_limit=360
 )
 def convert_to_html(self, job_id: str) -> Dict[str, Any]:
     """
@@ -400,12 +401,12 @@ def convert_to_html(self, job_id: str) -> Dict[str, Any]:
 @celery_app.task(
     name='extract_content',
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, redis.exceptions.ConnectionError),
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,
-    soft_time_limit=900,
-    time_limit=1200
+    soft_time_limit=300,
+    time_limit=360
 )
 def extract_content(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -488,12 +489,12 @@ def extract_content(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
 @celery_app.task(
     name='identify_structure',
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, redis.exceptions.ConnectionError),
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,
-    soft_time_limit=900,
-    time_limit=1200
+    soft_time_limit=300,
+    time_limit=360
 )
 def identify_structure(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -690,12 +691,12 @@ def identify_structure(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
 @celery_app.task(
     name='generate_epub',
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, redis.exceptions.ConnectionError),
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,
-    soft_time_limit=900,
-    time_limit=1200
+    soft_time_limit=300,
+    time_limit=360
 )
 def generate_epub(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -865,12 +866,12 @@ def generate_epub(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
 @celery_app.task(
     name='calculate_quality_score',
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, redis.exceptions.ConnectionError),
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,
-    soft_time_limit=900,
-    time_limit=1200
+    soft_time_limit=300,
+    time_limit=360
 )
 def calculate_quality_score(self, previous_result: Dict[str, Any]) -> Dict[str, Any]:
     """

@@ -40,7 +40,7 @@ Existing epics found from 2025-11-27. Enhancing stories with NEW architecture co
 **Major Updates:**
 1. **Authentication & Database:** Added **Supabase** for unified auth, PostgreSQL, and file storage (replaces self-managed PostgreSQL + S3)
 2. **AI Processing:** Changed from local PyTorch models → **API-based AI** (GPT-4o primary, Claude 3 Haiku fallback via LangChain)
-3. **Deployment:** Updated to **Vercel** (frontend) + **Railway** (backend + workers)
+3. **Deployment:** Self-hosted **Docker Compose** (frontend + backend + workers + Redis)
 4. **Storage:** Migrated from generic S3 → **Supabase Storage** with built-in security policies
 
 **Technical Stack (Current):**
@@ -400,35 +400,60 @@ So that **long-running AI-powered conversions can be processed asynchronously.**
 
 ---
 
-#### Story 1.5: Vercel + Railway Deployment Configuration
+#### Story 1.5: Docker Compose Deployment Configuration
 
 **User Story:**
 As a **DevOps Engineer**,  
-I want **to configure deployment to Vercel (frontend) and Railway (backend + workers)**,  
-So that **the application is production-ready with managed Supabase services.**
+I want **to configure Docker Compose for self-hosted deployment**,  
+So that **the application can run on local hardware with all services containerized.**
 
 **Acceptance Criteria:**
-- [ ] **Vercel Project:** Frontend connected to GitHub repo
-  - Production and Preview environments configured
-  - Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`
-- [ ] **Railway Project:** Two services deployed:
-  - **API Service:** FastAPI backend with Supabase keys, AI API keys
-  - **Worker Service:** Celery worker with same environment
-  - **Redis Service:** Managed Redis for Celery broker
-- [ ] **Supabase Production:** Production Supabase project (separate from dev)
-- [ ] **CORS Configuration:** Backend allows Vercel production domain
-- [ ] **Health Check:** Public URLs accessible:
-  - Frontend: `https://transfer2read.vercel.app`
-  - Backend: `https://transfer-api.railway.app/api/health` → `200 OK`
-- [ ] **Secrets Management:** All API keys stored in Railway secrets (not committed)
-- [ ] **CI/CD:** GitHub Actions runs tests on PR before deployment
+- [ ] **Docker Compose File Created:** `docker-compose.yml` in project root
+  - Defines 4 services: `frontend`, `backend-api`, `backend-worker`, `redis`
+  - All services use appropriate base images (Next.js, FastAPI, Redis 8.4)
+  - Port mappings: `3000` (frontend), `8000` (backend), `6379` (Redis internal only)
+  - Environment variables loaded from `.env` file
+  - Volume mounts for Redis persistence and backend uploads
+  - Service dependencies configured (worker depends on API, API depends on Redis)
+  - Restart policy: `unless-stopped` for all services
+
+- [ ] **Dockerfiles Created:**
+  - `frontend/Dockerfile`: Multi-stage build for Next.js production
+  - `backend/Dockerfile`: Python 3.13 image with all dependencies installed
+
+- [ ] **Environment Configuration:**
+  - Root `.env` file with all required variables (Supabase, AI keys, Redis URLs)
+  - `.env.example` template for documentation
+  - `.gitignore` updated to exclude `.env` file
+
+- [ ] **Health Checks Verified:**
+  - Frontend accessible: `http://localhost:3000` → Next.js UI loads
+  - Backend API: `http://localhost:8000/api/health` → `200 OK`
+  - Redis: `docker exec transfer2read-redis redis-cli ping` → `PONG`
+  - Worker: `docker-compose logs backend-worker` shows successful Celery startup
+
+- [ ] **Service Communication:**
+  - Frontend can call backend API at `http://backend-api:8000` (internal Docker network)
+  - Backend API can dispatch tasks to Celery worker via Redis
+  - All services can resolve each other by container name
+
+- [ ] **Production Supabase:** Separate Supabase project for production (distinct from dev)
+
+- [ ] **Documentation:**
+  - `README.md` updated with Docker deployment instructions
+  - Deployment commands documented: `docker-compose up -d`, `docker-compose logs`, `docker-compose down`
+  - Troubleshooting section for common Docker issues
 
 **Technical Notes:**
-- Architecture: Vercel (frontend edge) + Railway (backend containers)
-- **No database deployment** - Supabase is fully managed
-- Railway auto-deploys from `main` branch
+- All services run in Docker containers on same host machine
+- Supabase remains external managed service (not containerized)
+- No CI/CD for MVP - manual deployment via `docker-compose up -d --build`
+- HTTPS/SSL optional (can add nginx reverse proxy later)
+- Scaling: Use `docker-compose up -d --scale backend-worker=N` for multiple workers
 
 **Prerequisites:** Story 1.4
+
+**Effort Estimate:** Medium (Docker configuration + testing)
 
 ---
 
@@ -1266,20 +1291,34 @@ So that **the application can serve real users reliably.**
 **Acceptance Criteria:**
 
 **Production Infrastructure:**
-- [ ] **Vercel Frontend** fully deployed to production domain
-  - Custom domain configured with SSL certificate
-  - Environment variables verified: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`
-  - Preview deployments working for feature branches
-- [ ] **Railway Backend API** operational on production URL
-  - FastAPI service running with health check returning 200
+- [ ] **Docker Compose Services Running:**
+  - All 4 services started: `docker-compose ps` shows all containers healthy
+  - Frontend container: `transfer2read-frontend` (port 3000)
+  - Backend API container: `transfer2read-api` (port 8000)
+  - Worker container: `transfer2read-worker`
+  - Redis container: `transfer2read-redis` (port 6379)
+  - All services have restart policy `unless-stopped`
+
+- [ ] **Frontend Service Verified:**
+  - Accessible at `http://localhost:3000` or `http://<host-ip>:3000`
+  - Environment variables loaded correctly from `.env`
+  - Can communicate with backend API
+
+- [ ] **Backend API Service Verified:**
+  - Health check: `curl http://localhost:8000/api/health` → `200 OK`
   - Environment variables verified: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `REDIS_URL`
-  - Auto-deploy from `main` branch verified
-- [ ] **Railway Celery Worker** processing jobs
-  - Worker logs show successful startup and AI SDK initialization
+  - CORS configured for frontend origin
+
+- [ ] **Celery Worker Service Verified:**
+  - Worker logs show successful startup: `docker-compose logs backend-worker`
+  - AI SDK initialization successful (GPT-4o + Claude connection verified)
   - Test job dispatched and completed successfully
-- [ ] **Railway Redis** accessible to API and Worker
-  - Connection verified from both services
-  - Persistence enabled for job queue durability
+
+- [ ] **Redis Service Verified:**
+  - Redis ping successful: `docker exec transfer2read-redis redis-cli ping` → `PONG`
+  - Backend API can connect to Redis
+  - Worker can connect to Redis for task queue
+  - Data persistence enabled via Docker volume `redis-data`
 
 **Supabase Production:**
 - [ ] **Production Supabase Project** configured separately from development
@@ -1353,7 +1392,7 @@ So that **users experience fast, reliable conversions at scale.**
 - [ ] **50 concurrent users** (stress test):
   - System remains responsive (no crashes)
   - Celery worker queue depth monitored (max depth < 100)
-  - Railway CPU/memory usage: < 80%
+  - Docker container resource usage: `docker stats` shows CPU/memory < 80% of host capacity
 
 **AI API Rate Limits:**
 - [ ] **OpenAI rate limits** tested:
@@ -1591,9 +1630,10 @@ So that **we can detect and fix issues quickly after launch.**
 **Acceptance Criteria:**
 
 **Application Monitoring:**
-- [ ] **Railway Metrics** configured:
-  - CPU, memory, disk usage dashboards visible
-  - Alerts set for high resource usage (>80% for 5 minutes)
+- [ ] **Docker Container Metrics** monitoring:
+  - Use `docker stats` for real-time CPU, memory, network I/O
+  - Optional: Set up Prometheus + Grafana for dashboards (if desired)
+  - Monitor all 4 containers: frontend, backend-api, backend-worker, redis
 - [ ] **Supabase Dashboard** reviewed:
   - Database connection pool usage monitored
   - API request rate and error rate visible
@@ -1614,15 +1654,17 @@ So that **we can detect and fix issues quickly after launch.**
   - FastAPI logs include: `user_id`, `job_id`, `endpoint`, `duration`
   - Celery logs include: `task_name`, `job_id`, `ai_model_used`, `cost`
   - Log levels: DEBUG (dev), INFO (prod), ERROR (always)
-- [ ] **Log aggregation** (optional for MVP):
-  - Railway logs retained for 7 days (default)
-  - Consider Papertrail/Logtail for longer retention
+- [ ] **Log Management:**
+  - Docker logs accessible: `docker-compose logs -f`
+  - Configure log rotation to prevent disk fill: `docker-compose.yml` logging driver
+  - Optional: Centralized logging with ELK stack or Loki (post-MVP)
 
 **Uptime Monitoring:**
-- [ ] **Uptime checks** configured:
-  - Use UptimeRobot, Pingdom, or Railway health checks
-  - Monitor: Frontend (200 OK), Backend `/api/health` (200 OK)
-  - Alert on downtime >2 minutes
+- [ ] **Health Checks Configured:**
+  - Docker healthcheck directives in `docker-compose.yml` for each service
+  - Monitor: Frontend (port 3000), Backend `/api/health` (port 8000)
+  - Optional: External monitoring (UptimeRobot free tier) if host has public IP
+  - Alert mechanism: Email/SMS on service failure (optional for self-hosted)
 - [ ] **Status page** (optional):
   - Public status page (status.transfer2read.com) using Statuspage.io
   - Shows: API status, conversion processing status

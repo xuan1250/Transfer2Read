@@ -238,7 +238,7 @@ Transfer2Read as a web application must balance powerful conversion capabilities
 **Resource Optimization:**
 - Lazy loading for non-critical features
 - Code splitting for faster initial load
-- CDN delivery for static assets
+- Static assets served directly from Next.js (optimized with compression)
 - Optimized image/asset delivery
 
 ### SEO Strategy
@@ -450,11 +450,11 @@ The interface should feel:
 
 **Resource Efficiency:**
 - NFR5: Generated EPUB file size is ≤ 120% of original PDF size
-- NFR6: System handles concurrent conversions for up to 100 users simultaneously
+- NFR6: System handles concurrent conversions limited by host hardware resources (CPU cores, RAM, disk I/O)
 - NFR7: AI processing is optimized to minimize cloud API costs
 
 **Uptime & Availability:**
-- NFR8: Web application maintains 99.5% uptime
+- NFR8: Web application maintains best-effort uptime (dependent on host hardware and network availability)
 - NFR9: System degrades gracefully when cloud AI features are unavailable (falls back to local processing)
 {{/if}}
 
@@ -485,13 +485,12 @@ The interface should feel:
 ### Scalability
 
 **Growth Support:**
-- NFR21: Architecture supports horizontal scaling to accommodate 10x user growth
+- NFR21: Architecture supports vertical scaling within host hardware limits to accommodate user growth
 - NFR22: Database design supports millions of conversion records without performance degradation
 - NFR23: File storage infrastructure can scale to handle petabytes of PDFs/EPUBs
 
 **Load Management:**
 - NFR24: System queues conversion jobs when capacity is reached rather than failing
-- NFR25: System implements auto-scaling for compute resources based on demand
 {{/if}}
 
 {{#if accessibility_requirements}}

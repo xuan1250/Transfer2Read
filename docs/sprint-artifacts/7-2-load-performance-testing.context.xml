@@ -1,0 +1,287 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>2</storyId>
+    <title>Load & Performance Testing</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-08</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dominhxuan/Desktop/Transfer2Read/docs/sprint-artifacts/7-2-load-performance-testing.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>QA Engineer</asA>
+    <iWant>to verify the system can handle expected load and meets performance targets</iWant>
+    <soThat>users experience fast, reliable conversions at scale</soThat>
+    <tasks>
+      <task id="1" title="Set Up Load Testing Infrastructure" acs="#11, #12">
+        <subtask>Install Locust or k6 load testing framework</subtask>
+        <subtask>Create test scenarios in tests/load/scenarios.py (simple PDF, complex PDF, concurrent users)</subtask>
+        <subtask>Configure test data: Sample PDFs for each scenario</subtask>
+        <subtask>Set up test runner scripts for automated execution</subtask>
+      </task>
+      <task id="2" title="Execute Performance Baseline Tests" acs="#1, #2, #3">
+        <subtask>Test simple PDF conversion (10-20 pages): end-to-end time, EPUB size validation</subtask>
+        <subtask>Test complex PDF conversion (300 pages): processing time, AI cost, quality score</subtask>
+        <subtask>Test frontend page load times using Lighthouse or WebPageTest</subtask>
+      </task>
+      <task id="3" title="Execute Concurrent Load Tests" acs="#4, #5">
+        <subtask>Run 10 concurrent users test: job completion rate, processing time, API response times</subtask>
+        <subtask>Run 50 concurrent users stress test: system stability, Celery queue depth, Docker resource monitoring</subtask>
+      </task>
+      <task id="4" title="Test AI API Rate Limits and Fallback" acs="#6, #7">
+        <subtask>Test OpenAI API rate limits: monitor headers, simulate rate limit, verify Claude fallback</subtask>
+        <subtask>Test Anthropic API rate limits: verify fallback/retry logic</subtask>
+      </task>
+      <task id="5" title="Validate Database Performance" acs="#8, #9">
+        <subtask>Test Supabase PostgreSQL under load: query response times, RLS overhead, connection pooling</subtask>
+        <subtask>Test Redis performance: queue latency, memory usage stability</subtask>
+      </task>
+      <task id="6" title="Test File Storage Performance" acs="#10">
+        <subtask>Test Supabase Storage upload performance: 50MB PDF upload time, concurrent load</subtask>
+        <subtask>Test Supabase Storage download performance: EPUB download via signed URL, no 503 errors</subtask>
+      </task>
+      <task id="7" title="Monitor and Analyze Performance Metrics" acs="#13, #14, #15">
+        <subtask>Monitor Docker container metrics: CPU, memory, network, disk I/O</subtask>
+        <subtask>Generate load test report with scenarios, metrics, graphs, pass/fail status</subtask>
+        <subtask>Identify and document bottlenecks with prioritization and optimization recommendations</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <group title="Performance Baseline (Single User)">
+      <criterion id="1">Simple PDF conversion (10-20 pages): Upload → Processing → Download < 30 seconds end-to-end, EPUB file size ≤ 120% of original PDF</criterion>
+      <criterion id="2">Complex PDF conversion (300 pages with tables/images/equations): Processing time < 2 minutes, AI cost per job < $1.00, Quality confidence score ≥ 90%</criterion>
+      <criterion id="3">Frontend page load times: Landing page < 2s, Dashboard < 3s, Job status page < 3s</criterion>
+    </group>
+    <group title="Concurrent Load Testing">
+      <criterion id="4">10 concurrent users: All jobs complete successfully, Average processing time increase < 20% vs. single user, API response times P95 < 500ms, P99 < 1s</criterion>
+      <criterion id="5">50 concurrent users stress test: System remains responsive (no crashes), Celery queue depth max < 100, Docker container CPU/memory < 80% of host capacity</criterion>
+    </group>
+    <group title="AI API Rate Limits">
+      <criterion id="6">OpenAI rate limits: Monitor rate limit headers in LangChain callbacks, Verify Claude 3 Haiku fallback triggers on rate limit error, Document API tier</criterion>
+      <criterion id="7">Anthropic rate limits: Verify fallback or retry logic works</criterion>
+    </group>
+    <group title="Database Performance">
+      <criterion id="8">Supabase PostgreSQL: Query response times P95 < 100ms for conversion_jobs lookups, RLS policy overhead < 10ms per query, Connection pooling configured</criterion>
+      <criterion id="9">Redis performance: Job queue latency < 10ms for enqueue/dequeue, Memory usage stable under load</criterion>
+    </group>
+    <group title="File Storage Performance">
+      <criterion id="10">Supabase Storage: 50MB PDF upload < 10 seconds, EPUB download via signed URL < 5 seconds, No 503 errors under concurrent load</criterion>
+    </group>
+    <group title="Load Testing Tools">
+      <criterion id="11">Use Locust or k6 for load testing</criterion>
+      <criterion id="12">Test scenarios documented in tests/load/scenarios.py</criterion>
+      <criterion id="13">Load test report generated with metrics and graphs</criterion>
+    </group>
+    <group title="Performance Monitoring">
+      <criterion id="14">Docker container metrics reviewed during tests</criterion>
+      <criterion id="15">Bottlenecks identified and documented for future optimization</criterion>
+    </group>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR1: System processes 300-page technical PDF in under 2 minutes. NFR2: System processes text-based PDF in under 30 seconds. NFR3: Web interface responds to user interactions within 200ms. NFR5: Generated EPUB file size is ≤ 120% of original PDF size.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Conversion Process</section>
+        <snippet>FR35: System completes conversion of 300-page technical book in under 2 minutes. FR37: System produces EPUB files with file size ≤ 120% of original PDF.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Performance Considerations</section>
+        <snippet>Async Workers: CPU-heavy tasks never run on the web thread. Scaling: Web auto-scale based on HTTP request load, Worker auto-scale based on Redis Queue depth. Caching: Redis used for job status caching to reduce DB hits during polling.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Deployment Architecture</section>
+        <snippet>Self-hosted Docker Compose deployment with 4 services: frontend (Next.js port 3000), backend-api (FastAPI port 8000), backend-worker (Celery), redis (port 6379). Concurrent conversions limited by CPU cores. Vertical scaling only.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>AI Model Specification</section>
+        <snippet>Primary: GPT-4o (~$2.50/1M input, ~$10/1M output tokens, 2-5s per page). Fallback: Claude 3 Haiku (~$0.25/1M input, ~$1.25/1M output, 1-3s per page). LangChain 0.3.x provides retry logic and fallback orchestration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic and Story Breakdown</title>
+        <section>Epic 7 Story 7.2 - Dev Notes</section>
+        <snippet>Performance targets: NFR1 (300-page in 2min), NFR2 (text in 30s), NFR3 (web 200ms). Use Locust (Python) or k6 (Go) for load testing. Test environment: Docker Compose deployment against production Supabase. Budget $20-50 for AI API costs during testing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/app/main.py</path>
+        <kind>api</kind>
+        <symbol>FastAPI app initialization</symbol>
+        <lines>N/A</lines>
+        <reason>Main API entrypoint - need to verify health check endpoint and CORS configuration for load testing</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/upload.py</path>
+        <kind>api</kind>
+        <symbol>POST /api/v1/upload</symbol>
+        <lines>N/A</lines>
+        <reason>Upload endpoint to be load tested for file handling and tier limit enforcement under concurrent load</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/api/v1/jobs.py</path>
+        <kind>api</kind>
+        <symbol>GET /api/v1/jobs/{id}</symbol>
+        <lines>N/A</lines>
+        <reason>Job status endpoint - critical for verifying P95/P99 response times under load</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/tasks/conversion_pipeline.py</path>
+        <kind>worker</kind>
+        <symbol>convert_pdf_to_epub</symbol>
+        <lines>N/A</lines>
+        <reason>Main conversion task - need to monitor execution time and AI API costs during load tests</reason>
+      </artifact>
+      <artifact>
+        <path>backend/app/core/config.py</path>
+        <kind>config</kind>
+        <symbol>Settings</symbol>
+        <lines>N/A</lines>
+        <reason>Environment configuration including Redis URL, Supabase credentials - verify correct production settings</reason>
+      </artifact>
+      <artifact>
+        <path>docker-compose.yml</path>
+        <kind>infrastructure</kind>
+        <symbol>services</symbol>
+        <lines>N/A</lines>
+        <reason>Container orchestration - need to monitor resource usage via docker stats during load tests</reason>
+      </artifact>
+      <artifact>
+        <path>backend/tests/unit/tasks/test_conversion_pipeline.py</path>
+        <kind>test</kind>
+        <symbol>test_convert_pdf_to_epub</symbol>
+        <lines>N/A</lines>
+        <reason>Existing unit tests for conversion pipeline - reference for understanding expected behavior</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="fastapi" version="0.122.0">Backend API framework</package>
+        <package name="celery" version="5.5.3">Async task queue for conversions</package>
+        <package name="redis" version="5.0.1">Message broker and cache</package>
+        <package name="langchain" version="0.3.12">AI orchestration framework</package>
+        <package name="langchain-openai" version="0.2.9">GPT-4o integration</package>
+        <package name="langchain-anthropic" version="0.2.5">Claude 3 Haiku integration</package>
+        <package name="supabase" version="2.24.0">Database and storage client</package>
+        <package name="pymupdf" version="1.24.10">PDF processing</package>
+        <package name="locust" version="latest">Load testing framework (to be installed)</package>
+        <package name="pytest" version="8.x">Testing framework</package>
+      </python>
+      <nodejs>
+        <package name="next" version="15.0.3">Frontend framework</package>
+        <package name="@supabase/supabase-js" version="2.46.1">Supabase client</package>
+        <package name="axios">HTTP client for API calls</package>
+        <package name="@tanstack/react-query">Data fetching and caching</package>
+      </nodejs>
+      <infrastructure>
+        <service name="Docker Compose" version="latest">Container orchestration</service>
+        <service name="Redis" version="8.4.0">Message broker</service>
+        <service name="Supabase" version="managed">PostgreSQL + Storage + Auth</service>
+      </infrastructure>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>All load tests must run against production-like Docker Compose deployment (not localhost simplified setup)</constraint>
+    <constraint>Use production Supabase project or staging instance (not local PostgreSQL)</constraint>
+    <constraint>Monitor real AI API usage and costs - budget $20-50 for load testing</constraint>
+    <constraint>Load tests should simulate external network conditions (not same-host testing)</constraint>
+    <constraint>Preserve existing test data and user data - use isolated test accounts</constraint>
+    <constraint>Performance targets must match PRD specifications: 300-page < 2min, simple < 30s, API < 200ms</constraint>
+    <constraint>Docker resource monitoring must not interfere with application performance (use docker stats, not profiling tools)</constraint>
+    <constraint>Test scenarios must cover AC 1-15 comprehensively without gaps</constraint>
+    <constraint>Load test report must be saved to docs/sprint-artifacts/load-test-report-{date}.md</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Backend Health Check</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/health → 200 OK</signature>
+      <path>backend/app/main.py</path>
+    </interface>
+    <interface>
+      <name>PDF Upload Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/v1/upload (multipart/form-data) → 202 Accepted { job_id, status }</signature>
+      <path>backend/app/api/v1/upload.py</path>
+    </interface>
+    <interface>
+      <name>Job Status Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/v1/jobs/{id} → 200 OK { id, status, progress, result_url, quality_report }</signature>
+      <path>backend/app/api/v1/jobs.py</path>
+    </interface>
+    <interface>
+      <name>Job Download Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/v1/jobs/{id}/download → 302 Redirect (Supabase signed URL)</signature>
+      <path>backend/app/api/v1/jobs.py</path>
+    </interface>
+    <interface>
+      <name>Celery Task Queue</name>
+      <kind>Message Queue</kind>
+      <signature>Redis broker at redis://localhost:6379/0</signature>
+      <path>backend/app/core/celery_app.py</path>
+    </interface>
+    <interface>
+      <name>Supabase PostgreSQL</name>
+      <kind>Database</kind>
+      <signature>Tables: conversion_jobs, user_usage. Access via Supabase client with RLS.</signature>
+      <path>backend/app/core/supabase.py</path>
+    </interface>
+    <interface>
+      <name>Supabase Storage</name>
+      <kind>Object Storage</kind>
+      <signature>Buckets: uploads (PDFs), downloads (EPUBs). Signed URLs with 1-hour expiry.</signature>
+      <path>backend/app/services/storage/supabase_storage.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Load testing framework: Locust (Python-based, integrates with FastAPI) or k6 (Go-based, high performance).
+      Test execution: Run from external network to simulate real conditions.
+      Performance baselines: Simple PDF < 30s, Complex PDF < 2min, API P95 < 500ms, P99 < 1s.
+      Concurrent load scenarios: 10 users (normal load), 50 users (stress test).
+      Monitoring: Docker stats for container resources, Supabase dashboard for DB/Storage metrics, LangChain callbacks for AI API usage/costs.
+      Test data: 5 sample PDFs (simple text, complex technical, multi-language, large file, edge case) stored in tests/fixtures/load-test-pdfs/.
+      Reporting: Generate comprehensive report with metrics, graphs, pass/fail status saved to docs/sprint-artifacts/load-test-report-{date}.md.
+    </standards>
+    <locations>
+      <location>tests/load/ - Load test scenarios and configuration</location>
+      <location>tests/load/scenarios.py - Locust/k6 test scenarios</location>
+      <location>tests/load/conftest.py - Test configuration and fixtures</location>
+      <location>tests/fixtures/load-test-pdfs/ - Sample PDFs for testing</location>
+      <location>docs/sprint-artifacts/load-test-report-{date}.md - Test results report</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2,3">Test simple and complex PDF conversions individually to establish baseline metrics before concurrent load testing</idea>
+      <idea ac="1,2">Validate EPUB file size constraint (≤120% of PDF) and AI cost constraint (<$1.00 per job) with real conversions</idea>
+      <idea ac="3">Use Lighthouse CI or WebPageTest to automate frontend page load testing and track metrics over time</idea>
+      <idea ac="4,5">Start with 10 concurrent users to verify stable performance, then ramp to 50 users to identify breaking points</idea>
+      <idea ac="4,5">Monitor Celery worker queue depth in real-time during load tests to detect processing bottlenecks</idea>
+      <idea ac="6,7">Simulate OpenAI rate limit by intentionally triggering rate limit errors and verifying Claude 3 Haiku fallback activates correctly</idea>
+      <idea ac="8,9">Run database queries directly against Supabase with increasing concurrency to isolate DB performance from application logic</idea>
+      <idea ac="10">Test Supabase Storage with large file uploads (50MB) under concurrent load to verify no 503 errors occur</idea>
+      <idea ac="14,15">Use docker stats during all tests to track CPU/memory/network patterns and identify resource-constrained services</idea>
+      <idea ac="13,15">Generate graphs showing response time distribution, throughput, error rate, and resource utilization over time</idea>
+      <idea ac="15">Document top 3 bottlenecks with impact assessment (high/medium/low) and recommended optimizations (e.g., scale workers, add caching, optimize queries)</idea>
+    </ideas>
+  </tests>
+</story-context>
