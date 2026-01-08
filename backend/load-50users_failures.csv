@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+GET,/api/health,CatchResponseError('Health check failed: 0'),2
+POST,/api/v1/upload [simple PDF],CatchResponseError('Upload failed: 0 - '),1

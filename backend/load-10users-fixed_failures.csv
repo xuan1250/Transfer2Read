@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/api/v1/upload [complex PDF],"CatchResponseError('Upload failed: 403 - {""detail"":{""detail"":""Monthly conversion limit reached. You have used 5/5 conversions this month."",""code"":""CONVERSION_LIMIT_EXCEEDED"",""current_count"":5,""limit"":5,""tier"":""FREE"",""reset_date"":""2026-02-01"",""upgrade_url"":""/pricing""}}')",34
+POST,/api/v1/upload [simple PDF],"CatchResponseError('Upload failed: 403 - {""detail"":{""detail"":""Monthly conversion limit reached. You have used 5/5 conversions this month."",""code"":""CONVERSION_LIMIT_EXCEEDED"",""current_count"":5,""limit"":5,""tier"":""FREE"",""reset_date"":""2026-02-01"",""upgrade_url"":""/pricing""}}')",48
